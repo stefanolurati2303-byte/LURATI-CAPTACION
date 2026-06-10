@@ -3,670 +3,549 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lurati · Tablero de Captación</title>
+<title>Lurati · Estación del Asesor</title>
 <style>
 :root{
-  --green:#004d44;
-  --green-dark:#0e352c;
-  --teal:#128f8b;
-  --bordo:#7e2b26;
-  --paper:#f7faf9;
-  --line:#d7e3e0;
-  --ink:#23332f;
-  --muted:#5e716c;
-  --ok:#1d7a5f;
-  --bordo-bg:#f6eceb;
-  --green-bg:#e8f1ef;
-  --radius:14px;
-  --shadow:0 1px 2px rgba(0,77,68,.06),0 8px 24px rgba(0,77,68,.06);
+  --green:#004d44;--green-dark:#0e352c;--teal:#128f8b;--bordo:#7e2b26;
+  --paper:#f7faf9;--line:#d7e3e0;--ink:#23332f;--muted:#5e716c;--ok:#1d7a5f;
+  --bordo-bg:#f6eceb;--green-bg:#e8f1ef;--radius:14px;--shadow:0 1px 2px rgba(0,77,68,.06),0 8px 24px rgba(0,77,68,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  background:var(--paper);color:var(--ink);line-height:1.55;
-  -webkit-font-smoothing:antialiased;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1080px;margin:0 auto;padding:0 20px 80px}
-
-/* ---------- TOP BAR ---------- */
-.topbar{
-  background:var(--green);color:#fff;border-radius:0 0 var(--radius) var(--radius);
-  padding:22px 26px;margin-bottom:22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;
-}
+.topbar{background:var(--green);color:#fff;border-radius:0 0 var(--radius) var(--radius);padding:22px 26px;margin-bottom:18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .mark{display:flex;align-items:center;gap:14px}
 .col-ico{width:44px;height:auto;flex-shrink:0;display:block}
 .brandtxt b{font-size:22px;letter-spacing:.06em;font-weight:800;display:block;line-height:1}
 .brandtxt span{font-size:11px;letter-spacing:.28em;color:#9fd4cb;text-transform:uppercase}
 .topbar .role{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px}
-.topbar select,.topbar input{
-  font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.25);
-  background:rgba(255,255,255,.12);color:#fff;outline:none;min-width:160px;cursor:pointer;
-}
-.topbar input::placeholder{color:#bfe0da}
+.topbar select{font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;outline:none;min-width:160px;cursor:pointer}
 .topbar select option{color:#23332f}
-
-/* ---------- HERO: ACTIVITY BOARD ---------- */
-.board{
-  background:var(--green-dark);color:#fff;border-radius:var(--radius);padding:24px 26px 26px;
-  margin-bottom:24px;position:relative;overflow:hidden;
-}
+/* SECTION SWITCH */
+.modes{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.mode{flex:1;min-width:160px;padding:14px 18px;border-radius:var(--radius);border:1px solid var(--line);background:#fff;cursor:pointer;transition:.15s;text-align:left}
+.mode b{display:block;font-size:15px;font-weight:800;color:var(--ink)}
+.mode span{font-size:12px;color:var(--muted)}
+.mode.active{background:var(--green);border-color:var(--green)}
+.mode.active b{color:#fff}.mode.active span{color:#9fd4cb}
+.mode.m-venta.active{background:var(--bordo);border-color:var(--bordo)}
+.mode.m-venta.active span{color:#e8c9c6}
+.mode.m-props.active{background:var(--teal);border-color:var(--teal)}
+.mode.m-props.active span{color:#cdeae6}
+/* BOARD */
+.board{background:var(--green-dark);color:#fff;border-radius:var(--radius);padding:22px 26px 24px;margin-bottom:22px}
 .board h2{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#8fc7bd;font-weight:700;margin-bottom:4px}
-.board .week{font-size:12px;color:#7fb8ae;margin-bottom:18px}
+.board .week{font-size:12px;color:#7fb8ae;margin-bottom:16px}
 .rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:14px}
-.ring{
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-  border-radius:12px;padding:14px 16px;position:relative;
-}
+.ring{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px}
 .ring .lab{font-size:12px;color:#a9d4cc;margin-bottom:8px;min-height:30px}
 .ring .big{font-size:26px;font-weight:800;line-height:1}
 .ring .big small{font-size:14px;color:#86bdb3;font-weight:600}
 .bar{height:5px;border-radius:4px;background:rgba(255,255,255,.14);margin-top:10px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--teal);border-radius:4px;transition:width .5s ease}
 .ring.done .bar i{background:#39c9a3}
-.board .pulse{
-  margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);
-  font-size:14px;color:#cfe8e3;display:flex;align-items:center;gap:10px;
-}
+.board .pulse{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;color:#cfe8e3}
 .pulse b{color:#fff}
-
-/* ---------- NAV ---------- */
-.nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px;position:sticky;top:0;z-index:20;
-  background:var(--paper);padding:10px 0;border-bottom:1px solid var(--line)}
-.nav button{
-  font:inherit;font-size:13.5px;font-weight:600;padding:9px 15px;border-radius:10px;cursor:pointer;
-  border:1px solid var(--line);background:#fff;color:var(--muted);transition:.15s;
-}
+/* NAV */
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;position:sticky;top:0;z-index:20;background:var(--paper);padding:10px 0;border-bottom:1px solid var(--line)}
+.nav button{font:inherit;font-size:13.5px;font-weight:600;padding:9px 15px;border-radius:10px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);transition:.15s}
 .nav button:hover{border-color:var(--teal);color:var(--green)}
 .nav button.active{background:var(--green);color:#fff;border-color:var(--green)}
-
-/* ---------- PANELS ---------- */
-.panel{display:none;animation:fade .25s ease}
-.panel.active{display:block}
+.panel{display:none;animation:fade .25s ease}.panel.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:6px}
 .panel h3{font-size:23px;color:var(--green-dark);font-weight:800;margin-bottom:4px;letter-spacing:-.01em}
 .panel .sub{color:var(--muted);font-size:14.5px;margin-bottom:22px;max-width:62ch}
-
 .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
 .card h4{font-size:16px;color:var(--green);margin-bottom:10px;font-weight:700}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:720px){.grid2,.grid3{grid-template-columns:1fr}}
-
-/* phase steps */
 .phase{display:flex;gap:16px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--line)}
 .phase:last-child{border-bottom:none}
-.phase .n{
-  width:38px;height:38px;flex-shrink:0;border-radius:10px;background:var(--green-bg);color:var(--green);
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;
-}
+.phase .n{width:38px;height:38px;flex-shrink:0;border-radius:10px;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
 .phase .body b{display:block;font-size:15.5px;color:var(--ink);margin-bottom:2px}
 .phase .body p{font-size:13.5px;color:var(--muted)}
-
-/* tags */
 .tag{display:inline-block;font-size:12px;font-weight:600;padding:4px 11px;border-radius:20px;margin:3px 4px 3px 0}
-.t-green{background:var(--green-bg);color:var(--green)}
-.t-bordo{background:var(--bordo-bg);color:var(--bordo)}
-.t-teal{background:#dcf0ed;color:var(--teal)}
-
-/* checklist / tasks */
+.t-green{background:var(--green-bg);color:var(--green)}.t-bordo{background:var(--bordo-bg);color:var(--bordo)}.t-teal{background:#dcf0ed;color:var(--teal)}
 .task{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .task:last-child{border-bottom:none}
-.box{width:21px;height:21px;border-radius:6px;border:2px solid var(--line);flex-shrink:0;margin-top:1px;
-  display:flex;align-items:center;justify-content:center;transition:.15s;background:#fff}
+.box{width:21px;height:21px;border-radius:6px;border:2px solid var(--line);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;background:#fff}
 .task.checked .box{background:var(--green);border-color:var(--green)}
-.box svg{width:12px;height:12px;opacity:0;transition:.15s}
-.task.checked .box svg{opacity:1}
-.task .txt{font-size:14.5px;color:var(--ink)}
-.task.checked .txt{color:var(--muted);text-decoration:line-through}
-
-/* contact rows */
+.box svg{width:12px;height:12px;opacity:0;transition:.15s}.task.checked .box svg{opacity:1}
+.task .txt{font-size:14.5px;color:var(--ink)}.task.checked .txt{color:var(--muted);text-decoration:line-through}
 .addrow{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.addrow input,.addrow select{
-  font:inherit;font-size:14px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
-  background:#fff;color:var(--ink);outline:none;
-}
+.addrow input,.addrow select{font:inherit;font-size:14px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);outline:none}
 .addrow input{flex:1;min-width:140px}
 .addrow input:focus,.addrow select:focus{border-color:var(--teal)}
-.btn{font:inherit;font-size:14px;font-weight:600;padding:10px 18px;border-radius:10px;border:none;cursor:pointer;
-  background:var(--green);color:#fff;transition:.15s}
+.btn{font:inherit;font-size:14px;font-weight:600;padding:10px 18px;border-radius:10px;border:none;cursor:pointer;background:var(--green);color:#fff;transition:.15s}
 .btn:hover{background:var(--green-dark)}
-.btn.ghost{background:#fff;color:var(--green);border:1px solid var(--line)}
-.btn.ghost:hover{border-color:var(--teal)}
+.btn.ghost{background:#fff;color:var(--green);border:1px solid var(--line)}.btn.ghost:hover{border-color:var(--teal)}
 .btn.bordo{background:var(--bordo)}
 .contact{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .contact:last-child{border-bottom:none}
-.contact .av{width:34px;height:34px;border-radius:9px;background:var(--green-bg);color:var(--green);
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
-.contact .info b{font-size:14.5px;display:block}
-.contact .info span{font-size:12.5px;color:var(--muted)}
+.contact .av{width:34px;height:34px;border-radius:9px;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.contact .info b{font-size:14.5px;display:block}.contact .info span{font-size:12.5px;color:var(--muted)}
 .contact .stat{margin-left:auto;display:flex;gap:6px;align-items:center}
 .pill{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:16px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted)}
 .pill.on{background:var(--teal);color:#fff;border-color:var(--teal)}
 .del{cursor:pointer;color:var(--muted);font-size:18px;padding:2px 6px;border-radius:6px;line-height:1}
 .del:hover{color:var(--bordo);background:var(--bordo-bg)}
 .empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 10px;border:1px dashed var(--line);border-radius:12px}
-
-/* message snippets */
 .msg{background:var(--green-bg);border-left:4px solid var(--teal);border-radius:0 10px 10px 0;padding:14px 16px;margin-bottom:12px;position:relative}
 .msg.bordo{background:var(--bordo-bg);border-left-color:var(--bordo)}
 .msg .ml{font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block}
-.msg.bordo .ml{color:var(--bordo)}
-.msg p{font-size:14px;color:var(--ink);line-height:1.6}
-.copy{position:absolute;top:12px;right:12px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;
-  border:1px solid var(--teal);background:#fff;color:var(--teal);cursor:pointer}
+.msg.bordo .ml{color:var(--bordo)}.msg p{font-size:14px;color:var(--ink);line-height:1.6}
+.copy{position:absolute;top:12px;right:12px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;border:1px solid var(--teal);background:#fff;color:var(--teal);cursor:pointer}
 .msg.bordo .copy{border-color:var(--bordo);color:var(--bordo)}
-.copy.copied{background:var(--teal);color:#fff}
-.msg.bordo .copy.copied{background:var(--bordo);color:#fff}
-
-/* objection accordion */
+.copy.copied{background:var(--teal);color:#fff}.msg.bordo .copy.copied{background:var(--bordo);color:#fff}
 .obj{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
 .obj summary{padding:14px 16px;cursor:pointer;font-weight:600;font-size:14.5px;color:var(--green-dark);list-style:none;display:flex;align-items:center;gap:10px}
 .obj summary::-webkit-details-marker{display:none}
 .obj summary .q{width:24px;height:24px;border-radius:7px;background:var(--bordo-bg);color:var(--bordo);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
-.obj[open] summary{background:var(--green-bg)}
-.obj .ans{padding:14px 16px 16px 50px;font-size:14px;color:var(--muted);border-top:1px solid var(--line)}
-
-/* mini progress note */
+.obj[open] summary{background:var(--green-bg)}.obj .ans{padding:14px 16px 16px 50px;font-size:14px;color:var(--muted);border-top:1px solid var(--line)}
 .note{font-size:13px;color:var(--muted);background:var(--green-bg);border-radius:10px;padding:12px 14px;margin-bottom:18px}
 .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--line)}
 .reset{color:var(--bordo);cursor:pointer;text-decoration:underline}
+/* PROPERTY CARDS */
+.proptypes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.ptbtn{font:inherit;font-size:13.5px;font-weight:600;padding:9px 15px;border-radius:10px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.ptbtn.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.subfilter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.subfilter label{font-size:12.5px;color:var(--muted)}
+.subfilter select{font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.prop{display:flex;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.prop:last-child{border-bottom:none}
+.prop .pinfo b{font-size:15px;color:var(--ink);display:block}
+.prop .pinfo span{font-size:13px;color:var(--muted)}
+.prop .pval{margin-left:auto;text-align:right;flex-shrink:0}
+.prop .pval .v{font-size:16px;font-weight:800;color:var(--teal)}
+.prop .pval a{font-size:12.5px;color:var(--green);text-decoration:none;border:1px solid var(--line);padding:3px 10px;border-radius:8px;display:inline-block;margin-top:4px}
+.prop .pval a:hover{border-color:var(--teal)}
 @media(max-width:520px){.panel h3{font-size:20px}.ring .big{font-size:22px}}
+.leadrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.leadrow:last-child{border-bottom:none}
+.leadrow .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.leadrow .linfo{flex:1;min-width:0}
+.leadrow .linfo b{font-size:14.5px;display:block}
+.leadrow .linfo span{font-size:12.5px;color:var(--muted)}
+.leadrow .lact{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.lead-wa{font-size:12.5px;font-weight:600;color:#fff;background:#1d7a5f;padding:6px 12px;border-radius:8px;text-decoration:none}
+.lead-wa:hover{background:#0f6e56}
+.semsel{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+@media(max-width:520px){.leadrow{flex-wrap:wrap}.leadrow .lact{width:100%;margin-left:24px}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- TOP BAR -->
   <div class="topbar">
     <div class="mark">
       <img class="col-ico" alt="Escudo Lurati" src="data:image/png;base64,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">
-      <div class="brandtxt"><b>LURATI</b><span>Captación activa</span></div>
+      <div class="brandtxt"><b>LURATI</b><span>Estación del asesor</span></div>
     </div>
     <div class="role">
       <span>Asesor que trabaja:</span>
-      <select id="who">
-        <option value="" disabled selected>Seleccioná tu nombre</option>
-      </select>
+      <select id="who"><option value="" disabled selected>Seleccioná tu nombre</option></select>
     </div>
   </div>
 
-  <!-- ACTIVITY BOARD (HERO) -->
-  <div class="board">
-    <h2>Tu tablero de la semana</h2>
+  <div class="modes" id="modes">
+    <div class="mode m-capt active" data-mode="captacion"><b>Captación</b><span>Sumar propiedades al stock</span></div>
+    <div class="mode m-venta" data-mode="venta"><b>Venta</b><span>Atender y cerrar clientes</span></div>
+    <div class="mode m-props" data-mode="props"><b>Propiedades en venta</b><span>Consultar el stock</span></div>
+  </div>
+
+  <div class="board" id="boardWrap">
+    <h2 id="boardTitle">Tu tablero de la semana</h2>
     <div class="week" id="weeklabel">Cargá tus números a medida que trabajás. Se guardan solos.</div>
     <div class="rings" id="rings"></div>
     <div class="pulse" id="pulse"></div>
   </div>
 
-  <!-- NAV -->
   <div class="nav" id="nav"></div>
-
-  <!-- PANELS -->
-  <div id="panels">
-
-    <!-- PLAN -->
-    <section class="panel active" data-p="plan">
-      <div class="eyebrow">El recorrido</div>
-      <h3>Plan de captación, paso a paso</h3>
-      <p class="sub">Siete fases para pasar de esperar consultas a generar oportunidades. No hace falta hacerlo todo a la vez: una conversación ya es el primer paso.</p>
-      <div class="card" id="phases"></div>
-      <div class="card">
-        <h4>La idea que ordena todo</h4>
-        <p style="font-size:15px;color:var(--ink);font-style:italic;border-left:4px solid var(--green);padding-left:14px">
-          "Lurati no necesita vendedores que solo esperen consultas. Necesita asesores que generen oportunidades."</p>
-      </div>
-    </section>
-
-    <!-- CONTACTOS -->
-    <section class="panel" data-p="contactos">
-      <div class="eyebrow">Tu materia prima</div>
-      <h3>Mapa de contactos</h3>
-      <p class="sub">Anotá sin filtrar a quién podés activar esta semana. Cada nombre que sumás cuenta para tu meta. Marcá "Contactado" cuando ya le escribiste.</p>
-      <div class="card">
-        <div class="addrow">
-          <input id="c-name" placeholder="Nombre del contacto" autocomplete="off">
-          <select id="c-src">
-            <option value="Familia">Familia</option>
-            <option value="Amigo/conocido">Amigo / conocido</option>
-            <option value="Vecino">Vecino</option>
-            <option value="Ex cliente">Ex cliente</option>
-            <option value="Profesional">Profesional (contador, abogado…)</option>
-            <option value="Comerciante">Comerciante</option>
-            <option value="Otro">Otro</option>
-          </select>
-          <button class="btn" id="addc">Sumar contacto</button>
-        </div>
-        <div id="clist"></div>
-      </div>
-    </section>
-
-    <!-- OPORTUNIDADES -->
-    <section class="panel" data-p="oportunidades">
-      <div class="eyebrow">Señales reales</div>
-      <h3>Oportunidades detectadas</h3>
-      <p class="sub">Una propiedad vacía, alguien que heredó, un dueño cansado de inquilinos. Cargá la oportunidad apenas la detectás, antes de que se enfríe.</p>
-      <div class="card">
-        <div class="addrow">
-          <input id="o-desc" placeholder="¿Qué detectaste? Ej: depto vacío en Pellegrini al 1200" autocomplete="off">
-          <select id="o-type">
-            <option value="Propiedad vacía">Propiedad vacía</option>
-            <option value="Herencia">Herencia / sucesión</option>
-            <option value="Alquiler cansado">Dueño cansado de alquilar</option>
-            <option value="Mudanza">Mudanza / traslado</option>
-            <option value="Vender p/ comprar">Vende para comprar</option>
-            <option value="Pregunta valor">Preguntó cuánto vale</option>
-            <option value="Otro">Otro</option>
-          </select>
-          <button class="btn bordo" id="addo">Cargar</button>
-        </div>
-        <div id="olist"></div>
-      </div>
-      <div class="note">Tip: cada oportunidad cargada acá debería terminar también en el CRM con los datos mínimos del checklist.</div>
-    </section>
-
-    <!-- TAREAS -->
-    <section class="panel" data-p="tareas">
-      <div class="eyebrow">Tu semana</div>
-      <h3>Tareas de la semana</h3>
-      <p class="sub">Tocá cada tarea para marcarla. Lo que completás acá alimenta tu tablero de arriba.</p>
-      <div class="card" id="tasks"></div>
-      <div class="card">
-        <h4>Cerrá la semana</h4>
-        <p style="font-size:14px;color:var(--muted);margin-bottom:14px">Generá tu reporte con contactos, oportunidades y tareas, y enviáselo a Stefano por WhatsApp con un toque.</p>
-        <button class="btn" id="reportwa">Enviar reporte a Stefano</button>
-        <button class="btn ghost" id="report" style="margin-left:8px">Ver el reporte primero</button>
-        <div id="reportout" style="display:none;margin-top:16px">
-          <textarea id="reporttext" readonly style="width:100%;min-height:200px;font:inherit;font-size:13px;line-height:1.5;padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--green-bg);color:var(--ink);resize:vertical"></textarea>
-          <div style="margin-top:10px"><button class="btn bordo" id="copyreport">Copiar reporte</button></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- GUION -->
-    <section class="panel" data-p="guion">
-      <div class="eyebrow">Cómo hablar</div>
-      <h3>Guion sin quedar pesado</h3>
-      <p class="sub">No rogamos una propiedad: ofrecemos una solución. El camino es siempre el mismo — conectar, detectar, aportar valor, proponer el próximo paso.</p>
-      <div class="card">
-        <h4>Frases frías → frases profesionales</h4>
-        <div id="frases"></div>
-      </div>
-      <div class="card">
-        <h4>Preguntas para el propietario</h4>
-        <div id="preguntas"></div>
-      </div>
-    </section>
-
-    <!-- MENSAJES -->
-    <section class="panel" data-p="mensajes">
-      <div class="eyebrow">Listos para enviar</div>
-      <h3>Mensajes y estados</h3>
-      <p class="sub">Tocá "Copiar", pegá en WhatsApp o Instagram y reemplazá los datos entre corchetes. Verde para referidos, bordó para propietarios.</p>
-      <div id="msgs"></div>
-    </section>
-
-    <!-- OBJECIONES -->
-    <section class="panel" data-p="objeciones">
-      <div class="eyebrow">Cuando dudan</div>
-      <h3>Objeciones frecuentes</h3>
-      <p class="sub">Tocá cada objeción para ver cómo responder con el enfoque de orientar, no presionar.</p>
-      <div class="card" id="objs"></div>
-    </section>
-
-    <!-- CHECKLIST -->
-    <section class="panel" data-p="checklist">
-      <div class="eyebrow">Antes de cargar al CRM</div>
-      <h3>Checklist de captación</h3>
-      <p class="sub">Datos mínimos a relevar de cada propiedad. Usalo como guía en la conversación con el propietario. (No se guarda: es tu recordatorio de qué preguntar.)</p>
-      <div class="card grid2" id="checkmin"></div>
-    </section>
-
-  </div>
+  <div id="panels"></div>
 
   <div class="foot">
-    Lurati Consultora Inmobiliaria · Tablero de captación · Rosario<br>
+    Lurati Consultora Inmobiliaria · Estación del asesor · Rosario<br>
     Tus datos se guardan en este dispositivo. <span class="reset" id="reset">Borrar mis datos de la semana</span>
   </div>
-
 </div>
-
 <script>
-const KEY = 'lurati_capt_v1';
-const KEY_PREFIX = 'lurati_capt_v2_';
-const VENDORS = ["Ariel","Barbara","Carolina","Daiana","Flavia","Gabriela","Julio","Maximiliano","Pablo","Pedro","Roberto","Stefano","Victor","Virginia","Invitado"];
+/* ============ CONFIG ============ */
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbygRzmQntmyoRSgne5xg30jH9xiWc1W5oMPbLGDdxQuq5qTuOp6xvHPxmqNTJ9jAPmcgQ/exec";   // Pegá acá la URL del Apps Script (/exec). Vacío = no envía ni lee stock.
+const VENDORS = ["Ariel","Barbara","Carolina","Daiana","Flavia","Franco","Gabriela","Julio","Maximiliano","Pablo","Pedro","Roberto","Stefano","Virginia","Invitado"];
+const REPORT_WA = "5493415472349";
 
+/* ============ ALMACENAMIENTO ============ */
 const store = (function(){
-  let ok = false;
-  try{ const k='__lurati_test__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); ok = true; }catch(e){ ok = false; }
-  const mem = {};
-  return {
-    available: ok,
-    get(key){
-      try{ if(ok){ const v = localStorage.getItem(key); return v===null ? null : {key, value:v}; } }catch(e){}
-      return (key in mem) ? {key, value:mem[key]} : null;
-    },
-    set(key, value){
-      try{ if(ok){ localStorage.setItem(key, value); return; } }catch(e){}
-      mem[key] = value;
-    }
-  };
+  let ok=false; try{const k='__lt__';localStorage.setItem(k,'1');localStorage.removeItem(k);ok=true;}catch(e){ok=false;}
+  const mem={};
+  return {available:ok,
+    get(key){try{if(ok){const v=localStorage.getItem(key);return v===null?null:{key,value:v};}}catch(e){}return (key in mem)?{key,value:mem[key]}:null;},
+    set(key,value){try{if(ok){localStorage.setItem(key,value);return;}}catch(e){}mem[key]=value;}};
 })();
-
-const TASKS = [
-  "Completar el mapa de contactos con al menos 10 nombres",
-  "Activar 10 contactos personales (mensaje o llamada)",
-  "Detectar y reportar 3 posibles oportunidades",
-  "Llevar 1 conversación de captación a etapa avanzada",
-  "Publicar 1 historia o estado de captación",
-  "Pedir 1 referido a un contacto profesional",
-  "Cargar cada oportunidad en el CRM con los datos mínimos",
-  "Enviar el reporte semanal a Stefano antes del viernes"
-];
-const PHASES = [
-  ["Tu red","Repasá familia, amigos, vecinos, ex clientes y contactos profesionales. Ahí están tus primeras oportunidades."],
-  ["La conversación","Abrí el tema sin presionar. Una charla puede transformarse en una tasación."],
-  ["La detección","Aprendé a leer señales: casas vacías, herencias, mudanzas, dueños cansados de alquilar."],
-  ["El valor","Ofrecé una tasación seria y orientación honesta. Eso es lo que te diferencia."],
-  ["Las preguntas","Relevá los datos mínimos del propietario y de la propiedad para evaluar si es vendible."],
-  ["El registro","Cargá la oportunidad en el CRM. Lo que no se registra, se pierde."],
-  ["El seguimiento","Volvé a la conversación con criterio. La constancia construye la confianza."]
-];
-const FRASES = [
-  ["Avisame cualquier cosa.","Estamos trabajando con clientes activos para esa zona."],
-  ["Si te interesa me decís.","Podemos orientarte con un valor real de mercado."],
-  ["Estamos buscando propiedades.","La idea no es presionarte, sino ayudarte a evaluar si es buen momento."],
-  ["¿No querés vender?","Si conocés a alguien pensando en vender, podemos asesorarlo con una tasación seria."],
-  ["Dejame el dato y vemos.","Podemos verlo sin compromiso y analizar qué estrategia conviene."]
-];
-const PREGUNTAS = [
-  "¿Hace cuánto que tenés la propiedad?",
-  "¿Está habitada, alquilada o libre?",
-  "¿Qué te lleva a pensar en vender o mudarte?",
-  "¿Cuántos ambientes, baños y cochera tiene?",
-  "¿Qué metros aproximados y en qué estado está?",
-  "¿Tenés la documentación al día (escritura, impuestos)?",
-  "¿Tenés un valor pretendido o querés que te orientemos?",
-  "¿Aceptarías permuta o financiación?",
-  "¿Está publicada con otra inmobiliaria?",
-  "¿Aceptarías fotos y video profesional?"
-];
-const MSGS = [
-  ["green","Referido · conocido","Hola [Nombre], ¿cómo va? Te cuento que estoy trabajando en Lurati con clientes que están buscando comprar en la zona. Si en algún momento sabés de alguien que esté pensando en vender, lo podemos asesorar con una tasación seria y sin compromiso. Cualquier dato me sirve un montón. ¡Gracias!"],
-  ["green","Referido · profesional","Hola [Nombre], un gusto. Trabajo en Lurati Consultora Inmobiliaria. Como vos tratás con muchas familias y propietarios, quería dejarte el canal abierto: si alguno necesita orientarse para vender o tasar, lo atendemos con seriedad y rapidez. Encantado de devolver la mano."],
-  ["green","Re-contacto · ex cliente","Hola [Nombre], ¿cómo estás? Te escribo de Lurati. Estamos con bastante demanda de compradores en tu zona y me acordé de vos. Si alguna vez evaluás vender, o conocés a alguien que sí, podemos orientarte con un valor real de mercado. Sin apuro y sin compromiso."],
-  ["bordo","Propietario · aviso propio","Hola, buenos días. Vi que tenés la propiedad de [zona] en venta. Soy [Nombre] de Lurati. Estamos trabajando con clientes activos para esa zona. La idea no es presionarte: podemos verla sin compromiso y darte una orientación de valor real y una estrategia de venta. ¿Coordinamos?"],
-  ["bordo","Propietario · tras referido","Hola [Nombre], me pasó tu contacto [referidor], que pensó que te podía ser útil. Soy [Nombre] de Lurati. Entiendo que estás evaluando qué hacer con la propiedad de [zona]. Podemos orientarte con un valor real y analizar qué conviene, sin compromiso. ¿Cuándo charlamos?"],
-  ["bordo","Estado · WhatsApp","Si conocés a alguien que esté pensando en vender, lo asesoramos con una tasación seria. Pasame el dato. — Lurati"],
-  ["green","Historia · Instagram","¿Pensás vender? Te orientamos con una tasación seria y sin compromiso. Lurati Consultora Inmobiliaria. Escribinos."]
-];
-const OBJS = [
-  ["No estoy apurado.","Mejor todavía: sin apuro se vende mejor y al mejor precio. Te dejamos una tasación para que la tengas y decidas cuando quieras."],
-  ["Quiero probar vender yo.","Perfecto, probalo. Solo te pedimos algo: tené el valor real de referencia. Te lo damos sin compromiso para que no regales ni espantes compradores."],
-  ["Otra inmobiliaria me dijo más.","Puede pasar. Un valor alto que no se concreta cuesta meses. Te mostramos con datos del mercado por qué proponemos ese número."],
-  ["No quiero carteles.","Sin problema, es tu decisión. Trabajamos igual con portales, base de clientes y redes. El cartel es opcional."],
-  ["No quiero exclusividad.","Lo charlamos. Te explicamos qué cambia con y sin exclusividad para que elijas con información, sin presión."],
-  ["No quiero visitas de curiosos.","Por eso perfilamos y filtramos a cada interesado antes de coordinar. Solo entran visitas calificadas."],
-  ["Todavía no sé si vender.","Está perfecto. La tasación te ayuda justamente a decidir. No te compromete a nada."],
-  ["Es de la familia / mis hermanos.","Entiendo. Podemos preparar la info y una tasación para que la presentes a todos y decidan con datos en la mano."]
-];
-const CHECKMIN = ["Nombre del propietario","Teléfono","Dirección","Tipo de inmueble","Dormitorios y baños","Cochera","Metros aproximados","Estado general","Antigüedad","Ocupación (libre/habitada/alquilada)","Documentación al día","Valor pretendido","Motivo de venta","Urgencia","¿Acepta permuta/financiación?","¿Publicada con otra inmobiliaria?","¿Permite fotos/videos?","Próximo paso acordado"];
-
-const NAV = [
-  ["plan","Plan"],["contactos","Contactos"],["oportunidades","Oportunidades"],
-  ["tareas","Tareas"],["guion","Guion"],["mensajes","Mensajes"],
-  ["objeciones","Objeciones"],["checklist","Checklist"]
-];
-
-let current = "";
-let state = {contacts:[], opps:[], tasks:{}};
-
-function blank(){return {contacts:[], opps:[], tasks:{}};}
-
+const KP='lurati_v3_';
+let current="";
+let state=blank();
+function blank(){return {contacts:[],opps:[],leads:[],perfiles:[],visitas:[],tasksC:{},tasksV:{}};}
 function loadFor(name){
-  current = name;
-  state = blank();
-  try{
-    const r = store.get(KEY_PREFIX + name);
-    if(r && r.value){ const d = JSON.parse(r.value); state = {contacts:d.contacts||[], opps:d.opps||[], tasks:d.tasks||{}}; }
-  }catch(e){}
-  try{ store.set('lurati_last_vendor', name); }catch(e){}
+  current=name; state=blank();
+  try{const r=store.get(KP+name); if(r&&r.value){const d=JSON.parse(r.value);
+    state={contacts:d.contacts||[],opps:d.opps||[],leads:d.leads||[],perfiles:d.perfiles||[],visitas:d.visitas||[],tasksC:d.tasksC||{},tasksV:d.tasksV||{}};}}catch(e){}
+  try{store.set('lurati_last',name);}catch(e){}
 }
-function save(){
-  if(!current) return;
-  try{ store.set(KEY_PREFIX + current, JSON.stringify(state)); }catch(e){}
+function save(){if(!current)return;try{store.set(KP+current,JSON.stringify(state));}catch(e){}}
+
+/* ============ ENVÍO AL SHEET ============ */
+function logEvent(seccion,accion,detalle,tipo,estado){
+  if(!SHEET_URL||!current)return;
+  try{fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({asesor:current,seccion:seccion||"",accion:accion||"",detalle:detalle||"",tipo:tipo||"",estado:estado||""})}).catch(function(){});}catch(e){}
 }
 
-const $ = s=>document.querySelector(s);
-const tick = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+/* ============ DATOS ESTÁTICOS ============ */
+const TASKS_C=["Completar el mapa de contactos (10 nombres)","Activar 10 contactos personales","Detectar y reportar 3 oportunidades","Llevar 1 conversación de captación a etapa avanzada","Publicar 1 historia/estado de captación","Pedir 1 referido a un contacto profesional","Cargar cada oportunidad en el CRM","Enviar el reporte semanal a Stefano"];
+const TASKS_V=["Responder toda consulta en menos de 10 minutos","Completar el perfil de cada cliente nuevo","Ofrecer alternativas si la propiedad no encaja","Coordinar al menos 2 visitas","Hacer seguimiento dentro de las 24 hs","Cargar cada lead en el CRM","Derivar operaciones avanzadas a Stefano/Julio","Enviar el reporte semanal a Stefano"];
+const PHASES_C=[["Tu red","Familia, amigos, vecinos, ex clientes y contactos profesionales."],["La conversación","Abrí el tema sin presionar. Una charla puede transformarse en una tasación."],["La detección","Leé señales: casas vacías, herencias, mudanzas, dueños cansados de alquilar."],["El valor","Ofrecé una tasación seria y orientación honesta. Eso te diferencia."],["Las preguntas","Relevá los datos mínimos del propietario y de la propiedad."],["El registro","Cargá la oportunidad en el CRM. Lo que no se registra, se pierde."],["El seguimiento","Volvé con criterio. La constancia construye confianza."]];
+const PHASES_V=[["La consulta entra","Respuesta rápida: el primer asesor en contestar gana al cliente."],["El perfilado","Entendé qué busca, para qué, presupuesto, plazo y forma de pago."],["Las alternativas","Si la propiedad no encaja, ofrecé hasta 3 opciones reales del stock."],["La visita","Coordiná, confirmá y registrá el feedback el mismo día."],["El seguimiento","Todo contacto relevante se registra. Cliente sin próxima acción = enfriado."],["El cierre","Operación avanzada se deriva a Stefano o Julio para cerrar."]];
+const FRASES_C=[["Avisame cualquier cosa.","Estamos trabajando con clientes activos para esa zona."],["Si te interesa me decís.","Podemos orientarte con un valor real de mercado."],["Estamos buscando propiedades.","La idea no es presionarte, sino ayudarte a evaluar si es buen momento."],["¿No querés vender?","Si conocés a alguien pensando en vender, lo asesoramos con una tasación seria."],["Dejame el dato y vemos.","Podemos verlo sin compromiso y analizar qué estrategia conviene."]];
+const FRASES_V=[["¿Le interesa la propiedad?","Contame qué estás buscando y te muestro las mejores opciones que tenemos."],["Cualquier cosa me escribe.","Te propongo coordinar una visita esta semana, ¿qué día te queda cómodo?"],["No tengo nada más para ofrecer.","Tengo alternativas parecidas en la zona, dejame mostrarte 2 o 3."],["Le aviso si baja el precio.","Más allá del precio, ¿la propiedad te cierra en ubicación y ambientes?"]];
+const PREG_C=["¿Hace cuánto que tenés la propiedad?","¿Está habitada, alquilada o libre?","¿Qué te lleva a pensar en vender o mudarte?","¿Cuántos ambientes, baños y cochera tiene?","¿Qué metros aproximados y en qué estado está?","¿Tenés la documentación al día?","¿Tenés un valor pretendido o querés que te orientemos?","¿Aceptarías permuta o financiación?","¿Está publicada con otra inmobiliaria?","¿Aceptarías fotos y video profesional?"];
+const PREG_V=["¿Para qué buscás la propiedad: vivienda, inversión, mudanza?","¿Qué zona o zonas preferís?","¿Cuántos dormitorios necesitás como mínimo?","¿Tenés un presupuesto definido (mínimo y máximo)?","¿Cómo pensás pagar: contado, crédito, permuta?","¿En qué plazo querés concretar?","¿Tenés que vender algo antes de comprar?","¿Qué es lo que NO puede faltar en la propiedad?"];
+const MSGS_C=[["green","Referido · conocido","Hola [Nombre], ¿cómo va? Estoy trabajando en Lurati con clientes que buscan comprar en la zona. Si sabés de alguien pensando en vender, lo asesoramos con una tasación seria y sin compromiso. Cualquier dato me sirve. ¡Gracias!"],["green","Referido · profesional","Hola [Nombre], un gusto. Trabajo en Lurati. Como tratás con muchas familias y propietarios, te dejo el canal abierto: si alguno necesita vender o tasar, lo atendemos con seriedad. Encantado de devolver la mano."],["bordo","Propietario · aviso propio","Hola, buenos días. Vi la propiedad de [zona] en venta. Soy [Nombre] de Lurati. Trabajamos con clientes activos para esa zona. Sin presionar: podemos verla sin compromiso y darte un valor real y una estrategia. ¿Coordinamos?"],["bordo","Propietario · tras referido","Hola [Nombre], me pasó tu contacto [referidor]. Soy [Nombre] de Lurati. Entiendo que evaluás qué hacer con la propiedad de [zona]. Podemos orientarte con un valor real, sin compromiso. ¿Cuándo charlamos?"]];
+const MSGS_V=[["green","Primer contacto · consulta","Hola [Nombre], gracias por tu consulta por [propiedad]. Soy [Nombre] de Lurati. ¿Te viene bien que te haga un par de preguntas para mostrarte las mejores opciones? ¿Buscás para vivienda o inversión?"],["green","Coordinar visita","Hola [Nombre], tengo disponible la propiedad de [dirección] para que la veas. ¿Qué día te queda cómodo esta semana, [opción 1] o [opción 2]?"],["bordo","Ofrecer alternativas","Hola [Nombre], además de la que consultaste tengo 2 opciones parecidas en la zona que te pueden interesar. ¿Te las paso por acá o las vemos juntos?"],["bordo","Seguimiento post-visita","Hola [Nombre], ¿qué te pareció la propiedad que visitamos? Cualquier duda la vemos. Si querés, te muestro alguna alternativa más para comparar."]];
+const OBJS_C=[["No estoy apurado.","Mejor: sin apuro se vende mejor y al mejor precio. Te dejamos una tasación para que decidas cuando quieras."],["Quiero probar vender yo.","Perfecto, probalo. Solo tené el valor real de referencia, te lo damos sin compromiso para no regalar ni espantar compradores."],["Otra inmobiliaria me dijo más.","Un valor alto que no se concreta cuesta meses. Te mostramos con datos por qué proponemos ese número."],["No quiero carteles.","Sin problema. Trabajamos con portales, base de clientes y redes. El cartel es opcional."],["No quiero exclusividad.","Lo charlamos. Te explicamos qué cambia con y sin exclusividad para que elijas con información."],["Todavía no sé si vender.","La tasación te ayuda a decidir. No te compromete a nada."]];
+const OBJS_V=[["Está muy caro.","¿Comparado con qué? Te muestro valores reales de la zona para que veas que está en precio."],["Lo tengo que pensar.","Perfecto. ¿Qué es puntualmente lo que querés evaluar? Así te acerco la info para decidir mejor."],["Quiero ver más opciones.","Buenísimo, para eso estoy. Dejame afinar qué buscás y te traigo 2 o 3 que realmente encajen."],["Voy a seguir mirando solo.","Te entiendo. Te dejo el dato y, si querés, te aviso apenas entra algo que encaje con lo tuyo, sin compromiso."]];
+const CHECK_C=["Nombre del propietario","Teléfono","Dirección","Tipo de inmueble","Dormitorios y baños","Metros aproximados","Estado y antigüedad","Ocupación (libre/habitada/alquilada)","Documentación al día","Valor pretendido","Motivo de venta y urgencia","¿Permuta/financiación?","¿Publicada con otra inmobiliaria?","Próximo paso acordado"];
+const CHECK_V=["Nombre y teléfono del cliente","Canal de la consulta","Propiedad consultada","Para qué busca (vivienda/inversión)","Zona preferida","Tipo y dormitorios","Presupuesto (mín. y máx.)","Forma de pago","Plazo de compra","¿Tiene que vender antes?","Nivel de interés","Próxima acción y fecha"];
 
-function initials(n){return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"·";}
+/* ============ TIPOS DE PROPIEDAD ============ */
+const PTYPES=["Depto","Casa","Lote","Local","Galpón","Cochera","Campo","Otro"];
 
+/* ============ ESTRUCTURA DE SECCIONES ============ */
+const SECTIONS={
+  captacion:{color:"#004d44",nav:[["c-plan","Plan"],["c-contactos","Contactos"],["c-oport","Oportunidades"],["c-guion","Guion"],["c-msg","Mensajes"],["c-obj","Objeciones"],["c-check","Checklist"]]},
+  venta:{color:"#7e2b26",nav:[["v-plan","Plan"],["v-leads","Leads"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-msg","Mensajes"],["v-obj","Objeciones"],["v-check","Checklist"]]},
+  props:{color:"#128f8b",nav:[["p-stock","Stock"]]}
+};
+let mode="captacion";
+let activeNav="c-plan";
+
+const $=s=>document.querySelector(s);
+const tick='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function initials(n){return String(n).trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"·";}
+
+/* ============ TABLERO ============ */
 function renderBoard(){
-  const contacted = state.contacts.filter(c=>c.contacted).length;
-  const oppCount = state.opps.length;
-  const namesCount = state.contacts.length;
-  const taskDone = Object.values(state.tasks).filter(Boolean).length;
-  const metrics = [
-    {lab:"Contactos activados",val:contacted,goal:10},
-    {lab:"Oportunidades detectadas",val:oppCount,goal:3},
-    {lab:"Nombres en el mapa",val:namesCount,goal:10},
-    {lab:"Tareas completadas",val:taskDone,goal:TASKS.length}
-  ];
-  $('#rings').innerHTML = metrics.map(m=>{
-    const pct = Math.min(100, Math.round(m.val/m.goal*100));
-    const done = m.val>=m.goal;
-    return `<div class="ring ${done?'done':''}">
-      <div class="lab">${m.lab}</div>
-      <div class="big">${m.val}<small> / ${m.goal}</small></div>
-      <div class="bar"><i style="width:${pct}%"></i></div>
-    </div>`;
-  }).join("");
-  const totalGoals = metrics.length;
-  const metGoals = metrics.filter(m=>m.val>=m.goal).length;
+  let metrics, title;
+  if(mode==="captacion"){
+    title="Tu tablero de captación";
+    const cont=state.contacts.filter(c=>c.contacted).length;
+    metrics=[{l:"Contactos activados",v:cont,g:10},{l:"Oportunidades detectadas",v:state.opps.length,g:3},{l:"Nombres en el mapa",v:state.contacts.length,g:10},{l:"Tareas completadas",v:Object.values(state.tasksC).filter(Boolean).length,g:TASKS_C.length}];
+  }else if(mode==="venta"){
+    title="Tu tablero de venta";
+    const totalLeads=LEADS?LEADS.length:0;
+    const enProceso=LEADS?LEADS.filter(l=>semBase(l.semaforo)==="En proceso").length:0;
+    metrics=[{l:"Leads asignados",v:totalLeads,g:Math.max(totalLeads,1)},{l:"En proceso",v:enProceso,g:Math.max(totalLeads,1)},{l:"Visitas coordinadas",v:state.visitas.length,g:2},{l:"Tareas completadas",v:Object.values(state.tasksV).filter(Boolean).length,g:TASKS_V.length}];
+  }else{
+    $('#boardWrap').style.display="none"; return;
+  }
+  $('#boardWrap').style.display="block";
+  $('#boardTitle').textContent=title;
+  $('#rings').innerHTML=metrics.map(m=>{const pct=Math.min(100,Math.round(m.v/m.g*100));return `<div class="ring ${m.v>=m.g?'done':''}"><div class="lab">${m.l}</div><div class="big">${m.v}<small> / ${m.g}</small></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;}).join("");
+  const met=metrics.filter(m=>m.v>=m.g).length;
   let msg;
-  if(!current) msg = `<span>👆 Empezá <b>seleccionando tu nombre</b> arriba, en "Asesor que trabaja".</span>`;
-  else if(metGoals===0 && namesCount===0) msg = `<span>Hola <b>${current}</b>. Empezá por el <b>Mapa de contactos</b>. Una conversación ya es el primer paso.</span>`;
-  else if(metGoals===totalGoals) msg = `<span>✓ <b>Semana completa, ${current}.</b> Pasaste de esperar a generar. Enviá tu reporte a Stefano.</span>`;
-  else msg = `<span><b>${current}</b>, vas <b>${metGoals} de ${totalGoals}</b> metas. Seguí sumando: el que más conversaciones genera, más oportunidades encuentra.</span>`;
-  $('#pulse').innerHTML = msg;
+  if(!current) msg=`<span>👆 Empezá <b>seleccionando tu nombre</b> arriba.</span>`;
+  else if(met===metrics.length) msg=`<span>✓ <b>Listo, ${current}.</b> Cumpliste las metas de esta sección.</span>`;
+  else msg=`<span><b>${current}</b>: ${met} de ${metrics.length} metas. El que más conversaciones genera, más oportunidades encuentra.</span>`;
+  $('#pulse').innerHTML=msg;
 }
 
-function renderContacts(){
-  const el = $('#clist');
-  if(!state.contacts.length){ el.innerHTML = `<div class="empty">Todavía no cargaste contactos. Sumá al menos 10 nombres para esta semana.</div>`; return; }
-  el.innerHTML = state.contacts.map((c,i)=>`
-    <div class="contact">
-      <div class="av">${initials(c.name)}</div>
-      <div class="info"><b>${esc(c.name)}</b><span>${esc(c.src)}</span></div>
-      <div class="stat">
-        <span class="pill ${c.contacted?'on':''}" data-toggle="${i}">${c.contacted?'Contactado':'Pendiente'}</span>
-        <span class="del" data-delc="${i}">×</span>
-      </div>
-    </div>`).join("");
-}
-
-function renderOpps(){
-  const el = $('#olist');
-  if(!state.opps.length){ el.innerHTML = `<div class="empty">Sin oportunidades cargadas. Cuando detectes una señal, registrala acá antes de que se enfríe.</div>`; return; }
-  el.innerHTML = state.opps.map((o,i)=>`
-    <div class="contact">
-      <div class="av" style="background:var(--bordo-bg);color:var(--bordo)">●</div>
-      <div class="info"><b>${esc(o.desc)}</b><span>${esc(o.type)}</span></div>
-      <div class="stat"><span class="del" data-delo="${i}">×</span></div>
-    </div>`).join("");
-}
-
-function renderTasks(){
-  $('#tasks').innerHTML = TASKS.map((t,i)=>`
-    <div class="task ${state.tasks[i]?'checked':''}" data-task="${i}">
-      <div class="box">${tick}</div><div class="txt">${t}</div>
-    </div>`).join("");
-}
-
-function renderStatic(){
-  $('#phases').innerHTML = PHASES.map((p,i)=>`
-    <div class="phase"><div class="n">${i+1}</div>
-      <div class="body"><b>${p[0]}</b><p>${p[1]}</p></div></div>`).join("");
-  $('#frases').innerHTML = FRASES.map(f=>`
-    <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">
-      <div style="flex:1;min-width:200px"><span class="tag t-bordo">Evitar</span><div style="font-size:14px;color:var(--muted);margin-top:5px">"${f[0]}"</div></div>
-      <div style="flex:1;min-width:200px"><span class="tag t-green">Decir</span><div style="font-size:14px;color:var(--ink);margin-top:5px">"${f[1]}"</div></div>
-    </div>`).join("");
-  $('#preguntas').innerHTML = PREGUNTAS.map(q=>`<div style="padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--ink)">${q}</div>`).join("");
-  $('#msgs').innerHTML = MSGS.map((m,i)=>`
-    <div class="msg ${m[0]==='bordo'?'bordo':''}">
-      <span class="ml">${m[1]}</span>
-      <button class="copy" data-copy="${i}">Copiar</button>
-      <p>${m[2]}</p>
-    </div>`).join("");
-  $('#objs').innerHTML = OBJS.map((o,i)=>`
-    <details class="obj">
-      <summary><span class="q">?</span>${o[0]}</summary>
-      <div class="ans">${o[1]}</div>
-    </details>`).join("");
-  $('#checkmin').innerHTML = CHECKMIN.map(c=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 0">
-      <span style="width:16px;height:16px;border:2px solid var(--line);border-radius:4px;flex-shrink:0"></span>
-      <span style="font-size:14px">${c}</span></div>`).join("");
-}
-
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-
+/* ============ NAV ============ */
 function renderNav(){
-  $('#nav').innerHTML = NAV.map((n,i)=>`<button data-go="${n[0]}" class="${i===0?'active':''}">${n[1]}</button>`).join("");
+  const nav=SECTIONS[mode].nav;
+  $('#nav').innerHTML=nav.map((n,i)=>`<button data-go="${n[0]}" class="${n[0]===activeNav?'active':''}">${n[1]}</button>`).join("");
+}
+function go(id){activeNav=id;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===id));renderPanel();window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ============ PANELES ============ */
+function renderPanel(){
+  const P=$('#panels');
+  const id=activeNav;
+  let h="";
+  // -------- CAPTACIÓN --------
+  if(id==="c-plan"){h=plan("El recorrido","Plan de captación","De esperar consultas a generar oportunidades. Una conversación ya es el primer paso.",PHASES_C,"Lurati no necesita vendedores que esperen consultas. Necesita asesores que generen oportunidades.");}
+  else if(id==="c-contactos"){h=listPanel("Tu materia prima","Mapa de contactos","Anotá sin filtrar a quién podés activar. Marcá Contactado cuando ya le escribiste.","c-name","Nombre del contacto",srcSelect("c-src"),"addc","clist");}
+  else if(id==="c-oport"){h=listPanel("Señales reales","Oportunidades detectadas","Una propiedad vacía, alguien que heredó, un dueño cansado de inquilinos. Registrala antes de que se enfríe.","o-desc","¿Qué detectaste? Ej: depto vacío en Pellegrini 1200",oppSelect("o-type"),"addo","olist","bordo");}
+  else if(id==="c-guion"){h=guionPanel(FRASES_C,PREG_C);}
+  else if(id==="c-msg"){h=msgPanel(MSGS_C);}
+  else if(id==="c-obj"){h=objPanel(OBJS_C);}
+  else if(id==="c-check"){h=checkPanel("Antes de cargar al CRM","Checklist de captación",CHECK_C);}
+  // -------- VENTA --------
+  else if(id==="v-plan"){h=plan("El recorrido","Plan de venta","Respuesta rápida, perfilado, alternativas, visitas y seguimiento. Consulta no cargada = consulta perdida.",PHASES_V,"El primer asesor que responde con criterio se queda con el cliente.");}
+  else if(id==="v-leads"){h=leadsPanel();}
+  else if(id==="v-perfil"){h=perfilPanel();}
+  else if(id==="v-visitas"){h=visitaPanel();}
+  else if(id==="v-guion"){h=guionPanel(FRASES_V,PREG_V);}
+  else if(id==="v-msg"){h=msgPanel(MSGS_V);}
+  else if(id==="v-obj"){h=objPanel(OBJS_V);}
+  else if(id==="v-check"){h=checkPanel("Datos del cliente","Checklist de venta",CHECK_V);}
+  // -------- PROPIEDADES --------
+  else if(id==="p-stock"){h=stockPanel();}
+  P.innerHTML=`<section class="panel active">${h}</section>`;
+  // post-render hooks
+  if(id==="c-msg"||id==="v-msg")bindReportFooter(id);
+  if(id==="c-plan")appendReport();
+  if(id==="v-plan")appendReport();
+  if(id==="p-stock")loadStock();
+  if(id==="v-leads")loadLeads();
+  if(id==="v-perfil")loadLeadsForPerfil();
+  refreshLists();
 }
 
-function go(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.dataset.p===id));
-  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===id));
-  window.scrollTo({top:0,behavior:'smooth'});
+/* ---- componentes ---- */
+function plan(eb,title,sub,phases,quote){
+  let r=`<div class="eyebrow">${eb}</div><h3>${title}</h3><p class="sub">${sub}</p><div class="card">`;
+  r+=phases.map((p,i)=>`<div class="phase"><div class="n">${i+1}</div><div class="body"><b>${p[0]}</b><p>${p[1]}</p></div></div>`).join("");
+  r+=`</div><div class="card"><h4>La idea que ordena todo</h4><p style="font-size:15px;color:var(--ink);font-style:italic;border-left:4px solid var(--green);padding-left:14px">"${quote}"</p></div>`;
+  r+=reportCard();
+  return r;
+}
+function srcSelect(id){return `<select id="${id}"><option>Familia</option><option>Amigo/conocido</option><option>Vecino</option><option>Ex cliente</option><option>Profesional</option><option>Comerciante</option><option>Otro</option></select>`;}
+function oppSelect(id){return `<select id="${id}"><option>Propiedad vacía</option><option>Herencia</option><option>Dueño cansado de alquilar</option><option>Mudanza</option><option>Vende para comprar</option><option>Preguntó cuánto vale</option><option>Otro</option></select>`;}
+function chanSelect(id){return `<select id="${id}"><option>Meta Ads</option><option>Instagram</option><option>WhatsApp</option><option>Portal</option><option>Referido</option><option>Cartel</option><option>Llamado</option><option>Otro</option></select>`;}
+function listPanel(eb,title,sub,inputId,ph,selectHtml,btnId,listId,btnClass){
+  return `<div class="eyebrow">${eb}</div><h3>${title}</h3><p class="sub">${sub}</p>
+  <div class="card"><div class="addrow"><input id="${inputId}" placeholder="${ph}" autocomplete="off">${selectHtml}<button class="btn ${btnClass==='bordo'?'bordo':''}" id="${btnId}">Sumar</button></div><div id="${listId}"></div></div>`;
+}
+function guionPanel(frases,preg){
+  let r=`<div class="eyebrow">Cómo hablar</div><h3>Guion sin quedar pesado</h3><p class="sub">No rogamos: ofrecemos una solución. Conectar, detectar, aportar valor, proponer el próximo paso.</p>`;
+  r+=`<div class="card"><h4>Frases frías → frases profesionales</h4>`+frases.map(f=>`<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap"><div style="flex:1;min-width:200px"><span class="tag t-bordo">Evitar</span><div style="font-size:14px;color:var(--muted);margin-top:5px">"${f[0]}"</div></div><div style="flex:1;min-width:200px"><span class="tag t-green">Decir</span><div style="font-size:14px;color:var(--ink);margin-top:5px">"${f[1]}"</div></div></div>`).join("")+`</div>`;
+  r+=`<div class="card"><h4>Preguntas clave</h4>`+preg.map(q=>`<div style="padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--ink)">${q}</div>`).join("")+`</div>`;
+  return r;
+}
+function msgPanel(msgs){
+  let r=`<div class="eyebrow">Listos para enviar</div><h3>Mensajes</h3><p class="sub">Tocá Copiar, pegá en WhatsApp/Instagram y reemplazá lo que está entre corchetes.</p>`;
+  r+=msgs.map((m,i)=>`<div class="msg ${m[0]==='bordo'?'bordo':''}"><span class="ml">${m[1]}</span><button class="copy" data-copy="${i}">Copiar</button><p>${m[2]}</p></div>`).join("");
+  return r;
+}
+let CURRENT_MSGS=MSGS_C;
+function objPanel(objs){
+  return `<div class="eyebrow">Cuando dudan</div><h3>Objeciones frecuentes</h3><p class="sub">Tocá cada una para ver cómo responder orientando, no presionando.</p><div class="card">`+objs.map(o=>`<details class="obj"><summary><span class="q">?</span>${o[0]}</summary><div class="ans">${o[1]}</div></details>`).join("")+`</div>`;
+}
+function checkPanel(eb,title,items){
+  return `<div class="eyebrow">${eb}</div><h3>${title}</h3><p class="sub">Datos mínimos a relevar. Usalo como guía en la conversación. (No se guarda: es tu recordatorio.)</p><div class="card grid2">`+items.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0"><span style="width:16px;height:16px;border:2px solid var(--line);border-radius:4px;flex-shrink:0"></span><span style="font-size:14px">${c}</span></div>`).join("")+`</div>`;
+}
+function leadsPanel(){
+  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads</h3><p class="sub">Estos son los clientes que te asignaron en el CRM. Escribiles por WhatsApp y movés el semáforo según cómo venga cada uno. El cambio se guarda en el CRM.</p>
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h4 style="margin:0">Mis leads</h4><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div><div id="leadslist"><div class="empty">Cargando tus leads…</div></div></div>`;
+}
+function perfilPanel(){
+  return `<div class="eyebrow">Conocé al cliente</div><h3>Perfil de cliente</h3><p class="sub">Elegí uno de tus leads y completá qué busca. Esto se guarda en el CRM y define qué propiedades ofrecerle.</p>
+  <div class="card"><div class="addrow"><select id="pf-lead" style="flex:1;min-width:200px"><option value="">Elegí un lead…</option></select></div>
+  <div class="addrow"><input id="pf-busca" placeholder="Zona / qué busca (ej: 2 dorm zona sur)" autocomplete="off"><select id="pf-tipo"><option value="">Tipo</option><option>Depto</option><option>Casa</option><option>Lote</option><option>Local</option><option>Otro</option></select></div>
+  <div class="addrow"><input id="pf-presup" placeholder="Presupuesto (ej: USD 80-100k)" autocomplete="off"><select id="pf-pago"><option>Contado</option><option>Crédito</option><option>Permuta</option><option>Financiación</option><option>A definir</option></select></div>
+  <div class="addrow"><input id="pf-obs" placeholder="Observaciones del perfil" autocomplete="off"><button class="btn" id="savepf">Guardar perfil en CRM</button></div>
+  <div id="pfmsg" style="font-size:13px;color:var(--muted);margin-top:6px"></div></div>`;
+}
+function visitaPanel(){
+  return `<div class="eyebrow">Coordiná y registrá</div><h3>Visitas</h3><p class="sub">Cargá cada visita coordinada. Seguila dentro de las 24 hs.</p>
+  <div class="card"><div class="addrow"><input id="vi-cli" placeholder="Cliente" autocomplete="off"><input id="vi-prop" placeholder="Propiedad / dirección" autocomplete="off"></div><div class="addrow"><input id="vi-fecha" placeholder="Día y hora (ej: Mar 18hs)" autocomplete="off"><select id="vi-estado"><option>A coordinar</option><option>Coordinada</option><option>Realizada</option><option>Reprogramada</option><option>No asistió</option></select><button class="btn bordo" id="addvi">Sumar visita</button></div><div id="vilist"></div></div>`;
+}
+function stockPanel(){
+  let r=`<div class="eyebrow">Stock real del CRM</div><h3>Propiedades en venta</h3><p class="sub">Elegí el tipo y, si querés, afiná por dormitorios o baños. Se lee del CRM en vivo.</p>`;
+  r+=`<div class="proptypes" id="ptypes">`+PTYPES.map((t,i)=>`<button class="ptbtn ${i===0?'active':''}" data-pt="${t}">${t}</button>`).join("")+`</div>`;
+  r+=`<div class="subfilter"><label>Dormitorios</label><select id="f-dorm"><option value="">Todos</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4+</option></select><label>Baños</label><select id="f-banos"><option value="">Todos</option><option>1</option><option>2</option><option>3+</option></select></div>`;
+  r+=`<div class="card"><div id="stocklist"><div class="empty">Cargando propiedades…</div></div></div>`;
+  return r;
+}
+function reportCard(){
+  return `<div class="card"><h4>Cerrá la semana</h4><p style="font-size:14px;color:var(--muted);margin-bottom:14px">Generá tu reporte y enviáselo a Stefano por WhatsApp con un toque.</p>
+  <button class="btn" id="reportwa">Enviar reporte a Stefano</button><button class="btn ghost" id="reportview" style="margin-left:8px">Ver el reporte primero</button>
+  <div id="reportout" style="display:none;margin-top:16px"><textarea id="reporttext" readonly style="width:100%;min-height:200px;font:inherit;font-size:13px;line-height:1.5;padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--green-bg);color:var(--ink);resize:vertical"></textarea><div style="margin-top:10px"><button class="btn bordo" id="copyreport">Copiar reporte</button></div></div></div>`;
+}
+function appendReport(){}
+function bindReportFooter(){}
+
+/* ============ RENDER LISTAS ============ */
+function refreshLists(){
+  if($('#clist'))renderContacts();
+  if($('#olist'))renderOpps();
+  if($('#vilist'))renderVisitas();
+}
+function renderContacts(){const el=$('#clist');if(!el)return;if(!state.contacts.length){el.innerHTML=empty("Sumá al menos 10 nombres para esta semana.");return;}
+  el.innerHTML=state.contacts.map((c,i)=>`<div class="contact"><div class="av">${initials(c.name)}</div><div class="info"><b>${esc(c.name)}</b><span>${esc(c.src)}</span></div><div class="stat"><span class="pill ${c.contacted?'on':''}" data-tg="${i}">${c.contacted?'Contactado':'Pendiente'}</span><span class="del" data-dc="${i}">×</span></div></div>`).join("");}
+function renderOpps(){const el=$('#olist');if(!el)return;if(!state.opps.length){el.innerHTML=empty("Cuando detectes una señal, registrala acá.");return;}
+  el.innerHTML=state.opps.map((o,i)=>`<div class="contact"><div class="av" style="background:var(--bordo-bg);color:var(--bordo)">●</div><div class="info"><b>${esc(o.desc)}</b><span>${esc(o.type)}</span></div><div class="stat"><span class="del" data-do="${i}">×</span></div></div>`).join("");}
+function renderVisitas(){const el=$('#vilist');if(!el)return;if(!state.visitas.length){el.innerHTML=empty("Cargá cada visita coordinada.");return;}
+  el.innerHTML=state.visitas.map((v,i)=>`<div class="contact"><div class="av" style="background:var(--bordo-bg);color:var(--bordo)">▸</div><div class="info"><b>${esc(v.cli)} · ${esc(v.prop)}</b><span>${esc(v.fecha)} · ${esc(v.estado)}</span></div><div class="stat"><span class="del" data-dvi="${i}">×</span></div></div>`).join("");}
+function empty(t){return `<div class="empty">${t}</div>`;}
+
+/* ============ LEADS (lee/escribe CRM) ============ */
+let LEADS=null;
+const SEM=["Nuevo","En proceso","Cerrado"];
+const SEM_COLOR={"Nuevo":"#378add","En proceso":"#ef9f27","Cerrado":"#1d7a5f"};
+function semBase(v){v=String(v||"");for(const s of SEM){if(v.indexOf(s)===0)return s;}return "Nuevo";}
+function loadLeads(force){
+  const list=$('#leadslist'); if(!list)return;
+  if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
+  if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus leads.");return;}
+  if(LEADS&&!force){renderLeadsCRM();return;}
+  list.innerHTML=empty("Cargando tus leads…");
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderLeadsCRM();fillPerfilSelect();}).catch(()=>{list.innerHTML=empty("No se pudo leer tus leads. Revisá la conexión con el CRM.");});
+}
+function renderLeadsCRM(){
+  const list=$('#leadslist'); if(!list)return;
+  if(!LEADS||!LEADS.length){list.innerHTML=empty("No tenés leads asignados en el CRM por ahora.");return;}
+  list.innerHTML=LEADS.map((l,i)=>{
+    const sem=semBase(l.semaforo);
+    const wa=l.tel?`<a href="https://wa.me/${esc(l.tel)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
+    const opts=SEM.map(s=>`<option ${s===sem?'selected':''}>${s}</option>`).join("");
+    return `<div class="leadrow"><span class="dot" style="background:${SEM_COLOR[sem]}"></span>
+      <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'}</span></div>
+      <div class="lact">${wa}<select class="semsel" data-sem="${i}">${opts}</select></div></div>`;
+  }).join("");
+}
+function fillPerfilSelect(){
+  const sel=$('#pf-lead'); if(!sel||!LEADS)return;
+  sel.innerHTML='<option value="">Elegí un lead…</option>'+LEADS.map(l=>`<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)})</option>`).join("");
+}
+function loadLeadsForPerfil(){
+  if(!LEADS){loadLeads();} else {fillPerfilSelect();}
+  if(!SHEET_URL){const m=$('#pfmsg');if(m)m.textContent="El perfil se guarda en el CRM cuando conectes la dirección del Apps Script.";}
+}
+function setSemaforo(i,val){
+  if(!LEADS||!LEADS[i])return;
+  LEADS[i].semaforo=val; renderLeadsCRM();
+  if(!SHEET_URL||!current)return;
+  fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({accion:"semaforo",id:LEADS[i].id,valor:val,asesor:current})}).catch(function(){});
+}
+function savePerfil(){
+  const id=$('#pf-lead').value;
+  const m=$('#pfmsg');
+  if(!id){if(m){m.textContent="Elegí un lead primero.";m.style.color="var(--bordo)";}return;}
+  const payload={accion:"perfil",id:id,asesor:current,busca:$('#pf-busca').value.trim(),tipo:$('#pf-tipo').value,presup:$('#pf-presup').value.trim(),pago:$('#pf-pago').value,obs:$('#pf-obs').value.trim()};
+  if(!SHEET_URL){if(m){m.textContent="Se guardará en el CRM cuando esté conectado.";m.style.color="var(--muted)";}return;}
+  fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)}).catch(function(){});
+  if(m){m.textContent="✓ Perfil guardado en el CRM para "+id;m.style.color="var(--ok)";}
+  $('#pf-busca').value='';$('#pf-presup').value='';$('#pf-obs').value='';
 }
 
-function refreshAll(){renderBoard();renderContacts();renderOpps();renderTasks();}
-
-document.addEventListener('click',async e=>{
-  const t = e.target;
-  if(t.dataset.go){go(t.dataset.go);}
-  if(t.dataset.task!==undefined || t.closest('.task')){
-    const node = t.closest('.task'); if(node){ if(!current){ alert('Primero seleccioná tu nombre arriba, en "Asesor que trabaja".'); return; } const i=node.dataset.task; state.tasks[i]=!state.tasks[i]; renderTasks(); renderBoard(); save();}
-  }
-  if(t.dataset.toggle!==undefined){const i=+t.dataset.toggle; state.contacts[i].contacted=!state.contacts[i].contacted; renderContacts(); renderBoard(); save();}
-  if(t.dataset.delc!==undefined){state.contacts.splice(+t.dataset.delc,1); renderContacts(); renderBoard(); save();}
-  if(t.dataset.delo!==undefined){state.opps.splice(+t.dataset.delo,1); renderOpps(); renderBoard(); save();}
-  if(t.dataset.copy!==undefined){
-    const txt = MSGS[+t.dataset.copy][2];
-    try{await navigator.clipboard.writeText(txt);}catch(e){}
-    t.textContent='¡Copiado!'; t.classList.add('copied');
-    setTimeout(()=>{t.textContent='Copiar';t.classList.remove('copied');},1400);
-  }
-  if(t.id==='addc') addContact();
-  if(t.id==='addo') addOpp();
-  if(t.id==='report'){ showReport(); }
-  if(t.id==='copyreport'){
-    const txt=$('#reporttext').value;
-    try{await navigator.clipboard.writeText(txt);}catch(e){}
-    t.textContent='¡Copiado!'; setTimeout(()=>{t.textContent='Copiar reporte';},1400);
-  }
-  if(t.id==='reportwa'){
-    const txt=buildReport();
-    $('#reporttext').value=txt; $('#reportout').style.display='block';
-    window.open('https://wa.me/5493415472349?text='+encodeURIComponent(txt),'_blank');
-  }
-  if(t.id==='reset'){ if(confirm('¿Borrar tus contactos, oportunidades y tareas de la semana?')){ state=blank(); refreshAll(); save(); } }
-});
-
-function addContact(){
-  if(!current){ alert('Primero seleccioná tu nombre arriba, en "Asesor que trabaja".'); return; }
-  const n=$('#c-name').value.trim(); if(!n) {$('#c-name').focus();return;}
-  state.contacts.push({name:n,src:$('#c-src').value,contacted:false});
-  $('#c-name').value=''; $('#c-name').focus();
-  renderContacts(); renderBoard(); save();
+/* ============ STOCK (lee del CRM) ============ */
+let STOCK=null, stockType="Depto";
+function loadStock(){
+  const list=$('#stocklist'); if(!list)return;
+  if(!SHEET_URL){list.innerHTML=empty("El stock se activa cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
+  if(STOCK){renderStock();return;}
+  list.innerHTML=empty("Cargando propiedades…");
+  fetch(SHEET_URL+"?q=propiedades").then(r=>r.json()).then(d=>{STOCK=(d&&d.propiedades)||[];renderStock();}).catch(()=>{list.innerHTML=empty("No se pudo leer el stock. Revisá la conexión con el CRM.");});
 }
-function addOpp(){
-  if(!current){ alert('Primero seleccioná tu nombre arriba, en "Asesor que trabaja".'); return; }
-  const d=$('#o-desc').value.trim(); if(!d){$('#o-desc').focus();return;}
-  state.opps.push({desc:d,type:$('#o-type').value});
-  $('#o-desc').value=''; $('#o-desc').focus();
-  renderOpps(); renderBoard(); save();
+function renderStock(){
+  const list=$('#stocklist'); if(!list||!STOCK)return;
+  const dorm=$('#f-dorm')?$('#f-dorm').value:"";
+  const ban=$('#f-banos')?$('#f-banos').value:"";
+  let items=STOCK.filter(p=>matchType(p.tipo,stockType));
+  if(dorm){items=items.filter(p=>{const d=parseInt(p.dorms)||0; return dorm==="4+"?d>=4:String(d)===dorm;});}
+  if(ban){items=items.filter(p=>{const b=parseInt(p.banos)||0; return ban==="3+"?b>=3:String(b)===ban;});}
+  if(!items.length){list.innerHTML=empty("No hay propiedades publicadas con ese filtro.");return;}
+  list.innerHTML=items.map(p=>{
+    const val=p.valor?("USD "+Number(String(p.valor).replace(/[^\d.]/g,"")).toLocaleString("es-AR")):"Consultar";
+    const meta=[p.zona,p.m2,(p.dorms?p.dorms+" dorm":""),(p.banos?p.banos+" baños":"")].filter(Boolean).join(" · ");
+    const link=p.link?`<a href="${esc(p.link)}" target="_blank" rel="noopener">Ver ficha</a>`:"";
+    return `<div class="prop"><div class="pinfo"><b>${esc(p.dir)}</b><span>${esc(meta)}</span></div><div class="pval"><div class="v">${val}</div>${link}</div></div>`;
+  }).join("");
 }
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    if(document.activeElement.id==='c-name'){addContact();}
-    if(document.activeElement.id==='o-desc'){addOpp();}
-  }
-});
+function matchType(tipo,sel){
+  tipo=(tipo||"").toLowerCase();
+  if(sel==="Otro"){return !["depto","casa","lote","terreno","local","galpón","galpon","cochera","campo"].some(t=>tipo.indexOf(t)>=0);}
+  if(sel==="Lote")return tipo.indexOf("lote")>=0||tipo.indexOf("terreno")>=0;
+  return tipo.indexOf(sel.toLowerCase())>=0;
+}
 
+/* ============ REPORTE ============ */
 function buildReport(){
-  const name = current || "(sin asesor)";
-  const today = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  const contacted = state.contacts.filter(c=>c.contacted).length;
-  const taskDone = Object.values(state.tasks).filter(Boolean).length;
-  let r = "";
-  r += "*REPORTE DE CAPTACIÓN · LURATI*\n";
-  r += "Vendedor: " + name + "\n";
-  r += "Fecha: " + today + "\n";
-  r += "──────────────\n";
-  r += "*Resumen de la semana*\n";
-  r += "• Nombres en el mapa: " + state.contacts.length + "\n";
-  r += "• Contactos activados: " + contacted + " / 10\n";
-  r += "• Oportunidades detectadas: " + state.opps.length + " / 3\n";
-  r += "• Tareas completadas: " + taskDone + " / " + TASKS.length + "\n";
-  r += "──────────────\n";
-
-  r += "*Contactos activados*\n";
-  const act = state.contacts.filter(c=>c.contacted);
-  if(act.length) act.forEach(c=> r += "✓ " + c.name + " (" + c.src + ")\n");
-  else r += "— sin contactos activados aún —\n";
-
-  const pend = state.contacts.filter(c=>!c.contacted);
-  if(pend.length){
-    r += "\n*Pendientes de contactar*\n";
-    pend.forEach(c=> r += "○ " + c.name + " (" + c.src + ")\n");
+  const name=current||"(sin asesor)";
+  const today=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  let r="*REPORTE LURATI*\nAsesor: "+name+"\nFecha: "+today+"\n──────────────\n";
+  if(mode==="venta"){
+    r+="*VENTA*\n";
+    const tl=LEADS?LEADS.length:0;
+    const enp=LEADS?LEADS.filter(l=>semBase(l.semaforo)==="En proceso").length:0;
+    const cer=LEADS?LEADS.filter(l=>semBase(l.semaforo)==="Cerrado").length:0;
+    r+="• Leads asignados: "+tl+"\n• En proceso: "+enp+"\n• Cerrados: "+cer+"\n• Visitas: "+state.visitas.length+"\n• Tareas: "+Object.values(state.tasksV).filter(Boolean).length+"/"+TASKS_V.length+"\n──────────────\n";
+    r+="*Leads*\n"; r+=(LEADS&&LEADS.length)?LEADS.map(l=>"• "+l.nombre+" ("+l.id+") — "+semBase(l.semaforo)).join("\n"):"— sin leads asignados —"; r+="\n──────────────\n";
+    r+="*Visitas*\n"; r+=state.visitas.length?state.visitas.map(v=>"▸ "+v.cli+" — "+v.prop+" ["+v.estado+"]").join("\n"):"— sin visitas —";
+  }else{
+    r+="*CAPTACIÓN*\n";
+    const cont=state.contacts.filter(c=>c.contacted).length;
+    r+="• Nombres en el mapa: "+state.contacts.length+"\n• Contactos activados: "+cont+"/10\n• Oportunidades: "+state.opps.length+"/3\n• Tareas: "+Object.values(state.tasksC).filter(Boolean).length+"/"+TASKS_C.length+"\n──────────────\n";
+    r+="*Contactos activados*\n"; const act=state.contacts.filter(c=>c.contacted); r+=act.length?act.map(c=>"✓ "+c.name+" ("+c.src+")").join("\n"):"— ninguno —"; r+="\n──────────────\n";
+    r+="*Oportunidades*\n"; r+=state.opps.length?state.opps.map(o=>"▸ "+o.desc+" ["+o.type+"]").join("\n"):"— ninguna —";
   }
-  r += "──────────────\n";
-
-  r += "*Oportunidades detectadas*\n";
-  if(state.opps.length) state.opps.forEach(o=> r += "▸ " + o.desc + " [" + o.type + "]\n");
-  else r += "— sin oportunidades cargadas —\n";
-  r += "──────────────\n";
-
-  r += "*Tareas*\n";
-  TASKS.forEach((t,i)=> r += (state.tasks[i]?"✓ ":"○ ") + t + "\n");
-
   return r;
 }
 
-function showReport(){
-  $('#reporttext').value = buildReport();
-  $('#reportout').style.display = 'block';
-  $('#reporttext').scrollIntoView({behavior:'smooth',block:'center'});
+/* ============ EVENTOS ============ */
+function needName(){if(!current){alert('Primero seleccioná tu nombre arriba, en "Asesor que trabaja".');return true;}return false;}
+
+document.addEventListener('click',async e=>{
+  const t=e.target;
+  if(t.dataset.go)go(t.dataset.go);
+  if(t.dataset.mode){switchMode(t.dataset.mode);}
+  if(t.dataset.pt){stockType=t.dataset.pt;document.querySelectorAll('.ptbtn').forEach(b=>b.classList.toggle('active',b.dataset.pt===stockType));renderStock();}
+  // contactos
+  if(t.id==='addc'){if(needName())return;const n=$('#c-name').value.trim();if(!n)return;const s=$('#c-src').value;state.contacts.push({name:n,src:s,contacted:false});$('#c-name').value='';$('#c-name').focus();renderContacts();renderBoard();save();logEvent("Captación","Nuevo contacto",n,s,"Pendiente");}
+  if(t.dataset.tg!==undefined){const i=+t.dataset.tg;state.contacts[i].contacted=!state.contacts[i].contacted;renderContacts();renderBoard();save();if(state.contacts[i].contacted)logEvent("Captación","Contacto activado",state.contacts[i].name,state.contacts[i].src,"Contactado");}
+  if(t.dataset.dc!==undefined){state.contacts.splice(+t.dataset.dc,1);renderContacts();renderBoard();save();}
+  // oportunidades
+  if(t.id==='addo'){if(needName())return;const d=$('#o-desc').value.trim();if(!d)return;const tp=$('#o-type').value;state.opps.push({desc:d,type:tp});$('#o-desc').value='';$('#o-desc').focus();renderOpps();renderBoard();save();logEvent("Captación","Nueva oportunidad",d,tp,"");}
+  if(t.dataset.do!==undefined){state.opps.splice(+t.dataset.do,1);renderOpps();renderBoard();save();}
+  // leads
+  if(t.id==='reloadleads'){LEADS=null;loadLeads(true);}
+  if(t.id==='savepf'){savePerfil();}
+  // perfiles
+  // (perfil ahora se guarda con #savepf, leads se leen del CRM)
+  // visitas
+  if(t.id==='addvi'){if(needName())return;const c=$('#vi-cli').value.trim();if(!c)return;const o={cli:c,prop:$('#vi-prop').value.trim(),fecha:$('#vi-fecha').value.trim(),estado:$('#vi-estado').value};state.visitas.push(o);$('#vi-cli').value='';$('#vi-prop').value='';$('#vi-fecha').value='';renderVisitas();renderBoard();save();logEvent("Venta","Visita",c+" — "+o.prop,o.fecha,o.estado);}
+  if(t.dataset.dvi!==undefined){state.visitas.splice(+t.dataset.dvi,1);renderVisitas();renderBoard();save();}
+  // tareas
+  if(t.closest&&t.closest('.task')){const node=t.closest('.task');if(needName())return;const i=node.dataset.task;const bag=mode==="venta"?state.tasksV:state.tasksC;bag[i]=!bag[i];node.classList.toggle('checked',bag[i]);renderBoard();save();if(bag[i])logEvent(mode==="venta"?"Venta":"Captación","Tarea completada",(mode==="venta"?TASKS_V:TASKS_C)[i],"","✓");}
+  // mensajes copiar
+  if(t.dataset.copy!==undefined){const arr=mode==="venta"?MSGS_V:MSGS_C;const txt=arr[+t.dataset.copy][2];try{await navigator.clipboard.writeText(txt);}catch(e){}t.textContent='¡Copiado!';t.classList.add('copied');setTimeout(()=>{t.textContent='Copiar';t.classList.remove('copied');},1400);}
+  // reporte
+  if(t.id==='reportview'){$('#reporttext').value=buildReport();$('#reportout').style.display='block';$('#reporttext').scrollIntoView({behavior:'smooth',block:'center'});}
+  if(t.id==='copyreport'){try{await navigator.clipboard.writeText($('#reporttext').value);}catch(e){}t.textContent='¡Copiado!';setTimeout(()=>{t.textContent='Copiar reporte';},1400);}
+  if(t.id==='reportwa'){const txt=buildReport();$('#reporttext').value=txt;$('#reportout').style.display='block';logEvent(mode==="venta"?"Venta":"Captación","Reporte enviado","Resumen a Stefano","","Enviado");window.open('https://wa.me/'+REPORT_WA+'?text='+encodeURIComponent(txt),'_blank');}
+  if(t.id==='reset'){if(confirm('¿Borrar tus datos de la semana?')){state=blank();renderBoard();renderPanel();save();}}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='f-dorm'||e.target.id==='f-banos')renderStock();
+  if(e.target.classList&&e.target.classList.contains('semsel')){setSemaforo(+e.target.dataset.sem,e.target.value);}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;const a=document.activeElement.id;
+  if(a==='c-name')$('#addc').click(); if(a==='o-desc')$('#addo').click();
+  if(a==='vi-cli'||a==='vi-prop'||a==='vi-fecha')$('#addvi').click();
+});
+
+function switchMode(m){
+  mode=m;
+  document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('active',x.dataset.mode===m));
+  activeNav=SECTIONS[m].nav[0][0];
+  renderNav();renderBoard();renderPanel();
 }
 
+/* ============ INIT ============ */
 (function(){
-  renderNav(); renderStatic();
-  const who = $('#who');
-  who.innerHTML = '<option value="" disabled selected>Seleccioná tu nombre</option>' +
-    VENDORS.map(v=>`<option value="${v}">${v}</option>`).join("");
-
-  let last = "";
-  try{ const r = store.get('lurati_last_vendor'); if(r && r.value) last = r.value; }catch(e){}
-
-  if(last && VENDORS.includes(last)){
-    who.value = last;
-    loadFor(last);
-  }
-  refreshAll();
-
-  who.addEventListener('change', ()=>{
-    loadFor(who.value);
-    refreshAll();
-  });
-
-  if(!store.available){
-    const w = document.getElementById('weeklabel');
-    if(w) w.innerHTML = '⚠️ Este navegador no permite guardar datos (puede ser modo incógnito). Abrí el link en una ventana normal.';
-  }
+  const who=$('#who');
+  who.innerHTML='<option value="" disabled selected>Seleccioná tu nombre</option>'+VENDORS.map(v=>`<option value="${v}">${v}</option>`).join("");
+  let last="";try{const r=store.get('lurati_last');if(r&&r.value)last=r.value;}catch(e){}
+  if(last&&VENDORS.includes(last)){who.value=last;loadFor(last);}
+  who.addEventListener('change',()=>{loadFor(who.value);renderBoard();renderPanel();});
+  renderNav();renderBoard();renderPanel();
+  if(!store.available){const w=$('#weeklabel');if(w)w.innerHTML='⚠️ Este navegador no guarda datos (¿modo incógnito?). Abrilo en una ventana normal.';}
 })();
 </script>
 </body>
