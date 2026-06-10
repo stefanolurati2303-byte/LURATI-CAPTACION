@@ -322,26 +322,6 @@ body{
       <div class="card grid2" id="checkmin"></div>
     </section>
 
-    <!-- PANEL STEFANO -->
-    <section class="panel" data-p="stefano">
-      <div class="eyebrow">Solo coordinación</div>
-      <h3>Panel de Stefano</h3>
-      <p class="sub">Pegá acá los reportes que te van llegando por WhatsApp y se ordenan en una tabla con el resumen de todo el equipo. Los reportes que pegás se guardan en este dispositivo.</p>
-      <div class="card">
-        <h4>Pegar un reporte recibido</h4>
-        <textarea id="st-paste" placeholder="Pegá acá el reporte completo que te llegó por WhatsApp…" style="width:100%;min-height:120px;font:inherit;font-size:13px;line-height:1.5;padding:14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);resize:vertical"></textarea>
-        <div style="margin-top:10px">
-          <button class="btn" id="st-add">Sumar al consolidado</button>
-          <button class="btn ghost" id="st-clear" style="margin-left:8px">Vaciar consolidado</button>
-        </div>
-      </div>
-      <div class="card">
-        <h4>Resumen del equipo</h4>
-        <div id="st-summary"></div>
-      </div>
-      <div id="st-detail"></div>
-    </section>
-
   </div>
 
   <div class="foot">
@@ -417,7 +397,7 @@ const CHECKMIN = ["Nombre del propietario","Teléfono","Dirección","Tipo de inm
 const NAV = [
   ["plan","Plan"],["contactos","Contactos"],["oportunidades","Oportunidades"],
   ["tareas","Tareas"],["guion","Guion"],["mensajes","Mensajes"],
-  ["objeciones","Objeciones"],["checklist","Checklist"],["stefano","Panel Stefano"]
+  ["objeciones","Objeciones"],["checklist","Checklist"]
 ];
 
 let current = "";
@@ -575,16 +555,6 @@ document.addEventListener('click',async e=>{
     $('#reporttext').value=txt; $('#reportout').style.display='block';
     window.open('https://wa.me/5493415472349?text='+encodeURIComponent(txt),'_blank');
   }
-  if(t.id==='st-add'){
-    const v = $('#st-paste').value.trim();
-    if(!v){ $('#st-paste').focus(); return; }
-    const r = parseReport(v);
-    const ix = stReports.findIndex(x=>x.name.toLowerCase()===r.name.toLowerCase());
-    if(ix>=0) stReports[ix]=r; else stReports.push(r);
-    $('#st-paste').value=''; stRender(); stSave();
-  }
-  if(t.dataset.stdel!==undefined){ stReports.splice(+t.dataset.stdel,1); stRender(); stSave(); }
-  if(t.id==='st-clear'){ if(confirm('¿Vaciar todos los reportes del consolidado?')){ stReports=[]; stRender(); stSave(); } }
   if(t.id==='reset'){ if(confirm('¿Borrar tus contactos, oportunidades y tareas de la semana?')){ state=blank(); refreshAll(); save(); } }
 });
 
@@ -655,73 +625,8 @@ function showReport(){
   $('#reporttext').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-// ---------- Panel Stefano ----------
-const ST_KEY = 'lurati_stefano_v1';
-let stReports = [];
-
-function num(re, txt){ const m = txt.match(re); return m ? parseInt(m[1],10) : 0; }
-
-function parseReport(txt){
-  const nameM = txt.match(/Vendedor:\s*(.+)/i);
-  const dateM = txt.match(/Fecha:\s*(.+)/i);
-  const name = nameM ? nameM[1].trim() : "(sin nombre)";
-  const date = dateM ? dateM[1].trim() : "";
-  const mapa = num(/Nombres en el mapa:\s*(\d+)/i, txt);
-  const act = num(/Contactos activados:\s*(\d+)/i, txt);
-  const opp = num(/Oportunidades detectadas:\s*(\d+)/i, txt);
-  const tasks = num(/Tareas completadas:\s*(\d+)/i, txt);
-  // opportunities list (lines starting with ▸)
-  const opps = (txt.match(/▸\s*(.+)/g)||[]).map(s=>s.replace(/^▸\s*/,'').trim());
-  return {name,date,mapa,act,opp,tasks,opps,raw:txt.trim()};
-}
-
-async function stLoad(){
-  try{ const r = await window.storage.get(ST_KEY); if(r && r.value) stReports = JSON.parse(r.value); }catch(e){}
-}
-async function stSave(){ try{ await window.storage.set(ST_KEY, JSON.stringify(stReports)); }catch(e){} }
-
-function stRender(){
-  const sum = $('#st-summary'), det = $('#st-detail');
-  if(!sum) return;
-  if(!stReports.length){
-    sum.innerHTML = `<div class="empty">Todavía no sumaste reportes. Pegá el primero arriba.</div>`;
-    det.innerHTML = ""; return;
-  }
-  let rows = stReports.map((r,i)=>`
-    <tr>
-      <td style="padding:9px 8px;border-bottom:1px solid var(--line);font-weight:600">${esc(r.name)}</td>
-      <td style="padding:9px 8px;border-bottom:1px solid var(--line);text-align:center">${r.act}/10</td>
-      <td style="padding:9px 8px;border-bottom:1px solid var(--line);text-align:center">${r.opp}/3</td>
-      <td style="padding:9px 8px;border-bottom:1px solid var(--line);text-align:center">${r.tasks}/${TASKS.length}</td>
-      <td style="padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)">${esc(r.date)}</td>
-      <td style="padding:9px 8px;border-bottom:1px solid var(--line);text-align:center"><span class="del" data-stdel="${i}">×</span></td>
-    </tr>`).join("");
-  const totAct = stReports.reduce((a,r)=>a+r.act,0);
-  const totOpp = stReports.reduce((a,r)=>a+r.opp,0);
-  sum.innerHTML = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-      <div style="flex:1;min-width:120px;background:var(--green-bg);border-radius:10px;padding:12px 14px"><div style="font-size:12px;color:var(--muted)">Reportes recibidos</div><div style="font-size:24px;font-weight:800;color:var(--green)">${stReports.length}</div></div>
-      <div style="flex:1;min-width:120px;background:var(--green-bg);border-radius:10px;padding:12px 14px"><div style="font-size:12px;color:var(--muted)">Contactos activados (equipo)</div><div style="font-size:24px;font-weight:800;color:var(--green)">${totAct}</div></div>
-      <div style="flex:1;min-width:120px;background:var(--bordo-bg);border-radius:10px;padding:12px 14px"><div style="font-size:12px;color:var(--muted)">Oportunidades (equipo)</div><div style="font-size:24px;font-weight:800;color:var(--bordo)">${totOpp}</div></div>
-    </div>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px">
-      <thead><tr style="text-align:left">
-        <th style="padding:8px;border-bottom:2px solid var(--green);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--green)">Asesor</th>
-        <th style="padding:8px;border-bottom:2px solid var(--green);font-size:12px;text-align:center;color:var(--green)">Contactos</th>
-        <th style="padding:8px;border-bottom:2px solid var(--green);font-size:12px;text-align:center;color:var(--green)">Oport.</th>
-        <th style="padding:8px;border-bottom:2px solid var(--green);font-size:12px;text-align:center;color:var(--green)">Tareas</th>
-        <th style="padding:8px;border-bottom:2px solid var(--green);font-size:12px;color:var(--green)">Fecha</th>
-        <th style="padding:8px;border-bottom:2px solid var(--green)"></th>
-      </tr></thead><tbody>${rows}</tbody></table></div>`;
-  // detail: opportunities by vendor
-  det.innerHTML = `<div class="card"><h4>Oportunidades detectadas por el equipo</h4>` +
-    stReports.map(r=> r.opps.length ? `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b style="font-size:14px;color:var(--green)">${esc(r.name)}</b>${r.opps.map(o=>`<div style="font-size:13.5px;color:var(--ink);padding-left:10px;margin-top:3px">▸ ${esc(o)}</div>`).join("")}</div>` : "").join("") +
-    `</div>`;
-}
-
 (async function(){
   renderNav(); renderStatic();
-  await stLoad(); stRender();
   const who = $('#who');
   who.innerHTML = '<option value="" disabled selected>Seleccioná tu nombre</option>' +
     VENDORS.map(v=>`<option value="${v}">${v}</option>`).join("");
