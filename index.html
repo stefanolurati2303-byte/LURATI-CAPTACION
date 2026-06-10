@@ -258,13 +258,14 @@ function renderBoard(){
     const total=LEADS?LEADS.length:0;
     const gestionados=LEADS?LEADS.filter(l=>!esNoContactado(l)).length:0;
     const enGest=LEADS?LEADS.filter(enGestion).length:0;
-    const pendContacto=LEADS?LEADS.filter(esNoContactado).length:0;
-    const pendPerfil=LEADS?LEADS.filter(l=>!esNoContactado(l)&&faltaPerfil(l)).length:0;
+    const perfilesOk=LEADS?LEADS.filter(l=>l.tienePerfil).length:0;
+    const pendContacto=LEADS?LEADS.filter(pendienteContacto).length:0;
+    const pendPerfil=LEADS?LEADS.filter(l=>!esNoContactado(l)&&(l.estado||"").trim()!=="Perdido"&&faltaPerfil(l)).length:0;
     const pendientes=pendContacto+pendPerfil;
     metrics=[
       {l:"Leads asignados",v:gestionados,g:Math.max(total,1),sub:gestionados+"/"+total},
       {l:"En gestión",v:enGest,g:Math.max(total,1)},
-      {l:"Visitas coordinadas",v:state.visitas.length,g:2},
+      {l:"Perfiles completados",v:perfilesOk,g:Math.max(total,1),sub:perfilesOk+"/"+total},
       {l:"Pendientes",v:pendientes,g:0,alert:pendientes>0,pend:true}
     ];
   }else{
@@ -299,8 +300,8 @@ function renderBoard(){
 /* ============ NAV ============ */
 function pendientesCount(){
   if(mode!=="venta"||!LEADS)return 0;
-  const sc=LEADS.filter(esNoContactado).length;
-  const sp=LEADS.filter(l=>!esNoContactado(l)&&faltaPerfil(l)).length;
+  const sc=LEADS.filter(pendienteContacto).length;
+  const sp=LEADS.filter(l=>!esNoContactado(l)&&(l.estado||"").trim()!=="Perdido"&&faltaPerfil(l)).length;
   return sc+sp;
 }
 function renderNav(){
@@ -454,7 +455,32 @@ const EST_EN_GESTION=["Contactado","Interesado","Visitó","Seguimiento","Oferta"
 function esNoContactado(l){return EST_NO_CONTACTADO.indexOf((l.estado||"").trim())>=0;}
 function enGestion(l){return EST_EN_GESTION.indexOf((l.estado||"").trim())>=0;}
 function faltaPerfil(l){return !l.tienePerfil;}
+// Pendiente de contactar = sin contactar y NO descartado (Perdido)
+function pendienteContacto(l){return esNoContactado(l)&&(l.estado||"").trim()!=="Perdido";}
 function sortLeads(arr){return arr.slice().sort((a,b)=>(b.orden||0)-(a.orden||0));}
+// Arma el link de WhatsApp con mensaje preestablecido (omite tipo/dorms si faltan)
+function dormsTxt(d){
+  d=String(d||"").trim(); if(!d)return"";
+  if(d==="0")return"un monoambiente";
+  if(d==="1")return"1 dormitorio";
+  return d+" dormitorios";
+}
+function waLink(l){
+  if(!l.tel)return"";
+  const nombre=(l.nombre||"").split(/\s+/)[0]||"";
+  const tipo=(l.tipo||"").trim();
+  const prop=(l.propiedad||"").trim();
+  const dorms=dormsTxt(l.dorms);
+  let frase="Recibimos una consulta suya";
+  if(tipo&&prop)frase+=" por el "+tipo+" de calle "+prop;
+  else if(prop)frase+=" por la propiedad de calle "+prop;
+  if(dorms)frase+=", compuesta de "+dorms;
+  frase+=".";
+  const msg="Hola "+nombre+", ¿cómo le va?\n"+
+    "Mi nombre es "+(current||"")+", de Lurati Inmobiliaria.\n"+
+    frase+" Por sus características, es una buena alternativa tanto para vivienda propia como para inversión. ¿Qué día le queda cómodo para coordinar una visita?";
+  return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
+}
 function loadLeads(force){
   const list=$('#leadslist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
@@ -474,7 +500,7 @@ function renderLeadsCRM(){
   if(!arr.length){list.innerHTML=empty("No hay leads con ese filtro.");return;}
   list.innerHTML=arr.map(l=>{
     const est=l.estado||"Nuevo";
-    const wa=l.tel?`<a href="https://wa.me/${esc(l.tel)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
+    const wa=l.tel?`<a href="${waLink(l)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
     let opts=ESTADOS.map(s=>`<option ${s===est?'selected':''}>${s}</option>`).join("");
     if(!ESTADOS.includes(est)&&est){opts=`<option selected>${esc(est)}</option>`+opts;}
     const fecha=l.fecha?`<small style="color:var(--muted);font-weight:500;margin-left:6px">${esc(l.fecha)}</small>`:"";
@@ -511,14 +537,14 @@ function loadPendientes(){
 function renderPendientes(){
   const list=$('#pendlist'); if(!list)return;
   if(!LEADS){list.innerHTML=empty("Sin datos.");return;}
-  const sinContacto=sortLeads(LEADS.filter(esNoContactado));
-  const sinPerfil=sortLeads(LEADS.filter(l=>!esNoContactado(l)&&faltaPerfil(l)));
+  const sinContacto=sortLeads(LEADS.filter(pendienteContacto));
+  const sinPerfil=sortLeads(LEADS.filter(l=>!esNoContactado(l)&&(l.estado||"").trim()!=="Perdido"&&faltaPerfil(l)));
   let h="";
   // bloque 1: pendientes de contactar
   h+=`<div class="card"><h4>Pendientes de contactar ${sinContacto.length?`<span class="cnt cnt-bordo">${sinContacto.length}</span>`:`<span class="cnt cnt-ok">0</span>`}</h4>`;
   if(!sinContacto.length){h+=`<p style="font-size:14px;color:var(--ok)">✓ No tenés leads sin contactar. ¡Bien ahí!</p>`;}
   else{h+=sinContacto.map(l=>{
-    const wa=l.tel?`<a href="https://wa.me/${esc(l.tel)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
+    const wa=l.tel?`<a href="${waLink(l)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
     return `<div class="leadrow"><span class="alertmark sm">!</span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'} · ${esc(l.estado||'sin estado')}</span></div><div class="lact">${wa}</div></div>`;
   }).join("");}
   h+=`</div>`;
