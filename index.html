@@ -131,7 +131,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .leadrow .lact{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .lead-wa{font-size:12.5px;font-weight:600;color:#fff;background:#1d7a5f;padding:6px 12px;border-radius:8px;text-decoration:none}
 .lead-wa:hover{background:#0f6e56}
-.semsel{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.estsel{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);max-width:150px}
 @media(max-width:520px){.leadrow{flex-wrap:wrap}.leadrow .lact{width:100%;margin-left:24px}}
 </style>
 </head>
@@ -220,7 +220,7 @@ const CHECK_C=["Nombre del propietario","Teléfono","Dirección","Tipo de inmueb
 const CHECK_V=["Nombre y teléfono del cliente","Canal de la consulta","Propiedad consultada","Para qué busca (vivienda/inversión)","Zona preferida","Tipo y dormitorios","Presupuesto (mín. y máx.)","Forma de pago","Plazo de compra","¿Tiene que vender antes?","Nivel de interés","Próxima acción y fecha"];
 
 /* ============ TIPOS DE PROPIEDAD ============ */
-const PTYPES=["Depto","Casa","Lote","Local","Galpón","Cochera","Campo","Otro"];
+const PTYPES=["Todos","Depto","Casa","Lote","Local","Galpón","Cochera","Otro"];
 
 /* ============ ESTRUCTURA DE SECCIONES ============ */
 const SECTIONS={
@@ -246,8 +246,8 @@ function renderBoard(){
   }else if(mode==="venta"){
     title="Tu tablero de venta";
     const totalLeads=LEADS?LEADS.length:0;
-    const enProceso=LEADS?LEADS.filter(l=>semBase(l.semaforo)==="En proceso").length:0;
-    metrics=[{l:"Leads asignados",v:totalLeads,g:Math.max(totalLeads,1)},{l:"En proceso",v:enProceso,g:Math.max(totalLeads,1)},{l:"Visitas coordinadas",v:state.visitas.length,g:2},{l:"Tareas completadas",v:Object.values(state.tasksV).filter(Boolean).length,g:TASKS_V.length}];
+    const activos=LEADS?LEADS.filter(l=>l.estado&&["Nuevo",""].indexOf(l.estado)<0).length:0;
+    metrics=[{l:"Leads asignados",v:totalLeads,g:Math.max(totalLeads,1)},{l:"En gestión",v:activos,g:Math.max(totalLeads,1)},{l:"Visitas coordinadas",v:state.visitas.length,g:2},{l:"Tareas completadas",v:Object.values(state.tasksV).filter(Boolean).length,g:TASKS_V.length}];
   }else{
     $('#boardWrap').style.display="none"; return;
   }
@@ -338,7 +338,7 @@ function checkPanel(eb,title,items){
   return `<div class="eyebrow">${eb}</div><h3>${title}</h3><p class="sub">Datos mínimos a relevar. Usalo como guía en la conversación. (No se guarda: es tu recordatorio.)</p><div class="card grid2">`+items.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0"><span style="width:16px;height:16px;border:2px solid var(--line);border-radius:4px;flex-shrink:0"></span><span style="font-size:14px">${c}</span></div>`).join("")+`</div>`;
 }
 function leadsPanel(){
-  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads</h3><p class="sub">Estos son los clientes que te asignaron en el CRM. Escribiles por WhatsApp y movés el semáforo según cómo venga cada uno. El cambio se guarda en el CRM.</p>
+  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads</h3><p class="sub">Estos son los clientes que te asignaron en el CRM. Escribiles por WhatsApp y cambiá el estado según cómo avanza cada uno. El cambio se guarda en el CRM.</p>
   <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h4 style="margin:0">Mis leads</h4><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div><div id="leadslist"><div class="empty">Cargando tus leads…</div></div></div>`;
 }
 function perfilPanel(){
@@ -354,11 +354,24 @@ function visitaPanel(){
   <div class="card"><div class="addrow"><input id="vi-cli" placeholder="Cliente" autocomplete="off"><input id="vi-prop" placeholder="Propiedad / dirección" autocomplete="off"></div><div class="addrow"><input id="vi-fecha" placeholder="Día y hora (ej: Mar 18hs)" autocomplete="off"><select id="vi-estado"><option>A coordinar</option><option>Coordinada</option><option>Realizada</option><option>Reprogramada</option><option>No asistió</option></select><button class="btn bordo" id="addvi">Sumar visita</button></div><div id="vilist"></div></div>`;
 }
 function stockPanel(){
-  let r=`<div class="eyebrow">Stock real del CRM</div><h3>Propiedades en venta</h3><p class="sub">Elegí el tipo y, si querés, afiná por dormitorios o baños. Se lee del CRM en vivo.</p>`;
-  r+=`<div class="proptypes" id="ptypes">`+PTYPES.map((t,i)=>`<button class="ptbtn ${i===0?'active':''}" data-pt="${t}">${t}</button>`).join("")+`</div>`;
-  r+=`<div class="subfilter"><label>Dormitorios</label><select id="f-dorm"><option value="">Todos</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4+</option></select><label>Baños</label><select id="f-banos"><option value="">Todos</option><option>1</option><option>2</option><option>3+</option></select></div>`;
+  let r=`<div class="eyebrow">Stock real del CRM</div><h3>Propiedades en venta</h3><p class="sub">Elegí el tipo y afiná con los filtros. Se lee del CRM en vivo.</p>`;
+  r+=`<div class="proptypes" id="ptypes">`+PTYPES.map((t,i)=>`<button class="ptbtn ${t===stockType?'active':''}" data-pt="${t}">${t}</button>`).join("")+`</div>`;
+  r+=`<div class="subfilter" id="subfilter"></div>`;
   r+=`<div class="card"><div id="stocklist"><div class="empty">Cargando propiedades…</div></div></div>`;
   return r;
+}
+function renderSubfilter(){
+  const sf=$('#subfilter'); if(!sf)return;
+  // Depto/Casa -> Dormitorios ; Local -> Ambientes ; otros tipos -> sin dorms
+  const usaDorm = ["Todos","Depto","Casa"].indexOf(stockType)>=0;
+  const usaAmb = stockType==="Local";
+  const usaBanos = ["Todos","Depto","Casa","Local"].indexOf(stockType)>=0;
+  let h="";
+  if(usaDorm){h+=`<label>Dormitorios</label><select id="f-dorm"><option value="">Todos</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>`;}
+  if(usaAmb){h+=`<label>Ambientes</label><select id="f-dorm"><option value="">Todos</option><option>1</option><option>2</option><option>3+</option></select>`;}
+  if(usaBanos){h+=`<label>Baños</label><select id="f-banos"><option value="">Todos</option><option>1</option><option>2</option><option>3+</option></select>`;}
+  h+=`<label>Precio (USD)</label><select id="f-precio"><option value="">Todos</option><option value="0-50000">Hasta 50.000</option><option value="50000-100000">50.000 a 100.000</option><option value="100000-200000">100.000 a 200.000</option><option value="200000-0">Más de 200.000</option></select>`;
+  sf.innerHTML=h;
 }
 function reportCard(){
   return `<div class="card"><h4>Cerrá la semana</h4><p style="font-size:14px;color:var(--muted);margin-bottom:14px">Generá tu reporte y enviáselo a Stefano por WhatsApp con un toque.</p>
@@ -384,9 +397,9 @@ function empty(t){return `<div class="empty">${t}</div>`;}
 
 /* ============ LEADS (lee/escribe CRM) ============ */
 let LEADS=null;
-const SEM=["Nuevo","En proceso","Cerrado"];
-const SEM_COLOR={"Nuevo":"#378add","En proceso":"#ef9f27","Cerrado":"#1d7a5f"};
-function semBase(v){v=String(v||"");for(const s of SEM){if(v.indexOf(s)===0)return s;}return "Nuevo";}
+const ESTADOS=["Nuevo","Contactado","No respondió","Interesado","Visita coordinada","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio","Dormido","Perdido"];
+const EST_COLOR={"Nuevo":"#378add","Contactado":"#128f8b","No respondió":"#888780","Interesado":"#1d9e75","Visita coordinada":"#7f77dd","Visitó":"#534ab7","Seguimiento":"#ef9f27","Oferta":"#ba7517","Reserva":"#639922","Derivado a Julio":"#0c447c","Dormido":"#888780","Perdido":"#a32d2d"};
+function estColor(v){v=String(v||"").trim();return EST_COLOR[v]||"#888780";}
 function loadLeads(force){
   const list=$('#leadslist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
@@ -399,12 +412,13 @@ function renderLeadsCRM(){
   const list=$('#leadslist'); if(!list)return;
   if(!LEADS||!LEADS.length){list.innerHTML=empty("No tenés leads asignados en el CRM por ahora.");return;}
   list.innerHTML=LEADS.map((l,i)=>{
-    const sem=semBase(l.semaforo);
+    const est=l.estado||"Nuevo";
     const wa=l.tel?`<a href="https://wa.me/${esc(l.tel)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
-    const opts=SEM.map(s=>`<option ${s===sem?'selected':''}>${s}</option>`).join("");
-    return `<div class="leadrow"><span class="dot" style="background:${SEM_COLOR[sem]}"></span>
+    let opts=ESTADOS.map(s=>`<option ${s===est?'selected':''}>${s}</option>`).join("");
+    if(!ESTADOS.includes(est)&&est){opts=`<option selected>${esc(est)}</option>`+opts;}
+    return `<div class="leadrow"><span class="dot" style="background:${estColor(est)}"></span>
       <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'}</span></div>
-      <div class="lact">${wa}<select class="semsel" data-sem="${i}">${opts}</select></div></div>`;
+      <div class="lact">${wa}<select class="estsel" data-est="${i}">${opts}</select></div></div>`;
   }).join("");
 }
 function fillPerfilSelect(){
@@ -415,12 +429,12 @@ function loadLeadsForPerfil(){
   if(!LEADS){loadLeads();} else {fillPerfilSelect();}
   if(!SHEET_URL){const m=$('#pfmsg');if(m)m.textContent="El perfil se guarda en el CRM cuando conectes la dirección del Apps Script.";}
 }
-function setSemaforo(i,val){
+function setEstado(i,val){
   if(!LEADS||!LEADS[i])return;
-  LEADS[i].semaforo=val; renderLeadsCRM();
+  LEADS[i].estado=val; renderLeadsCRM();
   if(!SHEET_URL||!current)return;
   fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify({accion:"semaforo",id:LEADS[i].id,valor:val,asesor:current})}).catch(function(){});
+    body:JSON.stringify({accion:"estado",id:LEADS[i].id,valor:val,asesor:current})}).catch(function(){});
 }
 function savePerfil(){
   const id=$('#pf-lead').value;
@@ -434,9 +448,10 @@ function savePerfil(){
 }
 
 /* ============ STOCK (lee del CRM) ============ */
-let STOCK=null, stockType="Depto";
+let STOCK=null, stockType="Todos";
 function loadStock(){
   const list=$('#stocklist'); if(!list)return;
+  renderSubfilter();
   if(!SHEET_URL){list.innerHTML=empty("El stock se activa cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
   if(STOCK){renderStock();return;}
   list.innerHTML=empty("Cargando propiedades…");
@@ -446,21 +461,24 @@ function renderStock(){
   const list=$('#stocklist'); if(!list||!STOCK)return;
   const dorm=$('#f-dorm')?$('#f-dorm').value:"";
   const ban=$('#f-banos')?$('#f-banos').value:"";
+  const prec=$('#f-precio')?$('#f-precio').value:"";
   let items=STOCK.filter(p=>matchType(p.tipo,stockType));
-  if(dorm){items=items.filter(p=>{const d=parseInt(p.dorms)||0; return dorm==="4+"?d>=4:String(d)===dorm;});}
+  if(dorm){items=items.filter(p=>{const d=parseInt(p.dorms)||0; return dorm==="4+"?d>=4:(dorm==="3+"?d>=3:String(d)===dorm);});}
   if(ban){items=items.filter(p=>{const b=parseInt(p.banos)||0; return ban==="3+"?b>=3:String(b)===ban;});}
+  if(prec){const[lo,hi]=prec.split("-").map(Number);items=items.filter(p=>{const v=Number(String(p.valor).replace(/[^\d.]/g,""))||0; if(!v)return false; if(hi===0)return v>=lo; return v>=lo&&v<hi;});}
   if(!items.length){list.innerHTML=empty("No hay propiedades publicadas con ese filtro.");return;}
   list.innerHTML=items.map(p=>{
     const val=p.valor?("USD "+Number(String(p.valor).replace(/[^\d.]/g,"")).toLocaleString("es-AR")):"Consultar";
-    const meta=[p.zona,p.m2,(p.dorms?p.dorms+" dorm":""),(p.banos?p.banos+" baños":"")].filter(Boolean).join(" · ");
+    const meta=[p.zona,p.m2,(p.dorms?p.dorms+" amb/dorm":""),(p.banos?p.banos+" baños":"")].filter(Boolean).join(" · ");
     const link=p.link?`<a href="${esc(p.link)}" target="_blank" rel="noopener">Ver ficha</a>`:"";
     return `<div class="prop"><div class="pinfo"><b>${esc(p.dir)}</b><span>${esc(meta)}</span></div><div class="pval"><div class="v">${val}</div>${link}</div></div>`;
   }).join("");
 }
 function matchType(tipo,sel){
+  if(sel==="Todos")return true;
   tipo=(tipo||"").toLowerCase();
   if(sel==="Otro"){return !["depto","casa","lote","terreno","local","galpón","galpon","cochera","campo"].some(t=>tipo.indexOf(t)>=0);}
-  if(sel==="Lote")return tipo.indexOf("lote")>=0||tipo.indexOf("terreno")>=0;
+  if(sel==="Lote")return tipo.indexOf("lote")>=0||tipo.indexOf("terreno")>=0||tipo.indexOf("campo")>=0;
   return tipo.indexOf(sel.toLowerCase())>=0;
 }
 
@@ -472,10 +490,9 @@ function buildReport(){
   if(mode==="venta"){
     r+="*VENTA*\n";
     const tl=LEADS?LEADS.length:0;
-    const enp=LEADS?LEADS.filter(l=>semBase(l.semaforo)==="En proceso").length:0;
-    const cer=LEADS?LEADS.filter(l=>semBase(l.semaforo)==="Cerrado").length:0;
-    r+="• Leads asignados: "+tl+"\n• En proceso: "+enp+"\n• Cerrados: "+cer+"\n• Visitas: "+state.visitas.length+"\n• Tareas: "+Object.values(state.tasksV).filter(Boolean).length+"/"+TASKS_V.length+"\n──────────────\n";
-    r+="*Leads*\n"; r+=(LEADS&&LEADS.length)?LEADS.map(l=>"• "+l.nombre+" ("+l.id+") — "+semBase(l.semaforo)).join("\n"):"— sin leads asignados —"; r+="\n──────────────\n";
+    const eng=LEADS?LEADS.filter(l=>l.estado&&["Nuevo",""].indexOf(l.estado)<0).length:0;
+    r+="• Leads asignados: "+tl+"\n• En gestión: "+eng+"\n• Visitas: "+state.visitas.length+"\n• Tareas: "+Object.values(state.tasksV).filter(Boolean).length+"/"+TASKS_V.length+"\n──────────────\n";
+    r+="*Leads*\n"; r+=(LEADS&&LEADS.length)?LEADS.map(l=>"• "+l.nombre+" ("+l.id+") — "+(l.estado||"Nuevo")).join("\n"):"— sin leads asignados —"; r+="\n──────────────\n";
     r+="*Visitas*\n"; r+=state.visitas.length?state.visitas.map(v=>"▸ "+v.cli+" — "+v.prop+" ["+v.estado+"]").join("\n"):"— sin visitas —";
   }else{
     r+="*CAPTACIÓN*\n";
@@ -494,7 +511,7 @@ document.addEventListener('click',async e=>{
   const t=e.target;
   if(t.dataset.go)go(t.dataset.go);
   if(t.dataset.mode){switchMode(t.dataset.mode);}
-  if(t.dataset.pt){stockType=t.dataset.pt;document.querySelectorAll('.ptbtn').forEach(b=>b.classList.toggle('active',b.dataset.pt===stockType));renderStock();}
+  if(t.dataset.pt){stockType=t.dataset.pt;document.querySelectorAll('.ptbtn').forEach(b=>b.classList.toggle('active',b.dataset.pt===stockType));renderSubfilter();renderStock();}
   // contactos
   if(t.id==='addc'){if(needName())return;const n=$('#c-name').value.trim();if(!n)return;const s=$('#c-src').value;state.contacts.push({name:n,src:s,contacted:false});$('#c-name').value='';$('#c-name').focus();renderContacts();renderBoard();save();logEvent("Captación","Nuevo contacto",n,s,"Pendiente");}
   if(t.dataset.tg!==undefined){const i=+t.dataset.tg;state.contacts[i].contacted=!state.contacts[i].contacted;renderContacts();renderBoard();save();if(state.contacts[i].contacted)logEvent("Captación","Contacto activado",state.contacts[i].name,state.contacts[i].src,"Contactado");}
@@ -521,8 +538,8 @@ document.addEventListener('click',async e=>{
   if(t.id==='reset'){if(confirm('¿Borrar tus datos de la semana?')){state=blank();renderBoard();renderPanel();save();}}
 });
 document.addEventListener('change',e=>{
-  if(e.target.id==='f-dorm'||e.target.id==='f-banos')renderStock();
-  if(e.target.classList&&e.target.classList.contains('semsel')){setSemaforo(+e.target.dataset.sem,e.target.value);}
+  if(e.target.id==='f-dorm'||e.target.id==='f-banos'||e.target.id==='f-precio')renderStock();
+  if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(+e.target.dataset.est,e.target.value);}
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;const a=document.activeElement.id;
