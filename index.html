@@ -335,6 +335,24 @@ body{
 const KEY = 'lurati_capt_v1';
 const KEY_PREFIX = 'lurati_capt_v2_';
 const VENDORS = ["Ariel","Barbara","Carolina","Daiana","Flavia","Gabriela","Julio","Maximiliano","Pablo","Pedro","Roberto","Stefano","Victor","Virginia","Invitado"];
+
+const store = (function(){
+  let ok = false;
+  try{ const k='__lurati_test__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); ok = true; }catch(e){ ok = false; }
+  const mem = {};
+  return {
+    available: ok,
+    get(key){
+      try{ if(ok){ const v = localStorage.getItem(key); return v===null ? null : {key, value:v}; } }catch(e){}
+      return (key in mem) ? {key, value:mem[key]} : null;
+    },
+    set(key, value){
+      try{ if(ok){ localStorage.setItem(key, value); return; } }catch(e){}
+      mem[key] = value;
+    }
+  };
+})();
+
 const TASKS = [
   "Completar el mapa de contactos con al menos 10 nombres",
   "Activar 10 contactos personales (mensaje o llamada)",
@@ -405,18 +423,18 @@ let state = {contacts:[], opps:[], tasks:{}};
 
 function blank(){return {contacts:[], opps:[], tasks:{}};}
 
-async function loadFor(name){
+function loadFor(name){
   current = name;
   state = blank();
   try{
-    const r = await window.storage.get(KEY_PREFIX + name);
+    const r = store.get(KEY_PREFIX + name);
     if(r && r.value){ const d = JSON.parse(r.value); state = {contacts:d.contacts||[], opps:d.opps||[], tasks:d.tasks||{}}; }
   }catch(e){}
-  try{ await window.storage.set('lurati_last_vendor', name); }catch(e){}
+  try{ store.set('lurati_last_vendor', name); }catch(e){}
 }
-async function save(){
+function save(){
   if(!current) return;
-  try{ await window.storage.set(KEY_PREFIX + current, JSON.stringify(state)); }catch(e){}
+  try{ store.set(KEY_PREFIX + current, JSON.stringify(state)); }catch(e){}
 }
 
 const $ = s=>document.querySelector(s);
@@ -625,25 +643,30 @@ function showReport(){
   $('#reporttext').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-(async function(){
+(function(){
   renderNav(); renderStatic();
   const who = $('#who');
   who.innerHTML = '<option value="" disabled selected>Seleccioná tu nombre</option>' +
     VENDORS.map(v=>`<option value="${v}">${v}</option>`).join("");
 
   let last = "";
-  try{ const r = await window.storage.get('lurati_last_vendor'); if(r && r.value) last = r.value; }catch(e){}
+  try{ const r = store.get('lurati_last_vendor'); if(r && r.value) last = r.value; }catch(e){}
 
   if(last && VENDORS.includes(last)){
     who.value = last;
-    await loadFor(last);
+    loadFor(last);
   }
   refreshAll();
 
-  who.addEventListener('change', async ()=>{
-    await loadFor(who.value);
+  who.addEventListener('change', ()=>{
+    loadFor(who.value);
     refreshAll();
   });
+
+  if(!store.available){
+    const w = document.getElementById('weeklabel');
+    if(w) w.innerHTML = '⚠️ Este navegador no permite guardar datos (puede ser modo incógnito). Abrí el link en una ventana normal.';
+  }
 })();
 </script>
 </body>
