@@ -132,6 +132,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .lead-wa{font-size:12.5px;font-weight:600;color:#fff;background:#1d7a5f;padding:6px 12px;border-radius:8px;text-decoration:none}
 .lead-wa:hover{background:#0f6e56}
 .estsel{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);max-width:150px}
+.alertmark{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#c0392b;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;line-height:1}
+.alertmark.sm{width:18px;height:18px;font-size:12px}
+.ring.alertpend{border-color:#c0392b;background:rgba(192,57,43,.12)}
+.ring.alertpend .big{color:#ff8b7d}
+.pendnote{font-size:11.5px;color:#a9d4cc;margin-top:8px}
+.ring.alertpend .pendnote{color:#ffb3a8}
+.cnt{display:inline-block;min-width:22px;text-align:center;padding:1px 7px;border-radius:12px;font-size:13px;font-weight:700;margin-left:4px}
+.cnt-bordo{background:#c0392b;color:#fff}
+.cnt-ok{background:var(--green-bg);color:var(--ok)}
+.navalert{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#c0392b;color:#fff;font-weight:800;font-size:11px;margin-left:3px;vertical-align:middle}
 @media(max-width:520px){.leadrow{flex-wrap:wrap}.leadrow .lact{width:100%;margin-left:24px}}
 </style>
 </head>
@@ -225,7 +235,7 @@ const PTYPES=["Todos","Depto","Casa","Lote","Local","Galpón","Cochera","Otro"];
 /* ============ ESTRUCTURA DE SECCIONES ============ */
 const SECTIONS={
   captacion:{color:"#004d44",nav:[["c-plan","Plan"],["c-contactos","Contactos"],["c-oport","Oportunidades"],["c-guion","Guion"],["c-msg","Mensajes"],["c-obj","Objeciones"],["c-check","Checklist"]]},
-  venta:{color:"#7e2b26",nav:[["v-plan","Plan"],["v-leads","Leads"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-msg","Mensajes"],["v-obj","Objeciones"],["v-check","Checklist"]]},
+  venta:{color:"#7e2b26",nav:[["v-plan","Plan"],["v-leads","Leads"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-msg","Mensajes"],["v-obj","Objeciones"],["v-tareas","Tareas"]]},
   props:{color:"#128f8b",nav:[["p-stock","Stock"]]}
 };
 let mode="captacion";
@@ -245,27 +255,62 @@ function renderBoard(){
     metrics=[{l:"Contactos activados",v:cont,g:10},{l:"Oportunidades detectadas",v:state.opps.length,g:3},{l:"Nombres en el mapa",v:state.contacts.length,g:10},{l:"Tareas completadas",v:Object.values(state.tasksC).filter(Boolean).length,g:TASKS_C.length}];
   }else if(mode==="venta"){
     title="Tu tablero de venta";
-    const totalLeads=LEADS?LEADS.length:0;
-    const activos=LEADS?LEADS.filter(l=>l.estado&&["Nuevo",""].indexOf(l.estado)<0).length:0;
-    metrics=[{l:"Leads asignados",v:totalLeads,g:Math.max(totalLeads,1)},{l:"En gestión",v:activos,g:Math.max(totalLeads,1)},{l:"Visitas coordinadas",v:state.visitas.length,g:2},{l:"Tareas completadas",v:Object.values(state.tasksV).filter(Boolean).length,g:TASKS_V.length}];
+    const total=LEADS?LEADS.length:0;
+    const gestionados=LEADS?LEADS.filter(l=>!esNoContactado(l)).length:0;
+    const enGest=LEADS?LEADS.filter(enGestion).length:0;
+    const pendContacto=LEADS?LEADS.filter(esNoContactado).length:0;
+    const pendPerfil=LEADS?LEADS.filter(l=>!esNoContactado(l)&&faltaPerfil(l)).length:0;
+    const pendientes=pendContacto+pendPerfil;
+    metrics=[
+      {l:"Leads asignados",v:gestionados,g:Math.max(total,1),sub:gestionados+"/"+total},
+      {l:"En gestión",v:enGest,g:Math.max(total,1)},
+      {l:"Visitas coordinadas",v:state.visitas.length,g:2},
+      {l:"Pendientes",v:pendientes,g:0,alert:pendientes>0,pend:true}
+    ];
   }else{
     $('#boardWrap').style.display="none"; return;
   }
   $('#boardWrap').style.display="block";
   $('#boardTitle').textContent=title;
-  $('#rings').innerHTML=metrics.map(m=>{const pct=Math.min(100,Math.round(m.v/m.g*100));return `<div class="ring ${m.v>=m.g?'done':''}"><div class="lab">${m.l}</div><div class="big">${m.v}<small> / ${m.g}</small></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;}).join("");
-  const met=metrics.filter(m=>m.v>=m.g).length;
+  $('#rings').innerHTML=metrics.map(m=>{
+    if(m.pend){
+      const cls=m.alert?'ring alertpend':'ring';
+      const ico=m.alert?'<span class="alertmark">!</span>':'';
+      return `<div class="${cls}"><div class="lab">${m.l} ${ico}</div><div class="big">${m.v}</div><div class="pendnote">${m.alert?'Hay trabajo sin completar':'Todo al día'}</div></div>`;
+    }
+    const pct=Math.min(100,Math.round(m.v/m.g*100));
+    const big=m.sub?m.sub:(m.v+'<small> / '+m.g+'</small>');
+    return `<div class="ring ${m.v>=m.g?'done':''}"><div class="lab">${m.l}</div><div class="big">${big}</div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
   let msg;
   if(!current) msg=`<span>👆 Empezá <b>seleccionando tu nombre</b> arriba.</span>`;
-  else if(met===metrics.length) msg=`<span>✓ <b>Listo, ${current}.</b> Cumpliste las metas de esta sección.</span>`;
-  else msg=`<span><b>${current}</b>: ${met} de ${metrics.length} metas. El que más conversaciones genera, más oportunidades encuentra.</span>`;
+  else if(mode==="venta"){
+    const pend=metrics.find(m=>m.pend);
+    if(pend&&pend.v>0)msg=`<span><b>${current}</b>: tenés <b>${pend.v} pendientes</b>. Mirá la pestaña Tareas para resolverlos.</span>`;
+    else msg=`<span>✓ <b>${current}</b>, estás al día con tus leads.</span>`;
+  }else{
+    const met=metrics.filter(m=>m.v>=m.g).length;
+    if(met===metrics.length) msg=`<span>✓ <b>Listo, ${current}.</b> Cumpliste las metas de esta sección.</span>`;
+    else msg=`<span><b>${current}</b>: ${met} de ${metrics.length} metas. El que más conversaciones genera, más oportunidades encuentra.</span>`;
+  }
   $('#pulse').innerHTML=msg;
 }
 
 /* ============ NAV ============ */
+function pendientesCount(){
+  if(mode!=="venta"||!LEADS)return 0;
+  const sc=LEADS.filter(esNoContactado).length;
+  const sp=LEADS.filter(l=>!esNoContactado(l)&&faltaPerfil(l)).length;
+  return sc+sp;
+}
 function renderNav(){
   const nav=SECTIONS[mode].nav;
-  $('#nav').innerHTML=nav.map((n,i)=>`<button data-go="${n[0]}" class="${n[0]===activeNav?'active':''}">${n[1]}</button>`).join("");
+  const pc=pendientesCount();
+  $('#nav').innerHTML=nav.map((n,i)=>{
+    let label=n[1];
+    if(n[0]==="v-tareas"&&pc>0)label+=` <span class="navalert">!</span>`;
+    return `<button data-go="${n[0]}" class="${n[0]===activeNav?'active':''}">${label}</button>`;
+  }).join("");
 }
 function go(id){activeNav=id;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===id));renderPanel();window.scrollTo({top:0,behavior:'smooth'});}
 
@@ -290,7 +335,7 @@ function renderPanel(){
   else if(id==="v-guion"){h=guionPanel(FRASES_V,PREG_V);}
   else if(id==="v-msg"){h=msgPanel(MSGS_V);}
   else if(id==="v-obj"){h=objPanel(OBJS_V);}
-  else if(id==="v-check"){h=checkPanel("Datos del cliente","Checklist de venta",CHECK_V);}
+  else if(id==="v-tareas"){h=pendientesPanel();}
   // -------- PROPIEDADES --------
   else if(id==="p-stock"){h=stockPanel();}
   P.innerHTML=`<section class="panel active">${h}</section>`;
@@ -301,6 +346,7 @@ function renderPanel(){
   if(id==="p-stock")loadStock();
   if(id==="v-leads")loadLeads();
   if(id==="v-perfil")loadLeadsForPerfil();
+  if(id==="v-tareas")loadPendientes();
   refreshLists();
 }
 
@@ -338,12 +384,15 @@ function checkPanel(eb,title,items){
   return `<div class="eyebrow">${eb}</div><h3>${title}</h3><p class="sub">Datos mínimos a relevar. Usalo como guía en la conversación. (No se guarda: es tu recordatorio.)</p><div class="card grid2">`+items.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0"><span style="width:16px;height:16px;border:2px solid var(--line);border-radius:4px;flex-shrink:0"></span><span style="font-size:14px">${c}</span></div>`).join("")+`</div>`;
 }
 function leadsPanel(){
-  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads</h3><p class="sub">Estos son los clientes que te asignaron en el CRM. Escribiles por WhatsApp y cambiá el estado según cómo avanza cada uno. El cambio se guarda en el CRM.</p>
-  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h4 style="margin:0">Mis leads</h4><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div><div id="leadslist"><div class="empty">Cargando tus leads…</div></div></div>`;
+  const filtros=["Todos","Sin contactar","En gestión",...ESTADOS];
+  const opts=filtros.map(f=>`<option value="${f}">${f}</option>`).join("");
+  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads</h3><p class="sub">Tus clientes del CRM, los más nuevos arriba. Escribiles por WhatsApp y cambiá el estado. Se guarda en el CRM.</p>
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--muted)">Ver:</span><select id="leadfilter" style="font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff">${opts}</select></div><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div><div id="leadslist"><div class="empty">Cargando tus leads…</div></div></div>`;
 }
 function perfilPanel(){
-  return `<div class="eyebrow">Conocé al cliente</div><h3>Perfil de cliente</h3><p class="sub">Elegí uno de tus leads y completá qué busca. Esto se guarda en el CRM y define qué propiedades ofrecerle.</p>
-  <div class="card"><div class="addrow"><select id="pf-lead" style="flex:1;min-width:200px"><option value="">Elegí un lead…</option></select></div>
+  return `<div class="eyebrow">Conocé al cliente</div><h3>Perfil de cliente</h3><p class="sub">Elegí uno de tus leads y completá qué busca. Se guarda en el CRM. Activá el filtro para ver solo los que les falta el perfil.</p>
+  <div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--ink);cursor:pointer"><input type="checkbox" id="pf-filter" style="width:16px;height:16px;cursor:pointer"> Mostrar solo los que faltan completar</label></div>
+  <div class="addrow"><select id="pf-lead" style="flex:1;min-width:200px"><option value="">Elegí un lead…</option></select></div>
   <div class="addrow"><input id="pf-busca" placeholder="Zona / qué busca (ej: 2 dorm zona sur)" autocomplete="off"><select id="pf-tipo"><option value="">Tipo</option><option>Depto</option><option>Casa</option><option>Lote</option><option>Local</option><option>Otro</option></select></div>
   <div class="addrow"><input id="pf-presup" placeholder="Presupuesto (ej: USD 80-100k)" autocomplete="off"><select id="pf-pago"><option>Contado</option><option>Crédito</option><option>Permuta</option><option>Financiación</option><option>A definir</option></select></div>
   <div class="addrow"><input id="pf-obs" placeholder="Observaciones del perfil" autocomplete="off"><button class="btn" id="savepf">Guardar perfil en CRM</button></div>
@@ -400,41 +449,94 @@ let LEADS=null;
 const ESTADOS=["Nuevo","Contactado","No respondió","Interesado","Visita coordinada","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio","Dormido","Perdido"];
 const EST_COLOR={"Nuevo":"#378add","Contactado":"#128f8b","No respondió":"#888780","Interesado":"#1d9e75","Visita coordinada":"#7f77dd","Visitó":"#534ab7","Seguimiento":"#ef9f27","Oferta":"#ba7517","Reserva":"#639922","Derivado a Julio":"#0c447c","Dormido":"#888780","Perdido":"#a32d2d"};
 function estColor(v){v=String(v||"").trim();return EST_COLOR[v]||"#888780";}
+const EST_NO_CONTACTADO=["Nuevo","No respondió",""];
+const EST_EN_GESTION=["Contactado","Interesado","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio"];
+function esNoContactado(l){return EST_NO_CONTACTADO.indexOf((l.estado||"").trim())>=0;}
+function enGestion(l){return EST_EN_GESTION.indexOf((l.estado||"").trim())>=0;}
+function faltaPerfil(l){return !l.tienePerfil;}
+function sortLeads(arr){return arr.slice().sort((a,b)=>(b.orden||0)-(a.orden||0));}
 function loadLeads(force){
   const list=$('#leadslist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
   if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus leads.");return;}
   if(LEADS&&!force){renderLeadsCRM();return;}
   list.innerHTML=empty("Cargando tus leads…");
-  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderLeadsCRM();fillPerfilSelect();}).catch(()=>{list.innerHTML=empty("No se pudo leer tus leads. Revisá la conexión con el CRM.");});
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderLeadsCRM();fillPerfilSelect();renderBoard();renderNav();}).catch(()=>{list.innerHTML=empty("No se pudo leer tus leads. Revisá la conexión con el CRM.");});
 }
 function renderLeadsCRM(){
   const list=$('#leadslist'); if(!list)return;
   if(!LEADS||!LEADS.length){list.innerHTML=empty("No tenés leads asignados en el CRM por ahora.");return;}
-  list.innerHTML=LEADS.map((l,i)=>{
+  const filtro=$('#leadfilter')?$('#leadfilter').value:"Todos";
+  let arr=sortLeads(LEADS);
+  if(filtro==="Sin contactar")arr=arr.filter(esNoContactado);
+  else if(filtro==="En gestión")arr=arr.filter(enGestion);
+  else if(filtro&&filtro!=="Todos")arr=arr.filter(l=>(l.estado||"").trim()===filtro);
+  if(!arr.length){list.innerHTML=empty("No hay leads con ese filtro.");return;}
+  list.innerHTML=arr.map(l=>{
     const est=l.estado||"Nuevo";
     const wa=l.tel?`<a href="https://wa.me/${esc(l.tel)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
     let opts=ESTADOS.map(s=>`<option ${s===est?'selected':''}>${s}</option>`).join("");
     if(!ESTADOS.includes(est)&&est){opts=`<option selected>${esc(est)}</option>`+opts;}
+    const fecha=l.fecha?`<small style="color:var(--muted);font-weight:500;margin-left:6px">${esc(l.fecha)}</small>`:"";
     return `<div class="leadrow"><span class="dot" style="background:${estColor(est)}"></span>
-      <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'}</span></div>
-      <div class="lact">${wa}<select class="estsel" data-est="${i}">${opts}</select></div></div>`;
+      <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small>${fecha}</b><span>${esc(l.propiedad)||'—'}</span></div>
+      <div class="lact">${wa}<select class="estsel" data-id="${esc(l.id)}">${opts}</select></div></div>`;
   }).join("");
 }
 function fillPerfilSelect(){
   const sel=$('#pf-lead'); if(!sel||!LEADS)return;
-  sel.innerHTML='<option value="">Elegí un lead…</option>'+LEADS.map(l=>`<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)})</option>`).join("");
+  const soloFalta=$('#pf-filter')&&$('#pf-filter').checked;
+  let arr=sortLeads(LEADS);
+  if(soloFalta)arr=arr.filter(faltaPerfil);
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Elegí un lead…</option>'+arr.map(l=>`<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)})${faltaPerfil(l)?' · falta perfil':''}</option>`).join("");
+  if(prev)sel.value=prev;
 }
 function loadLeadsForPerfil(){
   if(!LEADS){loadLeads();} else {fillPerfilSelect();}
   if(!SHEET_URL){const m=$('#pfmsg');if(m)m.textContent="El perfil se guarda en el CRM cuando conectes la dirección del Apps Script.";}
 }
-function setEstado(i,val){
-  if(!LEADS||!LEADS[i])return;
-  LEADS[i].estado=val; renderLeadsCRM();
+function pendientesPanel(){
+  return `<div class="eyebrow">Lo que falta resolver</div><h3>Tareas pendientes</h3><p class="sub">Acá ves el trabajo que quedó sin completar: leads que faltan contactar y clientes contactados sin perfil cargado. Resolvelos y desaparecen solos.</p>
+  <div id="pendlist"><div class="empty">Cargando pendientes…</div></div>`;
+}
+function loadPendientes(){
+  const list=$('#pendlist'); if(!list)return;
+  if(!SHEET_URL){list.innerHTML=empty("Los pendientes se activan cuando conectes el CRM.");return;}
+  if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus pendientes.");return;}
+  if(LEADS){renderPendientes();return;}
+  list.innerHTML=empty("Cargando pendientes…");
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderPendientes();renderBoard();renderNav();}).catch(()=>{list.innerHTML=empty("No se pudieron leer tus pendientes. Revisá la conexión.");});
+}
+function renderPendientes(){
+  const list=$('#pendlist'); if(!list)return;
+  if(!LEADS){list.innerHTML=empty("Sin datos.");return;}
+  const sinContacto=sortLeads(LEADS.filter(esNoContactado));
+  const sinPerfil=sortLeads(LEADS.filter(l=>!esNoContactado(l)&&faltaPerfil(l)));
+  let h="";
+  // bloque 1: pendientes de contactar
+  h+=`<div class="card"><h4>Pendientes de contactar ${sinContacto.length?`<span class="cnt cnt-bordo">${sinContacto.length}</span>`:`<span class="cnt cnt-ok">0</span>`}</h4>`;
+  if(!sinContacto.length){h+=`<p style="font-size:14px;color:var(--ok)">✓ No tenés leads sin contactar. ¡Bien ahí!</p>`;}
+  else{h+=sinContacto.map(l=>{
+    const wa=l.tel?`<a href="https://wa.me/${esc(l.tel)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
+    return `<div class="leadrow"><span class="alertmark sm">!</span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'} · ${esc(l.estado||'sin estado')}</span></div><div class="lact">${wa}</div></div>`;
+  }).join("");}
+  h+=`</div>`;
+  // bloque 2: contactados sin perfil
+  h+=`<div class="card"><h4>Contactados sin perfil cargado ${sinPerfil.length?`<span class="cnt cnt-bordo">${sinPerfil.length}</span>`:`<span class="cnt cnt-ok">0</span>`}</h4>`;
+  if(!sinPerfil.length){h+=`<p style="font-size:14px;color:var(--ok)">✓ Todos tus clientes contactados tienen perfil. Excelente.</p>`;}
+  else{h+=sinPerfil.map(l=>{
+    return `<div class="leadrow"><span class="alertmark sm">!</span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.estado||'')} · falta zona/presupuesto</span></div><div class="lact"><button class="btn ghost gotoperfil" data-id="${esc(l.id)}" style="padding:6px 12px;font-size:13px">Completar</button></div></div>`;
+  }).join("");}
+  h+=`</div>`;
+  list.innerHTML=h;
+}
+function setEstado(id,val){
+  const idx=LEADS.findIndex(l=>l.id===id); if(idx<0)return;
+  LEADS[idx].estado=val; renderLeadsCRM(); renderBoard(); renderNav();
   if(!SHEET_URL||!current)return;
   fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify({accion:"estado",id:LEADS[i].id,valor:val,asesor:current})}).catch(function(){});
+    body:JSON.stringify({accion:"estado",id:id,valor:val,asesor:current})}).catch(function(){});
 }
 function savePerfil(){
   const id=$('#pf-lead').value;
@@ -521,6 +623,7 @@ document.addEventListener('click',async e=>{
   if(t.dataset.do!==undefined){state.opps.splice(+t.dataset.do,1);renderOpps();renderBoard();save();}
   // leads
   if(t.id==='reloadleads'){LEADS=null;loadLeads(true);}
+  if(t.classList&&t.classList.contains('gotoperfil')){const id=t.dataset.id;go('v-perfil');setTimeout(()=>{const sel=$('#pf-lead');if(sel){sel.value=id;}},60);}
   if(t.id==='savepf'){savePerfil();}
   // perfiles
   // (perfil ahora se guarda con #savepf, leads se leen del CRM)
@@ -539,7 +642,9 @@ document.addEventListener('click',async e=>{
 });
 document.addEventListener('change',e=>{
   if(e.target.id==='f-dorm'||e.target.id==='f-banos'||e.target.id==='f-precio')renderStock();
-  if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(+e.target.dataset.est,e.target.value);}
+  if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(e.target.dataset.id,e.target.value);}
+  if(e.target.id==='leadfilter')renderLeadsCRM();
+  if(e.target.id==='pf-filter')fillPerfilSelect();
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;const a=document.activeElement.id;
