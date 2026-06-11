@@ -523,9 +523,9 @@ function waLink(l){
   else if(prop)frase+=" por la propiedad de calle "+prop;
   if(dorms)frase+=", compuesta de "+dorms;
   frase+=".";
-  const msg="Hola "+nombre+", ¿cómo le va?\n"+
+  const msg="Hola "+nombre+", cómo le va?\n"+
     "Mi nombre es "+(current||"")+", de Lurati Inmobiliaria.\n"+
-    frase+" Por sus características, es una buena alternativa tanto para vivienda propia como para inversión. ¿Qué día le queda cómodo para coordinar una visita?";
+    frase+" Por sus características, es una buena oportunidad tanto para vivienda propia como para inversión. Qué día le queda cómodo para coordinar una visita?";
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function loadLeads(force){
@@ -699,13 +699,13 @@ function renderSugerencias(){
 function waAyuda(l){
   if(!l.tel)return"";
   const nombre=(l.nombre||"").split(/\s+/)[0]||"";
-  const msg="Hola "+nombre+", ¿cómo le va? Soy "+(current||"")+" de Lurati Inmobiliaria. Estuve revisando lo que está buscando y quiero acompañarlo personalmente para encontrar la propiedad ideal. ¿Coordinamos para que le muestre algunas opciones que pueden interesarle?";
+  const msg="Hola "+nombre+". Soy "+(current||"")+" de Lurati Inmobiliaria. Estuve analizando lo que está buscando y quiero acompañarlo personalmente para encontrar la oportunidad ideal. Coordinamos para que le muestre algunas opciones que pueden interesarle?";
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function waRecontacto(l){
   if(!l.tel)return"";
   const nombre=(l.nombre||"").split(/\s+/)[0]||"";
-  const msg="Hola "+nombre+", ¿cómo le va? Soy "+(current||"")+" de Lurati. ¿Sigue en la búsqueda de una propiedad? Tengo novedades que pueden interesarle.";
+  const msg="Hola "+nombre+". Soy "+(current||"")+" de Lurati. Sigue en la búsqueda de una propiedad? Tengo novedades que pueden interesarle.";
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function savePerfil(){
