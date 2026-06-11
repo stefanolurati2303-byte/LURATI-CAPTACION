@@ -214,9 +214,10 @@ const SHEET_URL = "https://script.google.com/macros/s/AKfycbygRzmQntmyoRSgne5xg3
    la ingresan una vez por dispositivo. Para cambiarla a futuro,
    editá solo esta línea y volvé a subir el archivo.
    ============================================================ */
-const ACCESS_KEY = "Lurati2026";
+const ACCESS_KEY = "Argentina2026";
 const VENDORS = ["Ariel","Barbara","Carolina","Daiana","Flavia","Franco","Gabriela","Julio","Maximiliano","Pablo","Pedro","Roberto","Stefano","Virginia","Invitado"];
 const REPORT_WA = "5493415472349";
+const INMO_WA = "5493415975972";   // WhatsApp de la inmobiliaria para avisos de visita
 
 /* ============ ALMACENAMIENTO ============ */
 const store = (function(){
@@ -249,7 +250,7 @@ function logEvent(seccion,accion,detalle,tipo,estado){
 const TASKS_C=["Completar el mapa de contactos (10 nombres)","Activar 10 contactos personales","Detectar y reportar 3 oportunidades","Llevar 1 conversación de captación a etapa avanzada","Publicar 1 historia/estado de captación","Pedir 1 referido a un contacto profesional","Cargar cada oportunidad en el CRM","Enviar el reporte semanal a Stefano"];
 const TASKS_V=["Responder toda consulta en menos de 10 minutos","Completar el perfil de cada cliente nuevo","Ofrecer alternativas si la propiedad no encaja","Coordinar al menos 2 visitas","Hacer seguimiento dentro de las 24 hs","Cargar cada lead en el CRM","Derivar operaciones avanzadas a Stefano/Julio","Enviar el reporte semanal a Stefano"];
 const PHASES_C=[["Tu red","Familia, amigos, vecinos, ex clientes y contactos profesionales."],["La conversación","Abrí el tema sin presionar. Una charla puede transformarse en una tasación."],["La detección","Leé señales: casas vacías, herencias, mudanzas, dueños cansados de alquilar."],["El valor","Ofrecé una tasación seria y orientación honesta. Eso te diferencia."],["Las preguntas","Relevá los datos mínimos del propietario y de la propiedad."],["El registro","Cargá la oportunidad en el CRM. Lo que no se registra, se pierde."],["El seguimiento","Volvé con criterio. La constancia construye confianza."]];
-const PHASES_V=[["La consulta entra","Respuesta rápida: el primer asesor en contestar gana al cliente."],["El perfilado","Entendé qué busca, para qué, presupuesto, plazo y forma de pago."],["Las alternativas","Si la propiedad no encaja, ofrecé hasta 3 opciones reales del stock."],["La visita","Coordiná, confirmá y registrá el feedback el mismo día."],["El seguimiento","Todo contacto relevante se registra. Cliente sin próxima acción = enfriado."],["El cierre","Operación avanzada se deriva a Stefano o Julio para cerrar."]];
+const PHASES_V=[["Respuesta rápida","Respondé lo más rápido posible: el cliente te está esperando. El primero que contesta gana."],["El perfilado","Entendé qué busca, para qué, presupuesto, plazo y forma de pago."],["Las alternativas","Si la propiedad no encaja, ofrecé hasta 3 opciones reales del stock."],["La visita","Coordiná, confirmá y registrá el feedback el mismo día."],["Reunión con Julio","Si hay interés, invitá al cliente a la oficina a una reunión con Julio Lurati. Si la visita no gustó, volvé a las alternativas (paso 3)."],["Derivar a Julio","Operación avanzada se deriva a Julio para cerrar."]];
 const FRASES_C=[["Avisame cualquier cosa.","Estamos trabajando con clientes activos para esa zona."],["Si te interesa me decís.","Podemos orientarte con un valor real de mercado."],["Estamos buscando propiedades.","La idea no es presionarte, sino ayudarte a evaluar si es buen momento."],["¿No querés vender?","Si conocés a alguien pensando en vender, lo asesoramos con una tasación seria."],["Dejame el dato y vemos.","Podemos verlo sin compromiso y analizar qué estrategia conviene."]];
 const FRASES_V=[["¿Le interesa la propiedad?","Contame qué estás buscando y te muestro las mejores opciones que tenemos."],["Cualquier cosa me escribe.","Te propongo coordinar una visita esta semana, ¿qué día te queda cómodo?"],["No tengo nada más para ofrecer.","Tengo alternativas parecidas en la zona, dejame mostrarte 2 o 3."],["Le aviso si baja el precio.","Más allá del precio, ¿la propiedad te cierra en ubicación y ambientes?"]];
 const PREG_C=["¿Hace cuánto que tenés la propiedad?","¿Está habitada, alquilada o libre?","¿Qué te lleva a pensar en vender o mudarte?","¿Cuántos ambientes, baños y cochera tiene?","¿Qué metros aproximados y en qué estado está?","¿Tenés la documentación al día?","¿Tenés un valor pretendido o querés que te orientemos?","¿Aceptarías permuta o financiación?","¿Está publicada con otra inmobiliaria?","¿Aceptarías fotos y video profesional?"];
@@ -257,7 +258,7 @@ const PREG_V=["¿Para qué buscás la propiedad: vivienda, inversión, mudanza?"
 const MSGS_C=[["green","Referido · conocido","Hola [Nombre], ¿cómo va? Estoy trabajando en Lurati con clientes que buscan comprar en la zona. Si sabés de alguien pensando en vender, lo asesoramos con una tasación seria y sin compromiso. Cualquier dato me sirve. ¡Gracias!"],["green","Referido · profesional","Hola [Nombre], un gusto. Trabajo en Lurati. Como tratás con muchas familias y propietarios, te dejo el canal abierto: si alguno necesita vender o tasar, lo atendemos con seriedad. Encantado de devolver la mano."],["bordo","Propietario · aviso propio","Hola, buenos días. Vi la propiedad de [zona] en venta. Soy [Nombre] de Lurati. Trabajamos con clientes activos para esa zona. Sin presionar: podemos verla sin compromiso y darte un valor real y una estrategia. ¿Coordinamos?"],["bordo","Propietario · tras referido","Hola [Nombre], me pasó tu contacto [referidor]. Soy [Nombre] de Lurati. Entiendo que evaluás qué hacer con la propiedad de [zona]. Podemos orientarte con un valor real, sin compromiso. ¿Cuándo charlamos?"]];
 const MSGS_V=[["green","Primer contacto · consulta","Hola [Nombre], gracias por tu consulta por [propiedad]. Soy [Nombre] de Lurati. ¿Te viene bien que te haga un par de preguntas para mostrarte las mejores opciones? ¿Buscás para vivienda o inversión?"],["green","Coordinar visita","Hola [Nombre], tengo disponible la propiedad de [dirección] para que la veas. ¿Qué día te queda cómodo esta semana, [opción 1] o [opción 2]?"],["bordo","Ofrecer alternativas","Hola [Nombre], además de la que consultaste tengo 2 opciones parecidas en la zona que te pueden interesar. ¿Te las paso por acá o las vemos juntos?"],["bordo","Seguimiento post-visita","Hola [Nombre], ¿qué te pareció la propiedad que visitamos? Cualquier duda la vemos. Si querés, te muestro alguna alternativa más para comparar."]];
 const OBJS_C=[["No estoy apurado.","Mejor: sin apuro se vende mejor y al mejor precio. Te dejamos una tasación para que decidas cuando quieras."],["Quiero probar vender yo.","Perfecto, probalo. Solo tené el valor real de referencia, te lo damos sin compromiso para no regalar ni espantar compradores."],["Otra inmobiliaria me dijo más.","Un valor alto que no se concreta cuesta meses. Te mostramos con datos por qué proponemos ese número."],["No quiero carteles.","Sin problema. Trabajamos con portales, base de clientes y redes. El cartel es opcional."],["No quiero exclusividad.","Lo charlamos. Te explicamos qué cambia con y sin exclusividad para que elijas con información."],["Todavía no sé si vender.","La tasación te ayuda a decidir. No te compromete a nada."]];
-const OBJS_V=[["Está muy caro.","¿Comparado con qué? Te muestro valores reales de la zona para que veas que está en precio."],["Lo tengo que pensar.","Perfecto. ¿Qué es puntualmente lo que querés evaluar? Así te acerco la info para decidir mejor."],["Quiero ver más opciones.","Buenísimo, para eso estoy. Dejame afinar qué buscás y te traigo 2 o 3 que realmente encajen."],["Voy a seguir mirando solo.","Te entiendo. Te dejo el dato y, si querés, te aviso apenas entra algo que encaje con lo tuyo, sin compromiso."]];
+const OBJS_V=[["Está muy caro.","¿Comparado con qué? Te muestro valores reales de la zona para que veas cómo está posicionada esta propiedad."],["Lo tengo que pensar.","Perfecto, es una decisión importante. ¿Qué es puntualmente lo que querés evaluar? Así te acerco la info que te falta para decidir."],["Quiero ver más opciones.","Buenísimo, para eso estoy. Dejame afinar qué buscás y te traigo 2 o 3 que realmente encajen con vos."],["Voy a seguir mirando solo.","Te entiendo. Te dejo el dato y, si querés, te aviso apenas entra algo que encaje con lo tuyo, sin compromiso."],["Necesito venderla a la mía primero.","Lo podemos coordinar. Te ayudo a tasar y vender la tuya mientras avanzamos con esta, para que no se te escape."],["No tengo todo el dinero ahora.","Veamos las opciones: hay propiedades aptas para crédito, financiación del dueño o permuta. ¿Cuánto tenés disponible para arrancar?"],["¿Y si encuentro algo mejor después?","Es válido. Por eso definimos bien qué buscás: si esta cumple lo que es importante para vos, esperar puede costarte la oportunidad."],["La ubicación no me convence del todo.","¿Qué es lo que te preocupa de la zona? A veces hay datos del barrio que cambian la mirada, y si no, busco en la ubicación que prefieras."],["Quiero consultarlo con mi familia/pareja.","Claro, es lo ideal. ¿Coordinamos una visita juntos para que la vean los dos y resuelvan con toda la info?"],["Vi otras más baratas en internet.","Puede ser, pero no todas están en el mismo estado ni tienen los papeles al día. Te muestro por qué esta es una compra segura."]];
 const CHECK_C=["Nombre del propietario","Teléfono","Dirección","Tipo de inmueble","Dormitorios y baños","Metros aproximados","Estado y antigüedad","Ocupación (libre/habitada/alquilada)","Documentación al día","Valor pretendido","Motivo de venta y urgencia","¿Permuta/financiación?","¿Publicada con otra inmobiliaria?","Próximo paso acordado"];
 const CHECK_V=["Nombre y teléfono del cliente","Canal de la consulta","Propiedad consultada","Para qué busca (vivienda/inversión)","Zona preferida","Tipo y dormitorios","Presupuesto (mín. y máx.)","Forma de pago","Plazo de compra","¿Tiene que vender antes?","Nivel de interés","Próxima acción y fecha"];
 
@@ -267,7 +268,7 @@ const PTYPES=["Todos","Depto","Casa","Lote","Local","Galpón","Cochera","Otro"];
 /* ============ ESTRUCTURA DE SECCIONES ============ */
 const SECTIONS={
   captacion:{color:"#004d44",nav:[["c-plan","Plan"],["c-contactos","Contactos"],["c-oport","Oportunidades"],["c-guion","Guion"],["c-msg","Mensajes"],["c-obj","Objeciones"],["c-check","Checklist"]]},
-  venta:{color:"#7e2b26",nav:[["v-plan","Plan"],["v-leads","Leads"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-msg","Mensajes"],["v-obj","Objeciones"],["v-tareas","Tareas"]]},
+  venta:{color:"#7e2b26",nav:[["v-plan","Plan"],["v-leads","Leads"],["v-sugerencias","Sugerencias"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-obj","Objeciones"],["v-tareas","Tareas"]]},
   props:{color:"#128f8b",nav:[["p-stock","Stock"]]}
 };
 let mode="captacion";
@@ -340,9 +341,11 @@ function pendientesCount(){
 function renderNav(){
   const nav=SECTIONS[mode].nav;
   const pc=pendientesCount();
+  const sc=sugerenciasCount();
   $('#nav').innerHTML=nav.map((n,i)=>{
     let label=n[1];
     if(n[0]==="v-tareas"&&pc>0)label+=` <span class="navalert">!</span>`;
+    if(n[0]==="v-sugerencias"&&sc>0)label+=` <span class="navalert" style="background:#1d9e75">!</span>`;
     return `<button data-go="${n[0]}" class="${n[0]===activeNav?'active':''}">${label}</button>`;
   }).join("");
 }
@@ -362,23 +365,24 @@ function renderPanel(){
   else if(id==="c-obj"){h=objPanel(OBJS_C);}
   else if(id==="c-check"){h=checkPanel("Antes de cargar al CRM","Checklist de captación",CHECK_C);}
   // -------- VENTA --------
-  else if(id==="v-plan"){h=plan("El recorrido","Plan de venta","Respuesta rápida, perfilado, alternativas, visitas y seguimiento. Consulta no cargada = consulta perdida.",PHASES_V,"El primer asesor que responde con criterio se queda con el cliente.");}
+  else if(id==="v-plan"){h=plan("El recorrido","Plan de venta","Respuesta rápida, perfilado, alternativas, visitas y reunión con Julio. Consulta no cargada = consulta perdida.",PHASES_V,"El primer asesor que responde con criterio se queda con el cliente.");}
   else if(id==="v-leads"){h=leadsPanel();}
+  else if(id==="v-sugerencias"){h=sugerenciasPanel();}
   else if(id==="v-perfil"){h=perfilPanel();}
   else if(id==="v-visitas"){h=visitaPanel();}
-  else if(id==="v-guion"){h=guionPanel(FRASES_V,PREG_V);}
-  else if(id==="v-msg"){h=msgPanel(MSGS_V);}
+  else if(id==="v-guion"){h=guionPanel(FRASES_V,PREG_V,MSGS_V);}
   else if(id==="v-obj"){h=objPanel(OBJS_V);}
   else if(id==="v-tareas"){h=pendientesPanel();}
   // -------- PROPIEDADES --------
   else if(id==="p-stock"){h=stockPanel();}
   P.innerHTML=`<section class="panel active">${h}</section>`;
   // post-render hooks
-  if(id==="c-msg"||id==="v-msg")bindReportFooter(id);
+  if(id==="c-msg")bindReportFooter(id);
   if(id==="c-plan")appendReport();
   if(id==="v-plan")appendReport();
   if(id==="p-stock")loadStock();
   if(id==="v-leads")loadLeads();
+  if(id==="v-sugerencias")loadSugerencias();
   if(id==="v-perfil")loadLeadsForPerfil();
   if(id==="v-tareas")loadPendientes();
   refreshLists();
@@ -399,10 +403,14 @@ function listPanel(eb,title,sub,inputId,ph,selectHtml,btnId,listId,btnClass){
   return `<div class="eyebrow">${eb}</div><h3>${title}</h3><p class="sub">${sub}</p>
   <div class="card"><div class="addrow"><input id="${inputId}" placeholder="${ph}" autocomplete="off">${selectHtml}<button class="btn ${btnClass==='bordo'?'bordo':''}" id="${btnId}">Sumar</button></div><div id="${listId}"></div></div>`;
 }
-function guionPanel(frases,preg){
+function guionPanel(frases,preg,msgs){
   let r=`<div class="eyebrow">Cómo hablar</div><h3>Guion sin quedar pesado</h3><p class="sub">No rogamos: ofrecemos una solución. Conectar, detectar, aportar valor, proponer el próximo paso.</p>`;
   r+=`<div class="card"><h4>Frases frías → frases profesionales</h4>`+frases.map(f=>`<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap"><div style="flex:1;min-width:200px"><span class="tag t-bordo">Evitar</span><div style="font-size:14px;color:var(--muted);margin-top:5px">"${f[0]}"</div></div><div style="flex:1;min-width:200px"><span class="tag t-green">Decir</span><div style="font-size:14px;color:var(--ink);margin-top:5px">"${f[1]}"</div></div></div>`).join("")+`</div>`;
   r+=`<div class="card"><h4>Preguntas clave</h4>`+preg.map(q=>`<div style="padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--ink)">${q}</div>`).join("")+`</div>`;
+  if(msgs&&msgs.length){
+    r+=`<div class="eyebrow" style="margin-top:24px">Listos para enviar</div><h3 style="font-size:19px">Mensajes</h3><p class="sub">Tocá Copiar, pegá en WhatsApp e Instagram y reemplazá lo que está entre corchetes.</p>`;
+    r+=msgs.map((m,i)=>`<div class="msg ${m[0]==='bordo'?'bordo':''}"><span class="ml">${m[1]}</span><button class="copy" data-copy="${i}">Copiar</button><p>${m[2]}</p></div>`).join("");
+  }
   return r;
 }
 function msgPanel(msgs){
@@ -436,8 +444,11 @@ function perfilPanel(){
   <div id="pfmsg" style="font-size:13px;color:var(--muted);margin-top:6px"></div></div>`;
 }
 function visitaPanel(){
-  return `<div class="eyebrow">Coordiná y registrá</div><h3>Visitas</h3><p class="sub">Cargá cada visita coordinada. Seguila dentro de las 24 hs.</p>
-  <div class="card"><div class="addrow"><input id="vi-cli" placeholder="Cliente" autocomplete="off"><input id="vi-prop" placeholder="Propiedad / dirección" autocomplete="off"></div><div class="addrow"><input id="vi-fecha" placeholder="Día y hora (ej: Mar 18hs)" autocomplete="off"><select id="vi-estado"><option>A coordinar</option><option>Coordinada</option><option>Realizada</option><option>Reprogramada</option><option>No asistió</option></select><button class="btn bordo" id="addvi">Sumar visita</button></div><div id="vilist"></div></div>`;
+  return `<div class="eyebrow">Coordiná y avisá</div><h3>Visitas</h3><p class="sub">Completá los datos y "Sumar visita" abre WhatsApp de la inmobiliaria con el aviso listo para enviar.</p>
+  <div class="card"><div class="addrow"><input id="vi-cli" placeholder="Nombre del cliente" autocomplete="off"><input id="vi-tel" placeholder="Teléfono del cliente" autocomplete="off"></div>
+  <div class="addrow"><input id="vi-prop" placeholder="Ubicación del inmueble a visitar" autocomplete="off"></div>
+  <div class="addrow"><input id="vi-dia" placeholder="Día (ej: Martes 18/06)" autocomplete="off"><input id="vi-hora" placeholder="Hora (ej: 18:00)" autocomplete="off"><button class="btn bordo" id="addvi">Sumar visita</button></div>
+  <div id="vimsg" style="font-size:13px;color:var(--muted);margin-bottom:8px"></div><div id="vilist"></div></div>`;
 }
 function stockPanel(){
   let r=`<div class="eyebrow">Stock real del CRM</div><h3>Propiedades en venta</h3><p class="sub">Elegí el tipo y afiná con los filtros. Se lee del CRM en vivo.</p>`;
@@ -564,6 +575,21 @@ function loadLeadsForPerfil(){
   if(!LEADS){loadLeads();} else {fillPerfilSelect();}
   if(!SHEET_URL){const m=$('#pfmsg');if(m)m.textContent="El perfil se guarda en el CRM cuando conectes la dirección del Apps Script.";}
 }
+function fillPerfilFromLead(id){
+  const l=LEADS&&LEADS.find(x=>x.id===id);
+  const m=$('#pfmsg');
+  const set=(sel,val)=>{const e=$(sel);if(e)e.value=val||"";};
+  if(!l||!l.perfil){set('#pf-busca','');set('#pf-tipo','');set('#pf-presup','');set('#pf-pago','Contado');set('#pf-obs','');
+    if(m&&id){m.textContent="Este cliente todavía no tiene perfil cargado. Completalo abajo.";m.style.color="var(--muted)";}
+    return;}
+  const p=l.perfil;
+  set('#pf-busca',p.busca||p.zona||'');
+  set('#pf-tipo',p.tipo||'');
+  set('#pf-presup',p.presup||'');
+  set('#pf-pago',p.pago||'Contado');
+  set('#pf-obs',p.obs||'');
+  if(m){m.textContent="✓ Perfil cargado desde el CRM. Podés editarlo y volver a guardar.";m.style.color="var(--ok)";}
+}
 function pendientesPanel(){
   return `<div class="eyebrow">Lo que falta resolver</div><h3>Tareas pendientes</h3><p class="sub">Acá ves el trabajo que quedó sin completar: leads que faltan contactar y clientes contactados sin perfil cargado. Resolvelos y desaparecen solos.</p>
   <div id="pendlist"><div class="empty">Cargando pendientes…</div></div>`;
@@ -597,6 +623,17 @@ function renderPendientes(){
     return `<div class="leadrow"><span class="alertmark sm">!</span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.estado||'')} · falta zona/presupuesto</span></div><div class="lact"><button class="btn ghost gotoperfil" data-id="${esc(l.id)}" style="padding:6px 12px;font-size:13px">Completar</button></div></div>`;
   }).join("");}
   h+=`</div>`;
+  // bloque 3: dormidos
+  const dormidos=sortLeads(LEADS.filter(l=>(l.estado||"").trim()==="Dormido"));
+  h+=`<div class="card"><h4>Clientes dormidos ${dormidos.length?`<span class="cnt cnt-bordo">${dormidos.length}</span>`:`<span class="cnt cnt-ok">0</span>`}</h4>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Clientes sin movimiento hace tiempo. Un último intento puede reactivarlos.</p>`;
+  if(!dormidos.length){h+=`<p style="font-size:14px;color:var(--ok)">✓ No tenés clientes dormidos.</p>`;}
+  else{h+=dormidos.map(l=>{
+    const wa=l.tel?`<a href="${waRecontacto(l)}" target="_blank" rel="noopener" class="lead-wa recontactar" data-rid="${esc(l.id)}" style="background:#888780">Reactivar</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
+    const dias=l.dias>=0?l.dias+" días":"";
+    return `<div class="leadrow"><span class="dot" style="background:#888780"></span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>Dormido · ${dias}</span></div><div class="lact">${wa}</div></div>`;
+  }).join("");}
+  h+=`</div>`;
   list.innerHTML=h;
 }
 function setEstado(id,val){
@@ -605,6 +642,71 @@ function setEstado(id,val){
   if(!SHEET_URL||!current)return;
   fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
     body:JSON.stringify({accion:"estado",id:id,valor:val,asesor:current})}).catch(function(){});
+}
+
+/* ============ SUGERENCIAS ============ */
+let OMITIDOS={};   // ids omitidos en esta sesión
+function esPrioridad(l){return !!(l.perfil&&(l.perfil.busca||l.perfil.zona)&&l.perfil.presup);}
+function esRecontactar(l){
+  const est=(l.estado||"").trim();
+  if(est==="Perdido"||est==="Dormido")return false;
+  const contactadoViejo = est==="Contactado" && l.dias>=3;
+  const sinPerfil = !esNoContactado(l) && !l.tienePerfil;
+  return contactadoViejo || sinPerfil;
+}
+function sugerenciasCount(){
+  if(mode!=="venta"||!LEADS)return 0;
+  return LEADS.filter(l=>!OMITIDOS[l.id]&&(esPrioridad(l)||esRecontactar(l))).length;
+}
+function sugerenciasPanel(){
+  return `<div class="eyebrow">El sistema te marca dónde enfocarte</div><h3>Sugerencias</h3><p class="sub">Clientes potenciales para impulsar y clientes a recontactar antes de que se enfríen.</p>
+  <div id="suglist"><div class="empty">Cargando sugerencias…</div></div>`;
+}
+function loadSugerencias(){
+  const list=$('#suglist'); if(!list)return;
+  if(!SHEET_URL){list.innerHTML=empty("Las sugerencias se activan cuando conectes el CRM.");return;}
+  if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus sugerencias.");return;}
+  if(LEADS){renderSugerencias();return;}
+  list.innerHTML=empty("Cargando sugerencias…");
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderSugerencias();renderNav();}).catch(()=>{list.innerHTML=empty("No se pudieron leer las sugerencias. Revisá la conexión.");});
+}
+function renderSugerencias(){
+  const list=$('#suglist'); if(!list)return;
+  if(!LEADS){list.innerHTML=empty("Sin datos.");return;}
+  const prioridades=sortLeads(LEADS.filter(l=>!OMITIDOS[l.id]&&esPrioridad(l)));
+  const recontactar=sortLeads(LEADS.filter(l=>!OMITIDOS[l.id]&&esRecontactar(l)&&!esPrioridad(l)));
+  let h="";
+  h+=`<div class="card"><h4>Prioridades ${prioridades.length?`<span class="alertmark sm" style="background:#1d9e75">!</span>`:`<span class="cnt cnt-ok">0</span>`}</h4>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Clientes con perfil completo: alto potencial. Acompañalos en la búsqueda.</p>`;
+  if(!prioridades.length){h+=`<p style="font-size:14px;color:var(--muted)">No hay prioridades por ahora.</p>`;}
+  else{h+=prioridades.map(l=>{
+    const wa=l.tel?`<a href="${waAyuda(l)}" target="_blank" rel="noopener" class="lead-wa">Ayudar en la búsqueda</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
+    const det=[l.perfil&&(l.perfil.busca||l.perfil.zona),l.perfil&&l.perfil.presup].filter(Boolean).join(" · ");
+    return `<div class="leadrow"><span class="dot" style="background:#1d9e75"></span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(det)||esc(l.propiedad)}</span></div><div class="lact">${wa}</div></div>`;
+  }).join("");}
+  h+=`</div>`;
+  h+=`<div class="card"><h4>Recontactar ${recontactar.length?`<span class="alertmark sm" style="background:#ef9f27">!</span>`:`<span class="cnt cnt-ok">0</span>`}</h4>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Contactados hace +3 días sin avance, o sin perfil cargado. Recontactalos antes de que se enfríen.</p>`;
+  if(!recontactar.length){h+=`<p style="font-size:14px;color:var(--muted)">No hay clientes para recontactar.</p>`;}
+  else{h+=recontactar.map(l=>{
+    const wa=l.tel?`<a href="${waRecontacto(l)}" target="_blank" rel="noopener" class="lead-wa recontactar" data-rid="${esc(l.id)}" style="background:#ef9f27">Recontactar</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
+    const dias=l.dias>=0?l.dias+" días":"sin fecha";
+    return `<div class="leadrow"><span class="dot" style="background:#ef9f27"></span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.estado||'')} · ${dias}</span></div><div class="lact">${wa}<button class="btn ghost omitir" data-oid="${esc(l.id)}" style="padding:6px 12px;font-size:13px;color:var(--muted)">Omitir</button></div></div>`;
+  }).join("");}
+  h+=`</div>`;
+  list.innerHTML=h;
+}
+function waAyuda(l){
+  if(!l.tel)return"";
+  const nombre=(l.nombre||"").split(/\s+/)[0]||"";
+  const msg="Hola "+nombre+", ¿cómo le va? Soy "+(current||"")+" de Lurati Inmobiliaria. Estuve revisando lo que está buscando y quiero acompañarlo personalmente para encontrar la propiedad ideal. ¿Coordinamos para que le muestre algunas opciones que pueden interesarle?";
+  return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
+}
+function waRecontacto(l){
+  if(!l.tel)return"";
+  const nombre=(l.nombre||"").split(/\s+/)[0]||"";
+  const msg="Hola "+nombre+", ¿cómo le va? Soy "+(current||"")+" de Lurati. ¿Sigue en la búsqueda de una propiedad? Tengo novedades que pueden interesarle.";
+  return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function savePerfil(){
   const id=$('#pf-lead').value;
@@ -692,12 +794,23 @@ document.addEventListener('click',async e=>{
   // leads
   if(t.id==='reloadleads'){LEADS=null;loadLeads(true);}
   if(t.classList&&t.classList.contains('lead-wa')&&t.dataset.waid){const l=LEADS&&LEADS.find(x=>x.id===t.dataset.waid);if(l&&esNoContactado(l)&&(l.estado||"").trim()!=="Perdido"){setEstado(l.id,"Contactado");}}
-  if(t.classList&&t.classList.contains('gotoperfil')){const id=t.dataset.id;go('v-perfil');setTimeout(()=>{const sel=$('#pf-lead');if(sel){sel.value=id;}},60);}
+  if(t.classList&&t.classList.contains('recontactar')&&t.dataset.rid){setEstado(t.dataset.rid,"Seguimiento");setTimeout(()=>{renderSugerencias();renderNav();},80);}
+  if(t.classList&&t.classList.contains('omitir')&&t.dataset.oid){OMITIDOS[t.dataset.oid]=true;renderSugerencias();renderNav();}
+  if(t.classList&&t.classList.contains('gotoperfil')){const id=t.dataset.id;go('v-perfil');setTimeout(()=>{const sel=$('#pf-lead');if(sel){sel.value=id;fillPerfilFromLead(id);}},60);}
   if(t.id==='savepf'){savePerfil();}
   // perfiles
   // (perfil ahora se guarda con #savepf, leads se leen del CRM)
   // visitas
-  if(t.id==='addvi'){if(needName())return;const c=$('#vi-cli').value.trim();if(!c)return;const o={cli:c,prop:$('#vi-prop').value.trim(),fecha:$('#vi-fecha').value.trim(),estado:$('#vi-estado').value};state.visitas.push(o);$('#vi-cli').value='';$('#vi-prop').value='';$('#vi-fecha').value='';renderVisitas();renderBoard();save();logEvent("Venta","Visita",c+" — "+o.prop,o.fecha,o.estado);}
+  if(t.id==='addvi'){if(needName())return;
+    const c=$('#vi-cli').value.trim(); if(!c){$('#vi-cli').focus();return;}
+    const tel=$('#vi-tel').value.trim(), prop=$('#vi-prop').value.trim(), dia=$('#vi-dia').value.trim(), hora=$('#vi-hora').value.trim();
+    const o={cli:c,prop:prop,fecha:(dia+" "+hora).trim(),estado:"Coordinada"};
+    state.visitas.push(o); $('#vi-cli').value='';$('#vi-tel').value='';$('#vi-prop').value='';$('#vi-dia').value='';$('#vi-hora').value='';
+    renderVisitas();renderBoard();save();logEvent("Venta","Visita",c+" — "+prop,o.fecha,"Coordinada");
+    const msg="*VISITA COORDINADA*\nVendedor: "+(current||"")+"\nInmueble: "+(prop||"-")+"\nCliente: "+c+"\nTeléfono cliente: "+(tel||"-")+"\nDía: "+(dia||"-")+"\nHora: "+(hora||"-");
+    const vm=$('#vimsg'); if(vm){vm.textContent="✓ Visita registrada. Se abrió WhatsApp de la inmobiliaria para enviar el aviso.";vm.style.color="var(--ok)";}
+    window.open('https://wa.me/'+INMO_WA+'?text='+encodeURIComponent(msg),'_blank');
+  }
   if(t.dataset.dvi!==undefined){state.visitas.splice(+t.dataset.dvi,1);renderVisitas();renderBoard();save();}
   // tareas
   if(t.closest&&t.closest('.task')){const node=t.closest('.task');if(needName())return;const i=node.dataset.task;const bag=mode==="venta"?state.tasksV:state.tasksC;bag[i]=!bag[i];node.classList.toggle('checked',bag[i]);renderBoard();save();if(bag[i])logEvent(mode==="venta"?"Venta":"Captación","Tarea completada",(mode==="venta"?TASKS_V:TASKS_C)[i],"","✓");}
@@ -717,11 +830,12 @@ document.addEventListener('change',e=>{
   if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(e.target.dataset.id,e.target.value);}
   if(e.target.id==='leadfilter')renderLeadsCRM();
   if(e.target.id==='pf-filter')fillPerfilSelect();
+  if(e.target.id==='pf-lead')fillPerfilFromLead(e.target.value);
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;const a=document.activeElement.id;
   if(a==='c-name')$('#addc').click(); if(a==='o-desc')$('#addo').click();
-  if(a==='vi-cli'||a==='vi-prop'||a==='vi-fecha')$('#addvi').click();
+  if(a==='vi-cli'||a==='vi-tel'||a==='vi-prop'||a==='vi-dia'||a==='vi-hora')$('#addvi').click();
 });
 
 function switchMode(m){
