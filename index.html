@@ -184,9 +184,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
   </div>
 
   <div class="modes" id="modes">
-    <div class="mode m-capt active" data-mode="captacion"><b>Captación</b><span>Sumar propiedades al stock</span></div>
-    <div class="mode m-venta" data-mode="venta"><b>Venta</b><span>Atender y cerrar clientes</span></div>
-    <div class="mode m-props" data-mode="props"><b>Propiedades en venta</b><span>Consultar el stock</span></div>
+    <div class="mode m-venta active" data-mode="venta"><b>Venta</b><span id="sub-venta">—</span></div>
+    <div class="mode m-capt" data-mode="captacion"><b>Captación</b><span id="sub-captacion">—</span></div>
+    <div class="mode m-props" data-mode="props"><b>Propiedades en venta</b><span id="sub-props">—</span></div>
   </div>
 
   <div class="board" id="boardWrap">
@@ -214,7 +214,7 @@ const SHEET_URL = "https://script.google.com/macros/s/AKfycbygRzmQntmyoRSgne5xg3
    la ingresan una vez por dispositivo. Para cambiarla a futuro,
    editá solo esta línea y volvé a subir el archivo.
    ============================================================ */
-const ACCESS_KEY = "Lurati2026";
+const ACCESS_KEY = "Argentina2026";
 const VENDORS = ["Ariel","Barbara","Carolina","Daiana","Flavia","Franco","Gabriela","Julio","Maximiliano","Pablo","Pedro","Roberto","Stefano","Virginia","Invitado"];
 const REPORT_WA = "5493415472349";
 const INMO_WA = "5493415975972";   // WhatsApp de la inmobiliaria para avisos de visita
@@ -268,11 +268,11 @@ const PTYPES=["Todos","Depto","Casa","Lote","Local","Galpón","Cochera","Otro"];
 /* ============ ESTRUCTURA DE SECCIONES ============ */
 const SECTIONS={
   captacion:{color:"#004d44",nav:[["c-plan","Plan"],["c-contactos","Contactos"],["c-oport","Oportunidades"],["c-guion","Guion"],["c-msg","Mensajes"],["c-obj","Objeciones"],["c-check","Checklist"]]},
-  venta:{color:"#7e2b26",nav:[["v-plan","Plan"],["v-leads","Leads"],["v-sugerencias","Sugerencias"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-obj","Objeciones"],["v-tareas","Tareas"]]},
+  venta:{color:"#7e2b26",nav:[["v-leads","Leads"],["v-sugerencias","Sugerencias"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-obj","Objeciones"],["v-tareas","Tareas"],["v-plan","Plan"]]},
   props:{color:"#128f8b",nav:[["p-stock","Stock"]]}
 };
-let mode="captacion";
-let activeNav="c-plan";
+let mode="venta";
+let activeNav="v-leads";
 
 const $=s=>document.querySelector(s);
 const tick='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -281,6 +281,30 @@ function normTxt(s){return String(s||"").toLowerCase().replace(/[áàä]/g,"a").
 function initials(n){return String(n).trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"·";}
 
 /* ============ TABLERO ============ */
+function updateSubtitles(){
+  // VENTA: 1) leads nuevos sin contestar  2) sugerencias pendientes  3) al día
+  const sv=$('#sub-venta');
+  if(sv){
+    if(!LEADS){sv.textContent="Atendé y cerrá clientes";}
+    else{
+      const nuevos=LEADS.filter(l=>esNoContactado(l)&&(l.estado||"").trim()!=="Perdido").length;
+      const recontactar=LEADS.filter(l=>!OMITIDOS[l.id]&&esRecontactar(l)&&!esPrioridad(l)).length;
+      if(nuevos>0)sv.textContent="Leads pendientes";
+      else if(recontactar>0)sv.textContent="Sugerencias pendientes";
+      else sv.textContent="¡Vamos por más!";
+    }
+  }
+  // CAPTACIÓN: por oportunidades detectadas (0 / pocas / meta 3+)
+  const sc=$('#sub-captacion');
+  if(sc){
+    const op=state.opps?state.opps.length:0;
+    if(op===0)sc.textContent="¡Buscá las oportunidades!";
+    else if(op<3)sc.textContent="Estás cerca, seguí pensando";
+    else sc.textContent="¡Este es el camino!";
+  }
+  // PROPIEDADES: fijo
+  const sp=$('#sub-props'); if(sp)sp.textContent="¡Apuntemos a más!";
+}
 function renderBoard(){
   let metrics, title;
   if(mode==="captacion"){
@@ -329,6 +353,7 @@ function renderBoard(){
     else msg=`<span><b>${current}</b>: ${met} de ${metrics.length} metas. El que más conversaciones genera, más oportunidades encuentra.</span>`;
   }
   $('#pulse').innerHTML=msg;
+  updateSubtitles();
 }
 
 /* ============ NAV ============ */
@@ -365,7 +390,7 @@ function renderPanel(){
   else if(id==="c-obj"){h=objPanel(OBJS_C);}
   else if(id==="c-check"){h=checkPanel("Antes de cargar al CRM","Checklist de captación",CHECK_C);}
   // -------- VENTA --------
-  else if(id==="v-plan"){h=plan("El recorrido","Plan de venta","Respuesta rápida, perfilado, alternativas, visitas y reunión con Julio. Consulta no cargada = consulta perdida.",PHASES_V,"El primer asesor que responde con criterio se queda con el cliente. Ganate la confianza del cliente!");}
+  else if(id==="v-plan"){h=plan("El recorrido","Plan de venta","Respuesta rápida, perfilado, alternativas, visitas y reunión con Julio. Consulta no cargada = consulta perdida.",PHASES_V,"El primer asesor que responde con criterio se queda con el cliente.");}
   else if(id==="v-leads"){h=leadsPanel();}
   else if(id==="v-sugerencias"){h=sugerenciasPanel();}
   else if(id==="v-perfil"){h=perfilPanel();}
@@ -523,9 +548,9 @@ function waLink(l){
   else if(prop)frase+=" por la propiedad de calle "+prop;
   if(dorms)frase+=", compuesta de "+dorms;
   frase+=".";
-  const msg="Hola "+nombre+", cómo le va?\n"+
+  const msg="Hola "+nombre+", ¿cómo le va?\n"+
     "Mi nombre es "+(current||"")+", de Lurati Inmobiliaria.\n"+
-    frase+" Por sus características, es una buena oportunidad tanto para vivienda propia como para inversión. Qué día le queda cómodo para coordinar una visita?";
+    frase+" Por sus características, es una buena alternativa tanto para vivienda propia como para inversión. ¿Qué día le queda cómodo para coordinar una visita?";
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function loadLeads(force){
@@ -668,7 +693,7 @@ function loadSugerencias(){
   if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus sugerencias.");return;}
   if(LEADS){renderSugerencias();return;}
   list.innerHTML=empty("Cargando sugerencias…");
-  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderSugerencias();renderNav();}).catch(()=>{list.innerHTML=empty("No se pudieron leer las sugerencias. Revisá la conexión.");});
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderSugerencias();renderNav();updateSubtitles();}).catch(()=>{list.innerHTML=empty("No se pudieron leer las sugerencias. Revisá la conexión.");});
 }
 function renderSugerencias(){
   const list=$('#suglist'); if(!list)return;
@@ -699,13 +724,13 @@ function renderSugerencias(){
 function waAyuda(l){
   if(!l.tel)return"";
   const nombre=(l.nombre||"").split(/\s+/)[0]||"";
-  const msg="Hola "+nombre+". Soy "+(current||"")+" de Lurati Inmobiliaria. Estuve analizando lo que está buscando y quiero acompañarlo personalmente para encontrar la oportunidad ideal. Coordinamos para que le muestre algunas opciones que pueden interesarle?";
+  const msg="Hola "+nombre+", ¿cómo le va? Soy "+(current||"")+" de Lurati Inmobiliaria. Estuve revisando lo que está buscando y quiero acompañarlo personalmente para encontrar la propiedad ideal. ¿Coordinamos para que le muestre algunas opciones que pueden interesarle?";
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function waRecontacto(l){
   if(!l.tel)return"";
   const nombre=(l.nombre||"").split(/\s+/)[0]||"";
-  const msg="Hola "+nombre+". Soy "+(current||"")+" de Lurati. Sigue en la búsqueda de una propiedad? Tengo novedades que pueden interesarle.";
+  const msg="Hola "+nombre+", ¿cómo le va? Soy "+(current||"")+" de Lurati. ¿Sigue en la búsqueda de una propiedad? Tengo novedades que pueden interesarle.";
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function savePerfil(){
