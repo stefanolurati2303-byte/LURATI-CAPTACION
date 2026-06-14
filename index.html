@@ -214,7 +214,7 @@ const SHEET_URL = "https://script.google.com/macros/s/AKfycbygRzmQntmyoRSgne5xg3
    la ingresan una vez por dispositivo. Para cambiarla a futuro,
    editá solo esta línea y volvé a subir el archivo.
    ============================================================ */
-const ACCESS_KEY = "Argentina2026";
+const ACCESS_KEY = "Lurati2026";
 const VENDORS = ["Ariel","Barbara","Carolina","Daiana","Flavia","Franco","Gabriela","Julio","Maximiliano","Pablo","Pedro","Roberto","Stefano","Virginia","Invitado"];
 const REPORT_WA = "5493415472349";
 const INMO_WA = "5493415975972";   // WhatsApp de la inmobiliaria para avisos de visita
@@ -267,7 +267,7 @@ const PTYPES=["Todos","Depto","Casa","Lote","Local","Galpón","Cochera","Otro"];
 
 /* ============ ESTRUCTURA DE SECCIONES ============ */
 const SECTIONS={
-  captacion:{color:"#004d44",nav:[["c-plan","Plan"],["c-contactos","Contactos"],["c-oport","Oportunidades"],["c-guion","Guion"],["c-msg","Mensajes"],["c-obj","Objeciones"],["c-check","Checklist"]]},
+  captacion:{color:"#004d44",nav:[["c-trabajo","Contactos y oportunidades"],["c-guion","Guion"],["c-msg","Mensajes"],["c-obj","Objeciones"],["c-check","Checklist"],["c-plan","Plan"]]},
   venta:{color:"#7e2b26",nav:[["v-leads","Leads"],["v-sugerencias","Sugerencias"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-obj","Objeciones"],["v-tareas","Tareas"],["v-plan","Plan"]]},
   props:{color:"#128f8b",nav:[["p-stock","Stock"]]}
 };
@@ -383,8 +383,7 @@ function renderPanel(){
   let h="";
   // -------- CAPTACIÓN --------
   if(id==="c-plan"){h=plan("El recorrido","Plan de captación","De esperar consultas a generar oportunidades. Una conversación ya es el primer paso.",PHASES_C,"Lurati no necesita vendedores que esperen consultas. Necesita asesores que generen oportunidades.");}
-  else if(id==="c-contactos"){h=listPanel("Tu materia prima","Mapa de contactos","Anotá sin filtrar a quién podés activar. Marcá Contactado cuando ya le escribiste.","c-name","Nombre del contacto",srcSelect("c-src"),"addc","clist");}
-  else if(id==="c-oport"){h=listPanel("Señales reales","Oportunidades detectadas","Una propiedad vacía, alguien que heredó, un dueño cansado de inquilinos. Registrala antes de que se enfríe.","o-desc","¿Qué detectaste? Ej: depto vacío en Pellegrini 1200",oppSelect("o-type"),"addo","olist","bordo");}
+  else if(id==="c-trabajo"){h=trabajoPanel();}
   else if(id==="c-guion"){h=guionPanel(FRASES_C,PREG_C);}
   else if(id==="c-msg"){h=msgPanel(MSGS_C);}
   else if(id==="c-obj"){h=objPanel(OBJS_C);}
@@ -428,6 +427,20 @@ function listPanel(eb,title,sub,inputId,ph,selectHtml,btnId,listId,btnClass){
   return `<div class="eyebrow">${eb}</div><h3>${title}</h3><p class="sub">${sub}</p>
   <div class="card"><div class="addrow"><input id="${inputId}" placeholder="${ph}" autocomplete="off">${selectHtml}<button class="btn ${btnClass==='bordo'?'bordo':''}" id="${btnId}">Sumar</button></div><div id="${listId}"></div></div>`;
 }
+function trabajoPanel(){
+  return `<div class="eyebrow">Tu trabajo de captación</div><h3>Contactos y oportunidades</h3><p class="sub">Anotá a quién podés activar, y cargá las oportunidades que detectás. Las oportunidades se guardan en el CRM.</p>
+  <div class="card"><h4>Mapa de contactos</h4><p style="font-size:13px;color:var(--muted);margin-bottom:12px">A quién podés contactar. Marcá Contactado cuando ya le escribiste. (Se guarda en este dispositivo.)</p>
+    <div class="addrow"><input id="c-name" placeholder="Nombre del contacto" autocomplete="off">${srcSelect("c-src")}<button class="btn" id="addc">Sumar</button></div><div id="clist"></div></div>
+  <div class="card"><h4>Oportunidades detectadas</h4><p style="font-size:13px;color:var(--muted);margin-bottom:12px">Una propiedad vacía, una herencia, un dueño cansado de alquilar. Cargá los datos y se guarda en el CRM.</p>
+    <div class="addrow">${vinculoSelect("op-vinculo")}<input id="op-nombre" placeholder="Nombre del contacto" autocomplete="off"></div>
+    <div class="addrow"><input id="op-tel" placeholder="Teléfono" autocomplete="off">${tipoPropSelect("op-tipo")}</div>
+    <div class="addrow"><input id="op-zona" placeholder="Dirección / Zona" autocomplete="off"></div>
+    <div class="addrow"><input id="op-obs" placeholder="Observaciones (lo que detectaste)" autocomplete="off"><button class="btn bordo" id="addop">Cargar al CRM</button></div>
+    <div id="opmsg" style="font-size:13px;color:var(--muted);margin-top:4px"></div>
+    <div id="olist" style="margin-top:8px"></div></div>`;
+}
+function vinculoSelect(id){return `<select id="${id}"><option value="">Vínculo…</option><option>Familiar</option><option>Amigo/conocido</option><option>Vecino</option><option>Ex cliente</option><option>Profesional</option><option>Comerciante</option><option>Propietario directo</option><option>Otro</option></select>`;}
+function tipoPropSelect(id){return `<select id="${id}"><option value="">Tipo propiedad…</option><option>Depto</option><option>Casa</option><option>Lote/Terreno</option><option>Local</option><option>Galpón</option><option>Cochera</option><option>Campo</option><option>Otro</option></select>`;}
 function guionPanel(frases,preg,msgs){
   let r=`<div class="eyebrow">Cómo hablar</div><h3>Guion sin quedar pesado</h3><p class="sub">No rogamos: ofrecemos una solución. Conectar, detectar, aportar valor, proponer el próximo paso.</p>`;
   r+=`<div class="card"><h4>Frases frías → frases profesionales</h4>`+frases.map(f=>`<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap"><div style="flex:1;min-width:200px"><span class="tag t-bordo">Evitar</span><div style="font-size:14px;color:var(--muted);margin-top:5px">"${f[0]}"</div></div><div style="flex:1;min-width:200px"><span class="tag t-green">Decir</span><div style="font-size:14px;color:var(--ink);margin-top:5px">"${f[1]}"</div></div></div>`).join("")+`</div>`;
@@ -493,6 +506,7 @@ function renderSubfilter(){
   if(usaAmb){h+=`<label>Ambientes</label><select id="f-dorm"><option value="">Todos</option><option>1</option><option>2</option><option>3+</option></select>`;}
   if(usaBanos){h+=`<label>Baños</label><select id="f-banos"><option value="">Todos</option><option>1</option><option>2</option><option>3+</option></select>`;}
   h+=`<label>Precio (USD)</label><select id="f-precio"><option value="">Todos</option><option value="0-50000">Hasta 50.000</option><option value="50000-100000">50.000 a 100.000</option><option value="100000-200000">100.000 a 200.000</option><option value="200000-0">Más de 200.000</option></select>`;
+  h+=`<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="f-credito" style="width:15px;height:15px;cursor:pointer"> Apto crédito</label>`;
   sf.innerHTML=h;
 }
 function reportCard(){
@@ -759,16 +773,19 @@ function renderStock(){
   const dorm=$('#f-dorm')?$('#f-dorm').value:"";
   const ban=$('#f-banos')?$('#f-banos').value:"";
   const prec=$('#f-precio')?$('#f-precio').value:"";
+  const credito=$('#f-credito')?$('#f-credito').checked:false;
   let items=STOCK.filter(p=>matchType(p.tipo,stockType));
   if(dorm){items=items.filter(p=>{const d=parseInt(p.dorms)||0; return dorm==="4+"?d>=4:(dorm==="3+"?d>=3:String(d)===dorm);});}
   if(ban){items=items.filter(p=>{const b=parseInt(p.banos)||0; return ban==="3+"?b>=3:String(b)===ban;});}
   if(prec){const[lo,hi]=prec.split("-").map(Number);items=items.filter(p=>{const v=Number(String(p.valor).replace(/[^\d.]/g,""))||0; if(!v)return false; if(hi===0)return v>=lo; return v>=lo&&v<hi;});}
+  if(credito){items=items.filter(p=>p.aptoCredito);}
   if(!items.length){list.innerHTML=empty("No hay propiedades publicadas con ese filtro.");return;}
   list.innerHTML=items.map(p=>{
     const val=p.valor?("USD "+Number(String(p.valor).replace(/[^\d.]/g,"")).toLocaleString("es-AR")):"Consultar";
     const meta=[p.zona,p.m2,(p.dorms?p.dorms+" amb/dorm":""),(p.banos?p.banos+" baños":"")].filter(Boolean).join(" · ");
     const link=p.link?`<a href="${esc(p.link)}" target="_blank" rel="noopener">Ver ficha</a>`:"";
-    return `<div class="prop"><div class="pinfo"><b>${esc(p.dir)}</b><span>${esc(meta)}</span></div><div class="pval"><div class="v">${val}</div>${link}</div></div>`;
+    const ac=p.aptoCredito?`<span class="tag t-green" style="font-size:11px;margin-left:6px">Apto crédito</span>`:"";
+    return `<div class="prop"><div class="pinfo"><b>${esc(p.dir)}${ac}</b><span>${esc(meta)}</span></div><div class="pval"><div class="v">${val}</div>${link}</div></div>`;
   }).join("");
 }
 function matchType(tipo,sel){
@@ -814,7 +831,18 @@ document.addEventListener('click',async e=>{
   if(t.dataset.tg!==undefined){const i=+t.dataset.tg;state.contacts[i].contacted=!state.contacts[i].contacted;renderContacts();renderBoard();save();if(state.contacts[i].contacted)logEvent("Captación","Contacto activado",state.contacts[i].name,state.contacts[i].src,"Contactado");}
   if(t.dataset.dc!==undefined){state.contacts.splice(+t.dataset.dc,1);renderContacts();renderBoard();save();}
   // oportunidades
-  if(t.id==='addo'){if(needName())return;const d=$('#o-desc').value.trim();if(!d)return;const tp=$('#o-type').value;state.opps.push({desc:d,type:tp});$('#o-desc').value='';$('#o-desc').focus();renderOpps();renderBoard();save();logEvent("Captación","Nueva oportunidad",d,tp,"");}
+  if(t.id==='addop'){if(needName())return;
+    const nombre=$('#op-nombre').value.trim();
+    const vinculo=$('#op-vinculo').value, tel=$('#op-tel').value.trim(), tipo=$('#op-tipo').value, zona=$('#op-zona').value.trim(), obs=$('#op-obs').value.trim();
+    if(!nombre&&!zona){const m=$('#opmsg');if(m){m.textContent="Cargá al menos el nombre o la dirección/zona.";m.style.color="var(--bordo)";}return;}
+    state.opps.push({desc:(nombre||zona)+(tipo?" · "+tipo:""),type:vinculo||"Oportunidad"});
+    renderOpps();renderBoard();save();
+    if(SHEET_URL){fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({accion:"oportunidad",asesor:current,vinculo:vinculo,nombre:nombre,telefono:tel,tipoProp:tipo,zona:zona,obs:obs})}).catch(function(){});}
+    logEvent("Captación","Oportunidad",nombre+" - "+tipo,vinculo,zona);
+    $('#op-nombre').value='';$('#op-tel').value='';$('#op-zona').value='';$('#op-obs').value='';$('#op-vinculo').value='';$('#op-tipo').value='';
+    const m=$('#opmsg');if(m){m.textContent="✓ Oportunidad cargada al CRM.";m.style.color="var(--ok)";}
+  }
   if(t.dataset.do!==undefined){state.opps.splice(+t.dataset.do,1);renderOpps();renderBoard();save();}
   // leads
   if(t.id==='reloadleads'){LEADS=null;loadLeads(true);}
@@ -851,7 +879,7 @@ document.addEventListener('input',e=>{
   if(e.target.id==='leadsearch')renderLeadsCRM();
 });
 document.addEventListener('change',e=>{
-  if(e.target.id==='f-dorm'||e.target.id==='f-banos'||e.target.id==='f-precio')renderStock();
+  if(e.target.id==='f-dorm'||e.target.id==='f-banos'||e.target.id==='f-precio'||e.target.id==='f-credito')renderStock();
   if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(e.target.dataset.id,e.target.value);}
   if(e.target.id==='leadfilter')renderLeadsCRM();
   if(e.target.id==='pf-filter')fillPerfilSelect();
@@ -859,7 +887,8 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;const a=document.activeElement.id;
-  if(a==='c-name')$('#addc').click(); if(a==='o-desc')$('#addo').click();
+  if(a==='c-name')$('#addc').click();
+  if(a==='op-nombre'||a==='op-tel'||a==='op-zona'||a==='op-obs')$('#addop').click();
   if(a==='vi-cli'||a==='vi-tel'||a==='vi-prop'||a==='vi-dia'||a==='vi-hora')$('#addvi').click();
 });
 
