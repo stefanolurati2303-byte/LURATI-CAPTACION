@@ -577,9 +577,10 @@ function waLink(l){
   else if(prop)frase+=" por la propiedad de calle "+prop;
   if(dorms)frase+=", compuesta de "+dorms;
   frase+=".";
-  const msg="Hola "+nombre+", ¿cómo le va?\n"+
+  let msg="Hola "+nombre+", ¿cómo le va?\n"+
     "Mi nombre es "+(current||"")+", de Lurati Inmobiliaria.\n"+
     frase+" Por sus características, es una buena alternativa tanto para vivienda propia como para inversión. ¿Qué día le queda cómodo para coordinar una visita?";
+  if(l.link)msg+="\n\nFicha de la propiedad: "+l.link;
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 function loadLeads(force){
@@ -622,7 +623,10 @@ function fillPerfilSelect(){
   let arr=sortLeads(LEADS);
   if(soloFalta)arr=arr.filter(faltaPerfil);
   const prev=sel.value;
-  sel.innerHTML='<option value="">Elegí un lead…</option>'+arr.map(l=>`<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)})${faltaPerfil(l)?' · falta perfil':''}</option>`).join("");
+  sel.innerHTML='<option value="">Elegí un lead…</option>'+arr.map(l=>{
+    const pct=perfilCarga(l);
+    return `<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)}) · ${pct}% cargado</option>`;
+  }).join("");
   if(prev)sel.value=prev;
 }
 function loadLeadsForPerfil(){
@@ -813,14 +817,24 @@ let SG_SEL={};
 function sgKey(dir,unidad){ return normDirJS(dir)+(unidad?"|"+unidad:""); }
 function clienteActualSug(){ const sel=$('#sg-cli'); const id=sel?sel.value:""; return LEADS&&LEADS.find(x=>x.id===id); }
 
-// % de carga del perfil: cuántos campos clave están completos sobre el total
+// % de carga del perfil, ponderado por importancia comercial de cada campo
 function perfilCarga(l){
   if(!l||!l.perfil)return 0;
   const p=l.perfil;
-  const campos=[p.tipo,p.dorms,p.banos,p.m2,p.estado,p.antig,(p.zona||p.busca),p.presup,p.pago];
-  let llenos=0;
-  campos.forEach(c=>{ if(String(c||"").trim()!=="")llenos++; });
-  return Math.round(llenos/campos.length*100);
+  const pesos=[
+    [p.tipo,11],
+    [p.dorms,19],
+    [p.banos,7],
+    [p.m2,6],
+    [p.estado,10],
+    [p.antig,7],
+    [(p.zona||p.busca),10],
+    [p.presup,20],
+    [p.pago,10]
+  ];
+  let pct=0;
+  pesos.forEach(c=>{ if(String(c[0]||"").trim()!=="")pct+=c[1]; });
+  return pct;
 }
 function cargaColor(pct){
   if(pct>=70)return "background:#e8f1ef;color:#1d7a5f";   // verde: confiable
@@ -896,17 +910,19 @@ function matchUnidad(g,u,k,esUnidad){
 function matchMensaje(items){
   const l=clienteActualSug();
   const nombre=l?(l.nombre||"").split(/\s+/)[0]:"";
+  const unaSola=items.length===1;
   let m="Hola "+nombre+"! En la búsqueda que estamos haciendo para usted, encontramos ";
-  m+=items.length>1?"estas propiedades que se ajustan a lo que busca:\n\n":"esta propiedad que se ajusta a lo que busca:\n\n";
+  m+=unaSola?"esta propiedad que se ajusta a lo que busca:\n\n":"estas propiedades que se ajustan a lo que busca:\n\n";
   m+=items.map(it=>{ const g=it.g,u=it.u;
     let s="• "+(g.tipo||"")+" en "+g.dir+(u.unidad?" — Unidad "+u.unidad:"")+"\n";
     s+="  "+(g.dorms||"?")+" dorm"; if(u.m2)s+=" · "+u.m2+" m²"; s+=" · "+moneyJS(u.valor);
     if(String(u.cochera)==="true"||u.cochera===true)s+=" · con cochera";
     if(u.diferencial)s+=" · "+u.diferencial;
-    if(u.link)s+="\n  Ficha: "+u.link;
+    if(!unaSola && u.link)s+="\n  Ficha: "+u.link;
     return s;
   }).join("\n\n");
   m+="\n\n¿Le gustaría que coordinemos una visita?";
+  if(unaSola && items[0].u.link)m+="\n\nFicha de la propiedad: "+items[0].u.link;
   return m;
 }
 function matchWaLink(items){ const l=clienteActualSug(); if(!l||!l.tel)return "#"; return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(matchMensaje(items)); }
@@ -940,6 +956,7 @@ function savePerfil(){
   fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)}).catch(function(){});
   if(m){m.textContent="✓ Perfil guardado en el CRM para "+id;m.style.color="var(--ok)";}
   if(LEADS){const l=LEADS.find(x=>x.id===id); if(l){l.tienePerfil=true; l.perfil={busca:payload.busca,zona:payload.busca,tipo:payload.tipo,dorms:payload.dorms,banos:payload.banos,m2:payload.m2,estado:payload.estado,antig:payload.antig,presup:payload.presup,pago:payload.pago,obs:payload.obs};}}
+  fillPerfilSelect();
 }
 
 /* ============ STOCK (lee del CRM) ============ */
