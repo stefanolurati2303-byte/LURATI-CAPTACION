@@ -268,7 +268,7 @@ const PTYPES=["Todos","Depto","Casa","Lote","Local","Galpón","Cochera","Otro"];
 /* ============ ESTRUCTURA DE SECCIONES ============ */
 const SECTIONS={
   captacion:{color:"#004d44",nav:[["c-trabajo","Contactos y oportunidades"],["c-guion","Guion"],["c-msg","Mensajes"],["c-obj","Objeciones"],["c-check","Checklist"],["c-plan","Plan"]]},
-  venta:{color:"#7e2b26",nav:[["v-leads","Leads"],["v-sugerencias","Sugerencias"],["v-perfil","Perfil cliente"],["v-visitas","Visitas"],["v-guion","Guion"],["v-obj","Objeciones"],["v-tareas","Tareas"],["v-plan","Plan"]]},
+  venta:{color:"#7e2b26",nav:[["v-leads","LEAD"],["v-perfil","Perfil Cliente"],["v-sugerencias","Sugerencias"],["v-visitas","Visitas"],["v-guion","Guion"],["v-obj","Objeciones"],["v-tareas","Tareas"],["v-plan","Plan"]]},
   props:{color:"#128f8b",nav:[["p-stock","Stock"]]}
 };
 let mode="venta";
@@ -473,11 +473,26 @@ function leadsPanel(){
     <div id="leadslist"><div class="empty">Cargando tus leads…</div></div></div>`;
 }
 function perfilPanel(){
-  return `<div class="eyebrow">Conocé al cliente</div><h3>Perfil de cliente</h3><p class="sub">Elegí uno de tus leads y completá qué busca. Se guarda en el CRM. Activá el filtro para ver solo los que les falta el perfil.</p>
+  return `<div class="eyebrow">Conocé al cliente</div><h3>Perfil de cliente</h3><p class="sub">Elegí uno de tus leads y completá qué busca, lo más detallado posible. Cuanto más completo, mejores sugerencias de propiedades. Se guarda en el CRM.</p>
   <div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--ink);cursor:pointer"><input type="checkbox" id="pf-filter" style="width:16px;height:16px;cursor:pointer"> Mostrar solo los que faltan completar</label></div>
   <div class="addrow"><select id="pf-lead" style="flex:1;min-width:200px"><option value="">Elegí un lead…</option></select></div>
-  <div class="addrow"><input id="pf-busca" placeholder="Zona / qué busca (ej: 2 dorm zona sur)" autocomplete="off"><select id="pf-tipo"><option value="">Tipo</option><option>Depto</option><option>Casa</option><option>Lote</option><option>Local</option><option>Otro</option></select></div>
-  <div class="addrow"><input id="pf-presup" placeholder="Presupuesto (ej: USD 80-100k)" autocomplete="off"><select id="pf-pago"><option>Contado</option><option>Crédito</option><option>Permuta</option><option>Financiación</option><option>A definir</option></select></div>
+
+  <div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px">Qué busca</div>
+  <div class="addrow">
+    <select id="pf-tipo"><option value="">Tipo de inmueble</option><option>Depto</option><option>Casa</option><option>Lote</option><option>Local</option><option>Cochera</option><option>Galpón</option></select>
+    <select id="pf-dorms"><option value="">Dormitorios</option><option>Mono</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>
+    <select id="pf-banos"><option value="">Baños</option><option>1</option><option>2</option><option>3+</option></select>
+  </div>
+  <div class="addrow">
+    <input id="pf-m2" placeholder="Metros aprox. (ej: 60)" inputmode="numeric" autocomplete="off">
+    <select id="pf-estado"><option value="">Estado</option><option>A estrenar</option><option>Muy bueno</option><option>Bueno</option><option>A refaccionar</option><option>En pozo / construcción</option></select>
+    <select id="pf-antig"><option value="">Antigüedad</option><option>A estrenar</option><option>Hasta 5 años</option><option>5 a 15 años</option><option>15 a 30 años</option><option>+30 años</option></select>
+  </div>
+  <div class="addrow">
+    <input id="pf-busca" placeholder="Zona preferida (ej: Centro, Pichincha)" autocomplete="off">
+    <input id="pf-presup" placeholder="Presupuesto USD (ej: 95000)" inputmode="numeric" autocomplete="off">
+    <select id="pf-pago"><option value="">Forma de pago</option><option>Contado</option><option>Crédito</option><option>Financiación</option><option>Permuta</option><option>Vehículo</option></select>
+  </div>
   <div class="addrow"><input id="pf-obs" placeholder="Observaciones del perfil" autocomplete="off"><button class="btn" id="savepf">Guardar perfil en CRM</button></div>
   <div id="pfmsg" style="font-size:13px;color:var(--muted);margin-top:6px"></div></div>`;
 }
@@ -618,14 +633,19 @@ function fillPerfilFromLead(id){
   const l=LEADS&&LEADS.find(x=>x.id===id);
   const m=$('#pfmsg');
   const set=(sel,val)=>{const e=$(sel);if(e)e.value=val||"";};
-  if(!l||!l.perfil){set('#pf-busca','');set('#pf-tipo','');set('#pf-presup','');set('#pf-pago','Contado');set('#pf-obs','');
+  if(!l||!l.perfil){set('#pf-busca','');set('#pf-tipo','');set('#pf-dorms','');set('#pf-banos','');set('#pf-m2','');set('#pf-estado','');set('#pf-antig','');set('#pf-presup','');set('#pf-pago','');set('#pf-obs','');
     if(m&&id){m.textContent="Este cliente todavía no tiene perfil cargado. Completalo abajo.";m.style.color="var(--muted)";}
     return;}
   const p=l.perfil;
   set('#pf-busca',p.busca||p.zona||'');
   set('#pf-tipo',p.tipo||'');
+  set('#pf-dorms',p.dorms||'');
+  set('#pf-banos',p.banos||'');
+  set('#pf-m2',p.m2||'');
+  set('#pf-estado',p.estado||'');
+  set('#pf-antig',p.antig||'');
   set('#pf-presup',p.presup||'');
-  set('#pf-pago',p.pago||'Contado');
+  set('#pf-pago',p.pago||'');
   set('#pf-obs',p.obs||'');
   if(m){m.textContent="✓ Perfil cargado desde el CRM. Podés editarlo y volver a guardar.";m.style.color="var(--ok)";}
 }
@@ -698,16 +718,32 @@ function sugerenciasCount(){
   return LEADS.filter(l=>!OMITIDOS[l.id]&&(esPrioridad(l)||esRecontactar(l))).length;
 }
 function sugerenciasPanel(){
-  return `<div class="eyebrow">El sistema te marca dónde enfocarte</div><h3>Sugerencias</h3><p class="sub">Clientes potenciales para impulsar y clientes a recontactar antes de que se enfríen.</p>
+  return `<div class="eyebrow">El sistema te marca dónde enfocarte</div><h3>Sugerencias</h3><p class="sub">Elegí un cliente con perfil cargado y te muestro las propiedades del stock que mejor encajan, listas para enviar por WhatsApp. Abajo, tus prioridades y clientes a recontactar.</p>
+  <div class="card"><div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Buscador para un cliente</div>
+  <div class="addrow"><select id="sg-cli" style="flex:1;min-width:200px"><option value="">Elegí un cliente con perfil…</option></select></div>
+  <div id="sg-match"><div class="empty">Elegí un cliente para ver las propiedades que le encajan.</div></div></div>
   <div id="suglist"><div class="empty">Cargando sugerencias…</div></div>`;
 }
 function loadSugerencias(){
   const list=$('#suglist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Las sugerencias se activan cuando conectes el CRM.");return;}
   if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus sugerencias.");return;}
-  if(LEADS){renderSugerencias();return;}
+  if(LEADS){renderSugerencias();fillSugCliSelect();ensureStockForMatch();return;}
   list.innerHTML=empty("Cargando sugerencias…");
-  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderSugerencias();renderNav();updateSubtitles();}).catch(()=>{list.innerHTML=empty("No se pudieron leer las sugerencias. Revisá la conexión.");});
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderSugerencias();fillSugCliSelect();ensureStockForMatch();renderNav();updateSubtitles();}).catch(()=>{list.innerHTML=empty("No se pudieron leer las sugerencias. Revisá la conexión.");});
+}
+function ensureStockForMatch(){
+  if(STOCK)return;
+  if(!SHEET_URL)return;
+  fetch(SHEET_URL+"?q=propiedades").then(r=>r.json()).then(d=>{STOCK=(d&&d.propiedades)||[];const sel=$('#sg-cli');if(sel&&sel.value)renderMatch(sel.value);}).catch(()=>{});
+}
+function fillSugCliSelect(){
+  const sel=$('#sg-cli'); if(!sel||!LEADS)return;
+  const conPerfil=sortLeads(LEADS.filter(l=>l.tienePerfil));
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Elegí un cliente con perfil…</option>'+conPerfil.map(l=>`<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)})</option>`).join("");
+  if(prev)sel.value=prev;
+  if(!conPerfil.length){const mt=$('#sg-match');if(mt)mt.innerHTML=empty("Todavía no tenés clientes con perfil cargado. Cargá uno en la pestaña Perfil Cliente.");}
 }
 function renderSugerencias(){
   const list=$('#suglist'); if(!list)return;
@@ -747,15 +783,143 @@ function waRecontacto(l){
   const msg="Hola "+nombre+", ¿cómo le va? Soy "+(current||"")+" de Lurati. ¿Sigue en la búsqueda de una propiedad? Tengo novedades que pueden interesarle.";
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
+/* ============ MATCH PERFIL ↔ PROPIEDADES (Sugerencias) ============ */
+function numPresupJS(v){ const n=Number(String(v||"").replace(/[^\d.]/g,"")); return isNaN(n)?0:n; }
+function numDormsJS(v){ v=String(v||"").trim().toLowerCase(); if(v==="mono"||v==="0")return 0; const m=v.match(/\d+/); return m?parseInt(m[0]):null; }
+function tipoIgualJS(a,b){ a=String(a||"").toLowerCase(); b=String(b||"").toLowerCase(); if(!a||!b)return false; if(a.indexOf("depto")>=0||a.indexOf("departamento")>=0)a="depto"; if(b.indexOf("depto")>=0||b.indexOf("departamento")>=0)b="depto"; return a===b; }
+function normDirJS(s){ return String(s||"").toLowerCase().trim().replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/\s+/g," "); }
+
+function scoreProp(p, perfil){
+  const presCli=numPresupJS(perfil.presup), valProp=numPresupJS(p.valor);
+  let sobre=0;
+  if(presCli>0 && valProp>0){ if(valProp>presCli+15000)return null; if(valProp>presCli)sobre=valProp-presCli; }
+  let score=0,max=0;
+  if(perfil.tipo){ max+=35; if(tipoIgualJS(perfil.tipo,p.tipo))score+=35; else return null; }
+  const dCli=numDormsJS(perfil.dorms);
+  if(dCli!==null){ max+=30; const dP=numDormsJS(p.dorms); if(dP===dCli)score+=30; else if(dP!==null&&Math.abs(dP-dCli)===1)score+=15; }
+  if(presCli>0&&valProp>0){ max+=20; score+=sobre===0?20:Math.max(0,20-Math.round(sobre/15000*20)); }
+  if(perfil.busca){ max+=10; const z=normDirJS(perfil.busca); if(z&&(normDirJS(p.zona).indexOf(z)>=0||z.indexOf(normDirJS(p.zona))>=0))score+=10; }
+  if(perfil.banos){ max+=5; const bP=numDormsJS(p.banos),bC=numDormsJS(perfil.banos); if(bP!==null&&bC!==null&&bP>=bC)score+=5; }
+  if(max===0)return {score:60,sobre:sobre};
+  return {score:Math.round(score/max*100),sobre:sobre};
+}
+function moneyJS(n){ n=numPresupJS(n); return n?("USD "+n.toLocaleString("es-AR")):"Consultar"; }
+function creditoTag(c){ c=String(c||"").toUpperCase(); if(c==="SI")return `<span class="tag t-green" style="font-size:11px;margin:2px 4px 2px 0">Apto crédito</span>`; if(c==="NO")return `<span class="tag" style="font-size:11px;margin:2px 4px 2px 0;background:#eee;color:#888">No apto crédito</span>`; return `<span class="tag t-teal" style="font-size:11px;margin:2px 4px 2px 0">Crédito a confirmar</span>`; }
+
+let SG_SEL={};
+function sgKey(dir,unidad){ return normDirJS(dir)+(unidad?"|"+unidad:""); }
+function clienteActualSug(){ const sel=$('#sg-cli'); const id=sel?sel.value:""; return LEADS&&LEADS.find(x=>x.id===id); }
+
+function renderMatch(id){
+  const cont=$('#sg-match'); if(!cont)return;
+  SG_SEL={};
+  const l=LEADS&&LEADS.find(x=>x.id===id);
+  if(!l){cont.innerHTML=empty("Elegí un cliente para ver las propiedades que le encajan.");return;}
+  if(!l.perfil){cont.innerHTML=empty("Este cliente no tiene perfil cargado. Cargalo en la pestaña Perfil Cliente.");return;}
+  if(!STOCK){cont.innerHTML=empty("Cargando stock de propiedades…");ensureStockForMatch();return;}
+  const perfil=l.perfil;
+  const faltan=[];
+  if(!perfil.tipo)faltan.push("tipo");
+  if(numDormsJS(perfil.dorms)===null)faltan.push("dormitorios");
+  if(numPresupJS(perfil.presup)===0)faltan.push("presupuesto");
+  if(!perfil.busca)faltan.push("zona");
+  const aviso=faltan.length?`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#854f0b;background:#fff2cc;border-radius:8px;padding:7px 10px;margin-bottom:10px">⚠ Perfil incompleto: falta ${faltan.join(", ")}. El match se hizo con los datos disponibles.</div>`:"";
+  let scored=[];
+  STOCK.forEach(p=>{ const r=scoreProp(p,perfil); if(r&&r.score>=60)scored.push(Object.assign({},p,{_score:r.score,_sobre:r.sobre})); });
+  const grupos={};
+  scored.forEach(p=>{ const k=normDirJS(p.dir); if(!grupos[k])grupos[k]={dir:p.dir,zona:p.zona,tipo:p.tipo,dorms:p.dorms,origen:p.origen,items:[]}; grupos[k].items.push(p); });
+  let arr=Object.values(grupos).map(g=>{ g.items.sort((a,b)=>numPresupJS(a.valor)-numPresupJS(b.valor)); g.score=Math.max.apply(null,g.items.map(x=>x._score)); return g; });
+  arr.sort((a,b)=>b.score-a.score);
+  if(!arr.length){cont.innerHTML=aviso+empty("No hay propiedades en el stock que encajen con este perfil (60% o más). Ajustá el perfil o revisá el stock en Propiedades.");return;}
+  let h=aviso;
+  h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;color:var(--muted)">${arr.length} ${arr.length===1?'coincidencia':'coincidencias'} (60% o más)</span><label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer"><input type="checkbox" id="sg-todas" style="width:15px;height:15px"> Todas</label></div>`;
+  arr.forEach((g,gi)=>{
+    const scStyle=g.score>=85?"background:#e8f1ef;color:#1d7a5f":(g.score>=72?"background:#dcf0ed;color:#128f8b":"background:#fff2cc;color:#854f0b");
+    h+=`<div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px">`;
+    h+=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><div style="flex:1"><b style="font-size:14px">${esc(g.dir)}</b><div style="font-size:12px;color:var(--muted)">${esc(g.tipo)} · ${esc(g.dorms)||'?'} dorm · ${esc(g.origen||'')}</div></div><span style="flex:none;font-size:12px;font-weight:700;border-radius:8px;padding:3px 9px;${scStyle}">Match ${g.score}%</span></div>`;
+    if(g.items.length>1){
+      h+=`<div style="font-size:11.5px;color:var(--muted);margin:8px 0 2px">${g.items.length} unidades · ordenadas por precio</div>`;
+      g.items.forEach((u,ui)=>{ const k=sgKey(g.dir,u.unidad||("u"+ui)); SG_SEL[k]=undefined; h+=matchUnidad(g,u,k,true); });
+    } else {
+      const u=g.items[0]; const k=sgKey(g.dir,""); h+=matchUnidad(g,u,k,false);
+    }
+    h+=`</div>`;
+  });
+  h+=`<div id="sg-barra" style="display:none;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;border-top:1px solid var(--line);padding-top:12px"><span id="sg-selcount" style="font-size:13px;color:var(--muted)"></span><div style="display:flex;gap:8px"><button class="btn ghost" id="sg-copiar" style="padding:8px 12px">Copiar selección</button><a id="sg-enviar" href="#" target="_blank" rel="noopener" class="lead-wa" style="padding:8px 14px">Enviar todas</a></div></div>`;
+  h+=`<div id="sg-aviso" style="font-size:12px;color:var(--ok);margin-top:8px;opacity:0;transition:opacity .3s"></div>`;
+  cont.innerHTML=h;
+  // guardar refs de items para selección
+  MATCH_INDEX={};
+  arr.forEach(g=>{ g.items.forEach((u,ui)=>{ const k=g.items.length>1?sgKey(g.dir,u.unidad||("u"+ui)):sgKey(g.dir,""); MATCH_INDEX[k]={g:g,u:u}; }); });
+}
+let MATCH_INDEX={};
+function matchUnidad(g,u,k,esUnidad){
+  const sobre=u._sobre||0;
+  const avisoSobre=sobre>0?` <span style="color:#b5462f">⚠ USD ${sobre.toLocaleString("es-AR")} arriba</span>`:"";
+  const metros=u.m2?u.m2+" m²":"";
+  const coch=(String(u.cochera)==="true"||u.cochera===true)?`<span class="tag t-teal" style="font-size:11px;margin:2px 4px 2px 0">Cochera</span>`:"";
+  const dif=u.diferencial?`<span class="tag" style="font-size:11px;margin:2px 4px 2px 0;background:#eef2f7;color:#5e716c">${esc(u.diferencial)}</span>`:"";
+  const ficha=u.link?"Tiene ficha online":"Sin ficha — se envían los datos";
+  const titulo=esUnidad?`<b style="font-weight:600;font-size:13px">Unidad ${esc(u.unidad||'')}</b> · `:"";
+  return `<div style="display:flex;gap:8px;${esUnidad?'border-top:1px solid var(--line);padding-top:8px;margin-top:8px':'margin-top:8px'}">
+    <input type="checkbox" class="sg-chk" data-k="${k}" style="width:16px;height:16px;flex:none;margin-top:2px">
+    <div style="flex:1">
+      <div style="font-size:13px;margin-bottom:3px">${titulo}${moneyJS(u.valor)}${avisoSobre}</div>
+      <div>${metros?`<span class="tag" style="font-size:11px;margin:2px 4px 2px 0;background:#eef2f7;color:#5e716c">${esc(metros)}</span>`:""}${coch}${dif}${creditoTag(u.credito||u.aptoCredito)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${ficha}</div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <a href="${matchWaLink([{g:g,u:u}])}" target="_blank" rel="noopener" class="lead-wa" style="flex:1;text-align:center">Enviar</a>
+        <button class="btn ghost sg-copyone" data-k="${k}" style="padding:6px 11px;font-size:12.5px">Copiar</button>
+      </div>
+    </div></div>`;
+}
+function matchMensaje(items){
+  const l=clienteActualSug();
+  const nombre=l?(l.nombre||"").split(/\s+/)[0]:"";
+  let m="Hola "+nombre+"! En la búsqueda que estamos haciendo para usted, encontramos ";
+  m+=items.length>1?"estas propiedades que se ajustan a lo que busca:\n\n":"esta propiedad que se ajusta a lo que busca:\n\n";
+  m+=items.map(it=>{ const g=it.g,u=it.u;
+    let s="• "+(g.tipo||"")+" en "+g.dir+(u.unidad?" — Unidad "+u.unidad:"")+"\n";
+    s+="  "+(g.dorms||"?")+" dorm"; if(u.m2)s+=" · "+u.m2+" m²"; s+=" · "+moneyJS(u.valor);
+    if(String(u.cochera)==="true"||u.cochera===true)s+=" · con cochera";
+    if(u.diferencial)s+=" · "+u.diferencial;
+    if(u.link)s+="\n  Ficha: "+u.link;
+    return s;
+  }).join("\n\n");
+  m+="\n\n¿Le gustaría que coordinemos una visita?";
+  return m;
+}
+function matchWaLink(items){ const l=clienteActualSug(); if(!l||!l.tel)return "#"; return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(matchMensaje(items)); }
+function sgRefrescarBarra(){
+  const barra=$('#sg-barra'); if(!barra)return;
+  const keys=Object.keys(SG_SEL).filter(k=>SG_SEL[k]);
+  if(!keys.length){barra.style.display="none";return;}
+  barra.style.display="flex";
+  $('#sg-selcount').textContent=keys.length+(keys.length===1?" seleccionada":" seleccionadas");
+  const items=keys.map(k=>MATCH_INDEX[k]).filter(Boolean);
+  $('#sg-enviar').href=matchWaLink(items);
+}
+function sgFlash(t){ const e=$('#sg-aviso'); if(!e)return; e.textContent=t; e.style.opacity="1"; setTimeout(()=>e.style.opacity="0",2200); }
+
 function savePerfil(){
   const id=$('#pf-lead').value;
   const m=$('#pfmsg');
   if(!id){if(m){m.textContent="Elegí un lead primero.";m.style.color="var(--bordo)";}return;}
-  const payload={accion:"perfil",id:id,asesor:current,busca:$('#pf-busca').value.trim(),tipo:$('#pf-tipo').value,presup:$('#pf-presup').value.trim(),pago:$('#pf-pago').value,obs:$('#pf-obs').value.trim()};
+  const payload={accion:"perfil",id:id,asesor:current,
+    busca:$('#pf-busca').value.trim(),
+    tipo:$('#pf-tipo').value,
+    dorms:$('#pf-dorms').value,
+    banos:$('#pf-banos').value,
+    m2:$('#pf-m2').value.trim(),
+    estado:$('#pf-estado').value,
+    antig:$('#pf-antig').value,
+    presup:$('#pf-presup').value.trim(),
+    pago:$('#pf-pago').value,
+    obs:$('#pf-obs').value.trim()};
   if(!SHEET_URL){if(m){m.textContent="Se guardará en el CRM cuando esté conectado.";m.style.color="var(--muted)";}return;}
   fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)}).catch(function(){});
   if(m){m.textContent="✓ Perfil guardado en el CRM para "+id;m.style.color="var(--ok)";}
-  $('#pf-busca').value='';$('#pf-presup').value='';$('#pf-obs').value='';
+  if(LEADS){const l=LEADS.find(x=>x.id===id); if(l){l.tienePerfil=true; l.perfil={busca:payload.busca,zona:payload.busca,tipo:payload.tipo,dorms:payload.dorms,banos:payload.banos,m2:payload.m2,estado:payload.estado,antig:payload.antig,presup:payload.presup,pago:payload.pago,obs:payload.obs};}}
 }
 
 /* ============ STOCK (lee del CRM) ============ */
@@ -825,6 +989,8 @@ document.addEventListener('click',async e=>{
   const t=e.target;
   if(t.dataset.go)go(t.dataset.go);
   if(t.dataset.mode){switchMode(t.dataset.mode);}
+  if(t.classList&&t.classList.contains('sg-copyone')){const it=MATCH_INDEX[t.dataset.k];if(it){try{await navigator.clipboard.writeText(matchMensaje([it]));}catch(_){}; sgFlash("Mensaje copiado ✓");}}
+  if(t.id==='sg-copiar'){const items=Object.keys(SG_SEL).filter(k=>SG_SEL[k]).map(k=>MATCH_INDEX[k]).filter(Boolean);if(items.length){try{await navigator.clipboard.writeText(matchMensaje(items));}catch(_){}; sgFlash(items.length+" propiedades copiadas ✓");}}
   if(t.dataset.pt){stockType=t.dataset.pt;document.querySelectorAll('.ptbtn').forEach(b=>b.classList.toggle('active',b.dataset.pt===stockType));renderSubfilter();renderStock();}
   // contactos
   if(t.id==='addc'){if(needName())return;const n=$('#c-name').value.trim();if(!n)return;const s=$('#c-src').value;state.contacts.push({name:n,src:s,contacted:false});$('#c-name').value='';$('#c-name').focus();renderContacts();renderBoard();save();logEvent("Captación","Nuevo contacto",n,s,"Pendiente");}
@@ -884,6 +1050,9 @@ document.addEventListener('change',e=>{
   if(e.target.id==='leadfilter')renderLeadsCRM();
   if(e.target.id==='pf-filter')fillPerfilSelect();
   if(e.target.id==='pf-lead')fillPerfilFromLead(e.target.value);
+  if(e.target.id==='sg-cli')renderMatch(e.target.value);
+  if(e.target.id==='sg-todas'){const on=e.target.checked;document.querySelectorAll('.sg-chk').forEach(c=>{c.checked=on;SG_SEL[c.dataset.k]=on?true:undefined;});sgRefrescarBarra();}
+  if(e.target.classList&&e.target.classList.contains('sg-chk')){SG_SEL[e.target.dataset.k]=e.target.checked?true:undefined;sgRefrescarBarra();}
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;const a=document.activeElement.id;
