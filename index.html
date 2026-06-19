@@ -741,7 +741,10 @@ function fillSugCliSelect(){
   const sel=$('#sg-cli'); if(!sel||!LEADS)return;
   const conPerfil=sortLeads(LEADS.filter(l=>l.tienePerfil));
   const prev=sel.value;
-  sel.innerHTML='<option value="">Elegí un cliente con perfil…</option>'+conPerfil.map(l=>`<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)})</option>`).join("");
+  sel.innerHTML='<option value="">Elegí un cliente con perfil…</option>'+conPerfil.map(l=>{
+    const pct=perfilCarga(l);
+    return `<option value="${esc(l.id)}">${esc(l.nombre)} (${esc(l.id)}) · ${pct}% cargado</option>`;
+  }).join("");
   if(prev)sel.value=prev;
   if(!conPerfil.length){const mt=$('#sg-match');if(mt)mt.innerHTML=empty("Todavía no tenés clientes con perfil cargado. Cargá uno en la pestaña Perfil Cliente.");}
 }
@@ -810,6 +813,21 @@ let SG_SEL={};
 function sgKey(dir,unidad){ return normDirJS(dir)+(unidad?"|"+unidad:""); }
 function clienteActualSug(){ const sel=$('#sg-cli'); const id=sel?sel.value:""; return LEADS&&LEADS.find(x=>x.id===id); }
 
+// % de carga del perfil: cuántos campos clave están completos sobre el total
+function perfilCarga(l){
+  if(!l||!l.perfil)return 0;
+  const p=l.perfil;
+  const campos=[p.tipo,p.dorms,p.banos,p.m2,p.estado,p.antig,(p.zona||p.busca),p.presup,p.pago];
+  let llenos=0;
+  campos.forEach(c=>{ if(String(c||"").trim()!=="")llenos++; });
+  return Math.round(llenos/campos.length*100);
+}
+function cargaColor(pct){
+  if(pct>=70)return "background:#e8f1ef;color:#1d7a5f";   // verde: confiable
+  if(pct>=40)return "background:#fff2cc;color:#854f0b";   // amarillo: a medias
+  return "background:#f6eceb;color:#b5462f";              // rojo: muy incompleto
+}
+
 function renderMatch(id){
   const cont=$('#sg-match'); if(!cont)return;
   SG_SEL={};
@@ -818,6 +836,8 @@ function renderMatch(id){
   if(!l.perfil){cont.innerHTML=empty("Este cliente no tiene perfil cargado. Cargalo en la pestaña Perfil Cliente.");return;}
   if(!STOCK){cont.innerHTML=empty("Cargando stock de propiedades…");ensureStockForMatch();return;}
   const perfil=l.perfil;
+  const pct=perfilCarga(l);
+  const cargaBadge=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:12px;font-weight:700;border-radius:8px;padding:3px 10px;${cargaColor(pct)}">Perfil ${pct}% cargado</span>${pct<40?'<span style="font-size:12px;color:#b5462f">Pocos datos: los matches pueden no ser reales. Completá el perfil.</span>':(pct<70?'<span style="font-size:12px;color:#854f0b">Perfil a medias: conviene completarlo para afinar el match.</span>':'<span style="font-size:12px;color:#1d7a5f">Perfil completo: matches confiables.</span>')}</div>`;
   const faltan=[];
   if(!perfil.tipo)faltan.push("tipo");
   if(numDormsJS(perfil.dorms)===null)faltan.push("dormitorios");
@@ -830,8 +850,8 @@ function renderMatch(id){
   scored.forEach(p=>{ const k=normDirJS(p.dir); if(!grupos[k])grupos[k]={dir:p.dir,zona:p.zona,tipo:p.tipo,dorms:p.dorms,origen:p.origen,items:[]}; grupos[k].items.push(p); });
   let arr=Object.values(grupos).map(g=>{ g.items.sort((a,b)=>numPresupJS(a.valor)-numPresupJS(b.valor)); g.score=Math.max.apply(null,g.items.map(x=>x._score)); return g; });
   arr.sort((a,b)=>b.score-a.score);
-  if(!arr.length){cont.innerHTML=aviso+empty("No hay propiedades en el stock que encajen con este perfil (60% o más). Ajustá el perfil o revisá el stock en Propiedades.");return;}
-  let h=aviso;
+  if(!arr.length){cont.innerHTML=cargaBadge+aviso+empty("No hay propiedades en el stock que encajen con este perfil (60% o más). Ajustá el perfil o revisá el stock en Propiedades.");return;}
+  let h=cargaBadge+aviso;
   h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;color:var(--muted)">${arr.length} ${arr.length===1?'coincidencia':'coincidencias'} (60% o más)</span><label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer"><input type="checkbox" id="sg-todas" style="width:15px;height:15px"> Todas</label></div>`;
   arr.forEach((g,gi)=>{
     const scStyle=g.score>=85?"background:#e8f1ef;color:#1d7a5f":(g.score>=72?"background:#dcf0ed;color:#128f8b":"background:#fff2cc;color:#854f0b");
