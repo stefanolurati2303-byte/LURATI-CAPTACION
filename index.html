@@ -1,1131 +1,442 @@
-/**
- * LURATI - Estación del Asesor — Servidor (Google Apps Script) v4
- *
- * Debe vivir DENTRO del Google Sheet del CRM.
- *
- * Cambios v4 respecto a v3:
- *  - leerPropiedades(): lee las DOS hojas (propias + constructoras),
- *    filtra por lista negra (nunca muestra BAJA, Pausado, Vendido, etc.)
- *    y suma cochera, diferencial, apto crédito (columna real), unidad y origen.
- *  - mapaPerfiles() y guardarPerfil(): manejan los campos nuevos del perfil
- *    (dorms, baños, m2, estado, antigüedad) además de los que ya existían.
- *  - leerLeads(): el perfil que devuelve ahora incluye todos esos campos,
- *    para que el match de la pestaña Sugerencias funcione completo.
- *
- * REQUISITO: en la hoja 02_Perfil_Cliente deben existir las columnas
- * (títulos exactos en la fila 1):
- *   Baños perfil | M2 perfil | Estado perfil | Antiguedad perfil
- * (las demás —Dorms., Tipo inmueble, Zona preferida, Forma de pago,
- *  Presupuesto Min y Max u$s— ya existían y se reutilizan).
- *
- * LURATI - Estación del Asesor — Servidor (Google Apps Script) v15.2
- *
- *
- * Novedades v15:
- *  - Alta de leads desde la propia Estación / modo Redes.
- *  - Gmail automático al vendedor asignado.
- *  - Consulta de duplicados limitada a las últimas 50 consultas.
- *  - La Estación puede marcar Nuevo -> Contactado antes de abrir WhatsApp.
- * Novedades v14:
- *  - importarLeadsMeta() ahora ESCRIBE en la primera fila libre (donde el
- *    Nombre está vacío), reutilizando las filas que ya tienen la fórmula de
- *    ID (columna A). Así el C-XXXX se asigna solo. Si no hay filas libres,
- *    appendea y replica la fórmula de ID adaptada a la fila nueva.
- *
- * Novedades v13: importarLeadsMeta ajustado a la estructura real del CRM.
- *
- * Novedades v8:
- *  - generarFeedMeta produce el formato exacto del catálogo de Meta:
- *    home_listing_group_id, sin latitude/country, constructoras con dirección
- *    limpia, amenities extraídos del texto, observaciones ordenadas.
- *  - Lee columnas nuevas: "A. C." (apto crédito), "Observacion", "Captada por".
- *
- * REQUISITO: en 00_Propiedades_Todos debe existir la columna "A. C." (o "Apto Credito")
- * con SI / NO / NOSE.
- */
-
-var SH_REG  = "Registros";
-var SH_CONS = "01_Consultas(interno)";
-var SH_PERF = "02_Perfil_Cliente";
-var SH_PROP = "00_Propiedades_Todos";
-var SH_PROP2 = "000_Prop_Constructoras";
-var COL_ESTADO = "Estado inicial";
-var COL_EST_FECHA = "Estado actualizado por";
-
-// ════════════════════════════════════════════════════════════════
-//  ID del Sheet APARTE donde se escribe el feed de Meta (seguridad).
-//  Es un Google Sheet SEPARADO del CRM, sin datos de clientes.
-//  Pegá acá el ID de tu Sheet "Lurati - Feed Meta"
-//  (la parte larga de su URL, entre /d/ y /edit):
-// ════════════════════════════════════════════════════════════════
-//  Imagen temporal para el feed de Meta (Meta exige foto obligatoria).
-//  Por ahora se usa la MISMA imagen en todas, solo para validar que el
-//  catálogo carga. Después se reemplaza por la foto real de cada propiedad.
-var IMAGEN_TEMPORAL = "https://static.kiteprop.com/kp/properties/524573/e7fcca/lg/e7fcca1b86278a1b64798e3aeb0f2901.jpg";
-// ════════════════════════════════════════════════════════════════
-
-var SHEET_FEED_ID = "1ApcffcGPoSpHMYghwPd9qYV-ImcCg2yx-9-DSsyLrvo";
-// ════════════════════════════════════════════════════════════════
-
-// ---------------- helpers ----------------
-function ss(){ return SpreadsheetApp.getActiveSpreadsheet(); }
-function json(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function headerIndex(ws, name){
-  var hdr = ws.getRange(1,1,1,ws.getLastColumn()).getValues()[0];
-  for (var i=0;i<hdr.length;i++){ if(String(hdr[i]).trim().toLowerCase()===name.toLowerCase()) return i; }
-  return -1;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#004d44">
+<title>Lurati · Estación del Asesor</title>
+<style>
+:root{
+  --green:#004d44;--green2:#0e352c;--teal:#128f8b;--paper:#f7faf9;
+  --line:#d7e3e0;--ink:#23332f;--muted:#5e716c;--red:#b42318;
 }
-function ensureColumn(ws, name){
-  var i = headerIndex(ws, name);
-  if (i>=0) return i;
-  var last = ws.getLastColumn();
-  ws.getRange(1, last+1).setValue(name).setFontWeight("bold").setBackground("#7e2b26").setFontColor("#ffffff");
-  return last;
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:var(--paper);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+#station{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--paper)}
+#newLeadBtn{
+  position:fixed;right:18px;bottom:18px;z-index:1000;border:0;border-radius:999px;
+  background:var(--green);color:#fff;font-weight:800;font-size:15px;padding:14px 20px;
+  box-shadow:0 8px 28px rgba(0,77,68,.28);cursor:pointer
 }
-function colExacta(ws, nombres){
-  for (var i=0;i<nombres.length;i++){ var idx = headerIndex(ws, nombres[i]); if (idx>=0) return idx; }
-  return -1;
+#newLeadBtn:hover{background:var(--green2)}
+.overlay{
+  display:none;position:fixed;inset:0;z-index:2000;background:rgba(14,53,44,.52);
+  padding:18px;overflow:auto
 }
+.overlay.open{display:block}
+.modal{
+  max-width:650px;margin:18px auto;background:#fff;border-radius:22px;padding:20px;
+  box-shadow:0 20px 70px rgba(0,0,0,.24)
+}
+.head{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.head .logo{width:42px;height:42px;border-radius:12px;background:var(--green);color:#fff;
+ display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px}
+.head h1{font-size:22px;color:var(--green2);margin:0}
+.head p{font-size:13px;color:var(--muted);margin:3px 0 0}
+.close{margin-left:auto;border:0;background:#eef4f2;color:var(--green);width:36px;height:36px;border-radius:10px;font-size:19px;cursor:pointer}
+.section{margin:15px 0}
+.label{font-size:12px;font-weight:800;color:#475467;margin-bottom:7px}
+.sellers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.seller{border:1px solid var(--line);background:#fff;border-radius:13px;padding:10px;text-align:left;cursor:pointer}
+.seller strong{display:block;font-size:14px;color:var(--ink)}
+.seller small{display:block;color:#98a2b3;margin-top:2px}
+.seller.on{background:var(--green);border-color:var(--green)}
+.seller.on strong,.seller.on small{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+.chip{border:0;border-radius:999px;padding:7px 10px;background:#e8f1ef;color:var(--green);font-weight:800;font-size:12px;cursor:pointer}
+input{
+ width:100%;height:50px;border:1px solid #d0d5dd;border-radius:13px;padding:0 13px;
+ font-size:17px;outline:none;background:#fff;color:var(--ink)
+}
+input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
+.action{
+ width:100%;min-height:54px;border:0;border-radius:14px;background:var(--green);color:#fff;
+ font-size:16px;font-weight:900;cursor:pointer;margin-top:5px
+}
+.action:disabled{opacity:.55}
+.status{display:none;margin-top:13px;border-radius:14px;padding:13px;font-size:14px;line-height:1.45}
+.status.show{display:block}
+.ok{background:#e8f5ef;color:#175f49}.warn{background:#fff6e5;color:#795700}.err{background:#fee4e2;color:#b42318}
+.dupBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.miniBtn{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;font-weight:800;cursor:pointer}
+.miniBtn.continue{background:var(--green);color:#fff;border-color:var(--green)}
+.footerActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.footerActions a,.footerActions button{flex:1;min-width:145px;text-align:center;border-radius:10px;padding:10px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;text-decoration:none;cursor:pointer}
+@media(max-width:520px){
+  .overlay{padding:0}
+  .modal{min-height:100%;margin:0;border-radius:0;padding:18px 14px 28px}
+  .sellers{grid-template-columns:1fr 1fr}
+  #newLeadBtn{right:12px;bottom:12px;padding:12px 16px}
+}
+</style>
+</head>
+<body>
+<iframe id="station" src="./estacion-base.html" title="Estación del Asesor"></iframe>
+<button id="newLeadBtn" type="button">+ Cargar lead</button>
 
-// ---------------- GET (leer) ----------------
-function doGet(e){
+<div id="overlay" class="overlay">
+  <div class="modal">
+    <div class="head">
+      <div class="logo">L</div>
+      <div>
+        <h1>Nueva consulta</h1>
+        <p>Se registra directamente en el CRM Lurati y avisa al vendedor. Sin salir de la Estación.</p>
+      </div>
+      <button id="close" class="close" type="button">×</button>
+    </div>
+
+    <div class="section">
+      <div class="label">1. Vendedor</div>
+      <div id="sellers" class="sellers"><small>Cargando vendedores…</small></div>
+    </div>
+
+    <div class="section">
+      <div class="label">2. Últimos inmuebles usados</div>
+      <div id="chips" class="chips"></div>
+      <div class="label">Buscar en el resto de propiedades</div>
+      <input id="property" list="propertyList" placeholder="Ej. Rodríguez 1671" autocomplete="off">
+      <datalist id="propertyList"></datalist>
+    </div>
+
+    <div class="section">
+      <div class="label">Nombre</div>
+      <input id="name" placeholder="Nombre del cliente" autocomplete="name">
+    </div>
+
+    <div class="section">
+      <div class="label">Teléfono</div>
+      <input id="phone" type="tel" inputmode="tel" placeholder="341..." autocomplete="tel">
+    </div>
+
+    <button id="save" class="action" type="button">REGISTRAR Y DERIVAR</button>
+    <div id="status" class="status"></div>
+  </div>
+</div>
+
+<script>
+const frame=document.getElementById('station');
+const overlay=document.getElementById('overlay');
+const sellersBox=document.getElementById('sellers');
+const property=document.getElementById('property');
+const propertyList=document.getElementById('propertyList');
+const nameInput=document.getElementById('name');
+const phone=document.getElementById('phone');
+const status=document.getElementById('status');
+const save=document.getElementById('save');
+let selectedSeller='';
+let apiUrl='';
+let configLoaded=false;
+let pendingData=null;
+
+const FALLBACK_ACTIVE_SELLERS = [
+  "Stefano","Julio","Pablo","Flavia","Ariel","Roberto","Virginia","Pedro","Maxi"
+];
+
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function digits(s){return String(s||'').replace(/\D/g,'');}
+function titleAddress(s){
+  const lower=new Set(['de','del','la','las','los','y','e']);
+  return String(s||'').trim().replace(/\s+/g,' ').split(' ').map((p,i)=>{
+    if(/^\d/.test(p))return p;
+    const x=p.toLowerCase();
+    if(i>0&&lower.has(x))return x;
+    return x.charAt(0).toUpperCase()+x.slice(1);
+  }).join(' ');
+}
+function stationApi(){
+  if(apiUrl)return apiUrl;
   try{
-    var q = e && e.parameter ? e.parameter.q : "";
-    if (q === "propiedades") return json({ ok:true, propiedades: leerPropiedades() });
-    if (q === "leads")       return json({ ok:true, leads: leerLeads(e.parameter.vendedor || "") });
-    if (q === "redesConfig") return json({ ok:true, config: leerConfigRedes() });
-    if (q === "duplicado")   return json({
-      ok:true,
-      duplicado: buscarDuplicadoUltimas50(e.parameter.tel || "", e.parameter.prop || "")
-    });
-    return ContentService.createTextOutput("Servidor LURATI v15 activo.").setMimeType(ContentService.MimeType.TEXT);
-  }catch(err){ return json({ ok:false, error:String(err) }); }
+    apiUrl=frame.contentWindow.eval("typeof SHEET_URL!=='undefined'?SHEET_URL:''")||'';
+  }catch(e){}
+  return apiUrl;
+}
+function currentAdvisor(){
+  try{
+    return frame.contentWindow.eval("typeof current!=='undefined'?current:''")||'';
+  }catch(e){return '';}
+}
+function recentProps(){
+  try{return JSON.parse(localStorage.getItem('lurati_v15_recent_props')||'[]')}catch(e){return[]}
+}
+function rememberProp(v){
+  v=titleAddress(v); if(!v)return;
+  let a=recentProps().filter(x=>x!==v);
+  a=[v,...a].slice(0,3);
+  localStorage.setItem('lurati_v15_recent_props',JSON.stringify(a));
+  renderChips();
+}
+function renderChips(){
+  const a=recentProps();
+  document.getElementById('chips').innerHTML=a.length
+    ? a.map(x=>`<button class="chip" type="button" data-v="${esc(x)}">${esc(x)}</button>`).join('')
+    : '<small style="color:#98a2b3">Todavía no hay inmuebles recientes.</small>';
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{property.value=b.dataset.v;nameInput.focus();});
+}
+function setStatus(type,html){
+  status.className='status show '+type;
+  status.innerHTML=html;
+}
+function openModal(){
+  overlay.classList.add('open');
+  status.className='status';
+  renderChips();
+  loadConfig();
+  setTimeout(()=>property.focus(),80);
+}
+function closeModal(){
+  overlay.classList.remove('open');
+}
+document.getElementById('newLeadBtn').onclick=openModal;
+document.getElementById('close').onclick=closeModal;
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+
+function cachedSellers(){
+  try{
+    const x=JSON.parse(localStorage.getItem('lurati_v15_active_sellers')||'null');
+    if(!x || !Array.isArray(x.items) || !x.items.length) return [];
+    return x.items;
+  }catch(e){return [];}
 }
 
-function leerLeads(vendedor){
-  var ws = ss().getSheetByName(SH_CONS);
-  if (!ws || !vendedor) return [];
-  var data = ws.getDataRange().getValues();
-  var cId=headerIndex(ws,"ID Cliente (auto)"), cNom=headerIndex(ws,"Nombre cliente"),
-      cTel=headerIndex(ws,"Teléfono"), cProp=headerIndex(ws,"Propiedad consultada"),
-      cVend=headerIndex(ws,"Vendedor asignado"), cEst=headerIndex(ws,COL_ESTADO),
-      cFec=headerIndex(ws,"Fecha ingreso"), cUpd=headerIndex(ws,COL_EST_FECHA);
-  var perfiles = mapaPerfiles();
-  var props = mapaPropiedades();
-  var hoy = new Date();
-  var out=[];
-  for (var r=1;r<data.length;r++){
-    var row=data[r];
-    if (cVend<0) break;
-    if (String(row[cVend]).trim().toLowerCase() !== vendedor.trim().toLowerCase()) continue;
-    var id = cId>=0 ? String(row[cId]||"").trim() : "";
-    if (!id) continue;
-    var prop = cProp>=0 ? String(row[cProp]||"").trim() : "";
-    var ficha = props[normDir(prop)] || {tipo:"", dorms:""};
-    var pf = perfiles[id] || null;
-    var refFecha = cUpd>=0 ? parseFecha(row[cUpd]) : null;
-    if (!refFecha && cFec>=0) refFecha = parseFecha(row[cFec]);
-    var dias = refFecha ? Math.floor((hoy - refFecha)/86400000) : -1;
-    out.push({
-      id: id,
-      orden: r,
-      fecha: cFec>=0 ? fmtFecha(row[cFec]) : "",
-      dias: dias,
-      nombre: cNom>=0 ? String(row[cNom]||"").trim() : "",
-      tel: cTel>=0 ? normalizarTel(row[cTel]) : "",
-      propiedad: prop,
-      tipo: ficha.tipo || "",
-      dorms: ficha.dorms || "",
-      link: ficha.link || "",
-      estado: cEst>=0 ? String(row[cEst]||"").trim() : "",
-      tienePerfil: pf ? pf.tiene : false,
-      perfil: pf ? {
-        busca:pf.busca, zona:pf.zona, tipo:pf.tipo, dorms:pf.dorms, banos:pf.banos,
-        m2:pf.m2, estado:pf.estado, antig:pf.antig, presup:pf.presup, pago:pf.pago, obs:pf.obs
-      } : null
-    });
-  }
-  return out;
+function saveSellersCache(items){
+  try{
+    localStorage.setItem('lurati_v15_active_sellers',JSON.stringify({
+      ts:Date.now(),
+      items:(items||[])
+    }));
+  }catch(e){}
 }
 
-function parseFecha(v){
-  if (v instanceof Date) return v;
-  var n = Number(v);
-  if (!isNaN(n) && n > 30000 && n < 60000) return new Date(Math.round((n - 25569) * 86400 * 1000));
-  var m = String(v||"").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (m) return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
-  return null;
+function sellersFromStation(){
+  const cache=cachedSellers();
+  if(cache.length) return cache;
+
+  return FALLBACK_ACTIVE_SELLERS.map((nombre,i)=>({
+    nombre,
+    email:'',
+    whatsapp:'',
+    orden:i+1
+  }));
 }
 
-function normDir(s){
-  s = String(s||"").toLowerCase().trim();
-  s = s.replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u");
-  s = s.replace(/\s+/g," ");
-  return s;
+function cachedProps(){
+  try{
+    const x=JSON.parse(localStorage.getItem('lurati_v15_props_cache')||'null');
+    if(!x || !Array.isArray(x.items)) return [];
+    return x.items;
+  }catch(e){return [];}
 }
 
-// Indexa el stock (las dos hojas) por dirección -> {tipo, dorms, link}
-function mapaPropiedades(){
-  var m = {};
-  [SH_PROP, SH_PROP2].forEach(function(nombre){
-    var ws = ss().getSheetByName(nombre);
-    if (!ws) return;
-    var data = ws.getDataRange().getValues();
-    var cDir=headerIndex(ws,"Propiedad"), cTipo=headerIndex(ws,"Tipo Inmueble"),
-        cD=headerIndex(ws,"Dorms"), cL=headerIndex(ws,"Ficha/Link");
-    for (var r=1;r<data.length;r++){
-      var dir = cDir>=0 ? normDir(data[r][cDir]) : "";
-      if (!dir || m[dir]) continue;
-      m[dir] = {
-        tipo: cTipo>=0 ? String(data[r][cTipo]||"").trim() : "",
-        dorms: cD>=0 ? String(data[r][cD]||"").replace(".0","").trim() : "",
-        link: cL>=0 ? String(data[r][cL]||"").trim() : ""
-      };
+function savePropsCache(items){
+  try{
+    localStorage.setItem('lurati_v15_props_cache',JSON.stringify({
+      ts:Date.now(),
+      items:(items||[]).slice(0,700)
+    }));
+  }catch(e){}
+}
+
+function renderPropertyOptions(props){
+  propertyList.innerHTML=(props||[])
+    .map(p=>`<option value="${esc(titleAddress(p.dir||p.nombre||''))}"></option>`)
+    .join('');
+}
+
+async function refreshSellersBackground(){
+  const api=stationApi();
+  if(!api)return;
+  try{
+    const cr=await fetch(api+'?q=redesConfig').then(r=>r.json());
+    const sellers=(cr&&cr.config&&cr.config.vendedores)||[];
+    if(sellers.length){
+      renderSellers(sellers);
+      saveSellersCache(sellers);
     }
-  });
-  return m;
+  }catch(e){}
 }
 
-// ----- Perfiles para el match (incluye campos nuevos) -----
-function mapaPerfiles(){
-  var ws = ss().getSheetByName(SH_PERF);
-  var m = {};
-  if (!ws) return m;
-  var data = ws.getDataRange().getValues();
-  var cId   = headerIndex(ws,"ID Cliente (auto)"); if (cId < 0) cId = 0;
-  var cZona = headerIndex(ws,"Zona preferida");
-  var cTipo = headerIndex(ws,"Tipo inmueble");
-  var cDorm = headerIndex(ws,"Dorms."); if (cDorm < 0) cDorm = headerIndex(ws,"Dorms");
-  var cBanos= headerIndex(ws,"Baños perfil");
-  var cM2   = headerIndex(ws,"M2 perfil");
-  var cEst  = headerIndex(ws,"Estado perfil");
-  var cAnt  = headerIndex(ws,"Antiguedad perfil");
-  var cPres = headerIndex(ws,"Presupuesto Min y Max u$s"); if (cPres < 0) cPres = headerIndex(ws,"Presupuesto Min y Max");
-  var cPago = headerIndex(ws,"Forma de pago");
-  var cObs  = headerIndex(ws,"Observaciones perfil");
-  for (var r=1;r<data.length;r++){
-    var id = String(data[r][cId]||"").trim();
-    if (!id) continue;
-    var zona = cZona>=0 ? String(data[r][cZona]||"").trim() : "";
-    var pres = cPres>=0 ? String(data[r][cPres]||"").trim() : "";
-    var tipo = cTipo>=0 ? String(data[r][cTipo]||"").trim() : "";
-    var dorm = cDorm>=0 ? String(data[r][cDorm]||"").replace(".0","").trim() : "";
-    m[id] = {
-      tiene: !!(zona || pres || tipo || dorm),
-      busca: zona,
-      zona: zona,
-      tipo: tipo,
-      dorms: dorm,
-      banos: cBanos>=0 ? String(data[r][cBanos]||"").replace(".0","").trim() : "",
-      m2:    cM2>=0    ? String(data[r][cM2]||"").replace(".0","").trim()    : "",
-      estado:cEst>=0   ? String(data[r][cEst]||"").trim()                    : "",
-      antig: cAnt>=0   ? String(data[r][cAnt]||"").trim()                    : "",
-      presup: pres,
-      pago: cPago>=0 ? String(data[r][cPago]||"").trim() : "",
-      obs: cObs>=0 ? String(data[r][cObs]||"").trim() : ""
+async function refreshPropsBackground(){
+  const api=stationApi();
+  if(!api)return;
+  try{
+    const pr=await fetch(api+'?q=propiedades').then(r=>r.json());
+    const props=(pr&&pr.propiedades)||[];
+    if(props.length){
+      renderPropertyOptions(props);
+      savePropsCache(props);
+    }
+  }catch(e){}
+}
+
+function loadConfig(){
+  // 1) Vendedores instantáneos: salen del mismo index de la Estación.
+  const localSellers=sellersFromStation();
+  if(localSellers.length){
+    renderSellers(localSellers);
+  }else if(!configLoaded){
+    sellersBox.innerHTML='<small>Cargando vendedores…</small>';
+  }
+
+  // 2) Propiedades cacheadas: aparecen sin esperar a Google.
+  const cp=cachedProps();
+  if(cp.length) renderPropertyOptions(cp);
+
+  // 3) Refresco silencioso desde el CRM. No bloquea el formulario.
+  refreshSellersBackground();
+  refreshPropsBackground();
+
+  configLoaded=true;
+}
+function renderSellers(sellers){
+  sellersBox.innerHTML=sellers.map(v=>`
+    <button type="button" class="seller" data-v="${esc(v.nombre)}">
+      <strong>${esc(v.nombre)}</strong>
+      <small>${v.email?'Aviso Gmail activo':'Gmail sin configurar'}</small>
+    </button>`).join('');
+  sellersBox.querySelectorAll('.seller').forEach(b=>{
+    b.onclick=()=>{
+      selectedSeller=b.dataset.v;
+      sellersBox.querySelectorAll('.seller').forEach(x=>x.classList.toggle('on',x===b));
     };
-  }
-  return m;
+  });
 }
-
-function fmtFecha(v){
-  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), "dd/MM/yyyy");
-  var n = Number(v);
-  if (!isNaN(n) && n > 30000 && n < 60000){
-    var d = new Date(Math.round((n - 25569) * 86400 * 1000));
-    return Utilities.formatDate(d, "GMT", "dd/MM/yyyy");
-  }
-  return String(v||"");
-}
-
-function normalizarTel(v){
-  var s = String(v||"").replace(/[^\d]/g,"");
-  if (!s) return "";
-  if (s.indexOf("54")===0) s = s.slice(2);
-  if (s.indexOf("9")===0 && s.length>10) s = s.slice(1);
-  if (s.indexOf("0")===0) s = s.slice(1);
-  if (s.length===12 && s.substr(3,2)==="15") s = s.slice(0,3)+s.slice(5);
-  if (s.length===11 && s.substr(2,2)==="15") s = s.slice(0,2)+s.slice(4);
-  if (s.length>10) s = s.slice(-10);
-  if (s.length<10) return "";
-  return "549"+s;
-}
-
-// ----- STOCK: dos hojas, filtro lista negra, datos completos -----
-function leerPropiedades(){
-  var propias = _leerHojaProps(SH_PROP, "Propia");
-  var constr  = _leerHojaProps(SH_PROP2, "Constructora");
-  return propias.concat(constr);
-}
-
-function _leerHojaProps(nombreHoja, origen){
-  var ws = ss().getSheetByName(nombreHoja);
-  if (!ws) return [];
-  var data = ws.getDataRange().getValues();
-  function col(n){ return headerIndex(ws, n); }
-  var cTipo=col("Tipo Inmueble"), cEstado=col("Estado"), cDir=col("Propiedad"),
-      cZona=col("Zona"), cVal=col("Valor"), cM2=col("m2 Total"),
-      cD=col("Dorms"), cB=col("Baños"), cL=col("Ficha/Link"),
-      cCoch=col("Cochera"), cDif=col("Balcón/Patio/Terraza"),
-      cUni=col("Unidad"), cID=col("ID Propiedad"),
-      cOri=col("Orientacion"), cPiso=col("Piso"), cExp=col("Expensas"),
-      cAmen=col("Amenities");
-  // Apto crédito: tolera "A. C." (nuevo) o "Apto Credito" (viejo)
-  var cAC = col("A. C."); if (cAC<0) cAC = col("Apto Credito");
-  // Observaciones: tolera "Observacion" (nuevo) u "observaciones" (viejo)
-  var cObsP = col("Observacion"); if (cObsP<0) cObsP = col("observaciones");
-  var cCaptada = col("Captada por");
-
-  var out = [];
-  for (var r=1; r<data.length; r++){
-    var row = data[r];
-    var dir = cDir>=0 ? String(row[cDir]||"").trim() : "";
-    if (!dir) continue;
-    var est = cEstado>=0 ? String(row[cEstado]||"").trim() : "";
-    if (!_estaDisponible(est)) continue;
-
-    var coch = cCoch>=0 ? String(row[cCoch]||"").trim() : "";
-    out.push({
-      id:    cID>=0 ? String(row[cID]||"").trim() : "",
-      origen: origen,
-      tipo:  cTipo>=0 ? String(row[cTipo]||"").trim() : "",
-      estadoTxt: est,
-      dir:   dir,
-      piso:  cPiso>=0 ? String(row[cPiso]||"").trim() : "",
-      unidad: cUni>=0 ? String(row[cUni]||"").trim() : "",
-      zona:  cZona>=0 ? String(row[cZona]||"").trim() : "",
-      orientacion: cOri>=0 ? String(row[cOri]||"").trim() : "",
-      expensas: cExp>=0 ? String(row[cExp]||"").trim() : "",
-      amenities: cAmen>=0 ? String(row[cAmen]||"").trim() : "",
-      observacion: cObsP>=0 ? String(row[cObsP]||"").trim() : "",
-      captada: cCaptada>=0 ? String(row[cCaptada]||"").trim() : "",
-      valor: cVal>=0  ? row[cVal] : "",
-      m2:    cM2>=0   ? String(row[cM2]||"").trim() : "",
-      dorms: cD>=0    ? String(row[cD]||"").replace(".0","").trim() : "",
-      banos: cB>=0    ? String(row[cB]||"").replace(".0","").trim() : "",
-      cochera: _esSi(coch),
-      diferencial: cDif>=0 ? String(row[cDif]||"").trim() : "",
-      link:  cL>=0    ? String(row[cL]||"").trim() : "",
-      credito: _leerAptoCredito(cAC>=0 ? row[cAC] : ""),   // "SI"|"NO"|"NOSE"
-      aptoCredito: _leerAptoCredito(cAC>=0 ? row[cAC] : "")==="SI"  // booleano para el filtro de la pestaña Propiedades
-    });
-  }
-  return out;
-}
-
-// Lista negra primero: nunca muestra BAJA/Pausado/Vendido/etc. Después lista blanca.
-function _estaDisponible(estado){
-  var e = String(estado||"").toLowerCase().trim();
-  if (!e) return false;
-  var prohibidos = ["baja", "pausad", "vendid", "pendiente", "reservad",
-                    "stand by", "alquilado", "no disponible", "suspendid"];
-  for (var i=0; i<prohibidos.length; i++){ if (e.indexOf(prohibidos[i]) >= 0) return false; }
-  if (e.indexOf("disponible") >= 0) return true;
-  if (e.indexOf("public")     >= 0) return true;
-  if (e.indexOf("promoci")    >= 0) return true;
-  return false;
-}
-
-function _leerAptoCredito(v){
-  var s = String(v||"").trim().toLowerCase();
-  if (s==="si" || s==="sí" || s==="x" || s==="true") return "SI";
-  if (s==="no" || s==="false")                       return "NO";
-  return "NOSE";
-}
-function _esSi(v){
-  var s = String(v||"").trim().toLowerCase();
-  return (s==="si" || s==="sí" || s==="x" || s==="true");
-}
-
-// ---------------- POST (escribir) ----------------
-function doPost(e){
+async function checkDuplicate(data){
+  const api=stationApi();
+  if(!api)return null;
   try{
-    var d = JSON.parse(e.postData.contents);
-    var accion = d.accion || "registro";
-    if (accion === "estado")   return json(actualizarEstado(d));
-    if (accion === "perfil")   return json(guardarPerfil(d));
-    if (accion === "oportunidad") return json(guardarOportunidad(d));
-    if (accion === "nuevoLead") return json(guardarNuevoLead(d));
-    return json(guardarRegistro(d));
-  }catch(err){ return json({ ok:false, error:String(err) }); }
+    const r=await fetch(api+'?q=duplicado&tel='+encodeURIComponent(data.telefono)+'&prop='+encodeURIComponent(data.propiedad));
+    const j=await r.json();
+    return j&&j.duplicado?j.duplicado:null;
+  }catch(e){return null;}
 }
-
-function guardarRegistro(d){
-  var sh = ss().getSheetByName(SH_REG);
-  if(!sh){
-    sh = ss().insertSheet(SH_REG);
-    sh.appendRow(["Fecha y hora","Asesor","Sección","Acción","Detalle","Tipo/Fuente","Estado"]);
-    sh.getRange(1,1,1,7).setFontWeight("bold").setBackground("#004d44").setFontColor("#ffffff");
-    sh.setFrozenRows(1);
-  }
-  sh.appendRow([new Date(), d.asesor||"", d.seccion||"", d.accion2||d.accion||"", d.detalle||"", d.tipo||"", d.estado||""]);
-  return { ok:true };
+function duplicateMessage(d){
+  if(!d)return '';
+  const when=d.dias==null?'':(d.dias===0?'Consultó hoy.':`Consultó hace ${d.dias} día${d.dias===1?'':'s'}.`);
+  return `Ya figura ${esc(d.id||'')} por este inmueble, asignado a <b>${esc(d.vendedor||'sin vendedor')}</b>. ${esc(when)}`;
 }
-
-function actualizarEstado(d){
-  var ws = ss().getSheetByName(SH_CONS);
-  if(!ws) return { ok:false, error:"No existe "+SH_CONS };
-  var cId = headerIndex(ws,"ID Cliente (auto)");
-  var cEst = headerIndex(ws, COL_ESTADO);
-  if (cEst < 0) cEst = ensureColumn(ws, COL_ESTADO);
-  var cQuien = ensureColumn(ws, COL_EST_FECHA);
-  var data = ws.getDataRange().getValues();
-  for (var r=1;r<data.length;r++){
-    if (String(data[r][cId]).trim() === String(d.id).trim()){
-      ws.getRange(r+1, cEst+1).setValue(d.valor);
-      ws.getRange(r+1, cQuien+1).setValue((d.asesor||"") + " · " + new Date().toLocaleString("es-AR"));
-      guardarRegistro({asesor:d.asesor, seccion:"Venta", accion:"Cambio de estado", detalle:d.id, tipo:"", estado:d.valor});
-      return { ok:true };
-    }
-  }
-  return { ok:false, error:"No se encontró el cliente "+d.id };
+function postLead(data){
+  const api=stationApi();
+  fetch(api,{
+    method:'POST',mode:'no-cors',keepalive:true,
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({
+      accion:'nuevoLead',
+      vendedor:data.vendedor,
+      propiedad:data.propiedad,
+      nombre:data.nombre,
+      telefono:data.telefono,
+      cargadoPor:'Flavia',
+      canal:'WhatsApp'
+    })
+  }).catch(()=>{});
 }
-
-// ----- Guarda el perfil con todos los campos nuevos -----
-function guardarPerfil(d){
-  var ws = ss().getSheetByName(SH_PERF);
-  if(!ws) return { ok:false, error:"No existe "+SH_PERF };
-  var data = ws.getDataRange().getValues();
-  var cId = 0;
-  var cZona = colExacta(ws,["Zona preferida"]);
-  var cTipo = colExacta(ws,["Tipo inmueble"]);
-  var cDorm = colExacta(ws,["Dorms.","Dorms"]);
-  var cBanos= colExacta(ws,["Baños perfil"]);
-  var cM2   = colExacta(ws,["M2 perfil"]);
-  var cEst  = colExacta(ws,["Estado perfil"]);
-  var cAnt  = colExacta(ws,["Antiguedad perfil"]);
-  var cPres = colExacta(ws,["Presupuesto Min y Max u$s","Presupuesto Min y Max u$S","Presupuesto Min y Max"]);
-  var cPago = colExacta(ws,["Forma de pago"]);
-  var cObs  = colExacta(ws,["Observaciones perfil"]);
-  for (var r=1;r<data.length;r++){
-    if (String(data[r][cId]).trim() === String(d.id).trim()){
-      var fila = r+1;
-      if(d.busca  && cZona>=0) ws.getRange(fila,cZona+1).setValue(d.busca);
-      if(d.tipo   && cTipo>=0) ws.getRange(fila,cTipo+1).setValue(d.tipo);
-      if(d.dorms  && cDorm>=0) ws.getRange(fila,cDorm+1).setValue(d.dorms);
-      if(d.banos  && cBanos>=0)ws.getRange(fila,cBanos+1).setValue(d.banos);
-      if(d.m2     && cM2>=0)   ws.getRange(fila,cM2+1).setValue(d.m2);
-      if(d.estado && cEst>=0)  ws.getRange(fila,cEst+1).setValue(d.estado);
-      if(d.antig  && cAnt>=0)  ws.getRange(fila,cAnt+1).setValue(d.antig);
-      if(d.presup && cPres>=0) ws.getRange(fila,cPres+1).setValue(d.presup);
-      if(d.pago   && cPago>=0) ws.getRange(fila,cPago+1).setValue(d.pago);
-      if(d.obs    && cObs>=0)  ws.getRange(fila,cObs+1).setValue(d.obs);
-      guardarRegistro({asesor:d.asesor, seccion:"Venta", accion:"Perfil cliente", detalle:d.id, tipo:d.tipo||"", estado:d.presup||""});
-      return { ok:true };
-    }
-  }
-  return { ok:false, error:"No se encontró el cliente "+d.id+" en Perfil" };
-}
-
-function guardarOportunidad(d){
-  var SH_POS = "07_Posibilidades_Vendedores";
-  var ws = ss().getSheetByName(SH_POS);
-  if(!ws) return { ok:false, error:"No existe la hoja "+SH_POS };
-  var hoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
-  ws.appendRow([
-    "", hoy, d.vinculo||"", d.nombre||"", d.telefono||"", d.asesor||"",
-    d.tipoProp||"", d.zona||"", "", "", "", "", "Nueva", "", "", "", d.obs||""
-  ]);
-  guardarRegistro({asesor:d.asesor, seccion:"Captación", accion:"Oportunidad", detalle:(d.nombre||"")+" - "+(d.tipoProp||""), tipo:d.vinculo||"", estado:d.zona||""});
-  return { ok:true };
-}
-
-// ============================================================
-//  v15 — ALTA RÁPIDA DE LEADS + AVISO AL VENDEDOR
-// ============================================================
-
-var SH_CFG_REDES = "CFG_REDES_RAPIDO";
-var URL_ESTACION_V15 = "https://stefanolurati2303-byte.github.io/LURATI-CAPTACION/estacion-v15.html";
-
-function _tituloDireccion(s){
-  var menores = {"de":1,"del":1,"la":1,"las":1,"los":1,"y":1,"e":1};
-  var txt = String(s||"").trim().replace(/\s+/g," ");
-  if (!txt) return "";
-  return txt.split(" ").map(function(p,i){
-    if (/^\d/.test(p)) return p;
-    var low = p.toLowerCase();
-    if (i>0 && menores[low]) return low;
-    return low.charAt(0).toUpperCase() + low.slice(1);
-  }).join(" ");
-}
-
-function _emailVendedor(nombre){
-  var ws = ss().getSheetByName(SH_CFG_REDES);
-  if (!ws || ws.getLastRow()<2) return "";
-  var data = ws.getDataRange().getDisplayValues();
-  var hdr = data[0].map(function(x){return String(x||"").trim().toLowerCase();});
-  var cNom = hdr.indexOf("vendedor");
-  var cMail = hdr.indexOf("email");
-  var cAct = hdr.indexOf("activo");
-  if (cNom<0 || cMail<0) return "";
-  var n = String(nombre||"").trim().toLowerCase();
-  for (var r=1;r<data.length;r++){
-    if (String(data[r][cNom]||"").trim().toLowerCase() !== n) continue;
-    if (cAct>=0){
-      var a = String(data[r][cAct]||"").trim().toLowerCase();
-      if (a && a!=="si" && a!=="sí" && a!=="s") return "";
-    }
-    return String(data[r][cMail]||"").trim();
-  }
-  return "";
-}
-
-function leerConfigRedes(){
-  var vendedores = [];
-  var ws = ss().getSheetByName(SH_CFG_REDES);
-
-  // Fuente principal: CFG_REDES_RAPIDO.
-  // Si existe, SOLO devuelve vendedores con Activo = Sí.
-  if (ws && ws.getLastRow()>=2){
-    var data = ws.getDataRange().getDisplayValues();
-    var hdr = data[0].map(function(x){return String(x||"").trim().toLowerCase();});
-
-    var cNom  = hdr.indexOf("vendedor");
-    var cMail = hdr.indexOf("email");
-    var cW    = hdr.indexOf("whatsapp");
-    var cAct  = hdr.indexOf("activo");
-    var cOrd  = hdr.indexOf("orden");
-
-    if (cNom>=0){
-      for (var r=1;r<data.length;r++){
-        var nom = String(data[r][cNom]||"").trim();
-        if (!nom) continue;
-
-        var act = cAct>=0 ? String(data[r][cAct]||"").trim().toLowerCase() : "si";
-        var activo = (act==="si" || act==="sí" || act==="s");
-        if (!activo) continue;
-
-        vendedores.push({
-          nombre: nom,
-          email: cMail>=0 ? String(data[r][cMail]||"").trim() : "",
-          whatsapp: cW>=0 ? String(data[r][cW]||"").replace(/\D/g,"") : "",
-          orden: cOrd>=0 ? Number(data[r][cOrd]||999) : 999
-        });
-      }
-
-      vendedores.sort(function(a,b){
-        if (a.orden !== b.orden) return a.orden - b.orden;
-        return a.nombre.localeCompare(b.nombre);
-      });
-
-      return {
-        vendedores:vendedores,
-        cargadoPor:"Flavia",
-        estacion:URL_ESTACION_V15
-      };
-    }
-  }
-
-  // Fallback únicamente si todavía no existe CFG_REDES_RAPIDO.
-  var wsC = ss().getSheetByName("Config");
-  if (wsC && wsC.getLastRow()>=4){
-    var vals = wsC.getRange(4,1,wsC.getLastRow()-3,1).getDisplayValues();
-    var vistos = {};
-    for (var i=0;i<vals.length;i++){
-      var n = String(vals[i][0]||"").trim();
-      if (!n || vistos[n.toLowerCase()] || n.toLowerCase()==="invitado") continue;
-      vistos[n.toLowerCase()] = true;
-      vendedores.push({nombre:n,email:"",whatsapp:"",orden:i+1});
-    }
-  }
-
-  return {
-    vendedores:vendedores,
-    cargadoPor:"Flavia",
-    estacion:URL_ESTACION_V15
+function completeSave(data){
+  postLead(data);
+  rememberProp(data.propiedad);
+  save.disabled=false;
+  setStatus('ok',
+    `<b>Consulta enviada al CRM.</b><br>${esc(data.nombre)} · ${esc(data.propiedad)}<br>`+
+    `Asignada a <b>${esc(data.vendedor)}</b>. El aviso por Gmail se procesa automáticamente.`+
+    `<div class="footerActions"><button id="sameProp" type="button">Otro del mismo inmueble</button>`+
+    `<button id="newProp" type="button">Nuevo inmueble</button></div>`
+  );
+  document.getElementById('sameProp').onclick=()=>{
+    nameInput.value='';phone.value='';status.className='status';nameInput.focus();
   };
-}
+  document.getElementById('newProp').onclick=()=>{
+    property.value='';nameInput.value='';phone.value='';status.className='status';property.focus();
+  };
 
-function _ultimaFilaRealConsultas(){
-  var ws = ss().getSheetByName(SH_CONS);
-  if (!ws) return 1;
-  try{
-    return ws.getRange(ws.getMaxRows(),5)
-      .getNextDataCell(SpreadsheetApp.Direction.UP).getRow();
-  }catch(e){
-    return ws.getLastRow();
+  // Si el asesor seleccionado es el que está abierto, refrescamos sus leads unos segundos después.
+  if(currentAdvisor()===data.vendedor){
+    setTimeout(()=>{
+      try{frame.contentWindow.eval("LEADS=null; loadLeads();");}catch(e){}
+    },1800);
   }
 }
+async function submit(force){
+  const data={
+    vendedor:selectedSeller,
+    propiedad:titleAddress(property.value),
+    nombre:String(nameInput.value||'').trim(),
+    telefono:String(phone.value||'').trim()
+  };
+  if(!data.vendedor)return setStatus('err','Elegí el vendedor.');
+  if(!data.propiedad)return setStatus('err','Elegí o escribí el inmueble.');
+  if(!data.nombre)return setStatus('err','Falta el nombre.');
+  if(digits(data.telefono).length<7)return setStatus('err','Revisá el teléfono.');
 
-function buscarDuplicadoUltimas50(tel, prop){
-  var ws = ss().getSheetByName(SH_CONS);
-  if (!ws) return null;
-  var last = _ultimaFilaRealConsultas();
-  if (last < 2) return null;
+  save.disabled=true;
+  setStatus('warn','Guardando…');
 
-  var inicio = Math.max(2, last-49);
-  var cant = last-inicio+1;
-  var data = ws.getRange(inicio,1,cant,9).getValues();
-
-  var t = _soloDigitos(tel);
-  var p = normDir(prop);
-  if (!t || !p) return null;
-
-  for (var i=data.length-1;i>=0;i--){
-    var row=data[i];
-    if (_soloDigitos(row[5]) !== t) continue;
-    if (normDir(row[7]) !== p) continue;
-
-    var f=parseFecha(row[1]);
-    var dias=f?Math.max(0,Math.floor((new Date()-f)/86400000)):null;
-    return {
-      id:String(row[0]||"").trim(),
-      nombre:String(row[4]||"").trim(),
-      vendedor:String(row[8]||"").trim(),
-      fecha:f?fmtFecha(f):"",
-      dias:dias
-    };
+  if(!force){
+    const dup=await checkDuplicate(data);
+    if(dup){
+      pendingData=data;
+      save.disabled=false;
+      setStatus('warn',
+        duplicateMessage(dup)+
+        `<div class="dupBtns"><button id="noDup" class="miniBtn" type="button">No duplicar</button>`+
+        `<button id="yesDup" class="miniBtn continue" type="button">Cargar igual</button></div>`
+      );
+      document.getElementById('noDup').onclick=()=>{status.className='status';};
+      document.getElementById('yesDup').onclick=()=>completeSave(pendingData);
+      return;
+    }
   }
-  return null;
+  completeSave(data);
 }
+save.onclick=()=>submit(false);
 
-function _formulaIdBase(ws, cId){
-  if (cId<0) return "";
-  var last=Math.max(ws.getLastRow(),2);
-  var formulas=ws.getRange(2,cId+1,Math.max(last-1,1),1).getFormulas();
-  for(var i=0;i<formulas.length;i++) if(formulas[i][0]) return formulas[i][0];
-  return "";
-}
+// ---------- Mejora de la Estación: WhatsApp marca Contactado ----------
+function enhanceStation(){
+  let doc;
+  try{doc=frame.contentDocument;}catch(e){return;}
+  if(!doc||doc.__luratiV15)return;
+  doc.__luratiV15=true;
 
-function _adaptarFormulaFila(formula, fila){
-  if(!formula) return "";
-  return formula.replace(/([A-Z]\$?)(\d+)/g,function(m,col,num){
-    return col+fila;
-  });
-}
+  doc.addEventListener('click',function(e){
+    const a=e.target.closest&&e.target.closest('a.lead-wa');
+    if(!a || a.classList.contains('recontactar'))return;
 
-function _siguienteIdManual(ws,cId){
-  if(cId<0) return "";
-  var last=Math.max(_ultimaFilaRealConsultas(),2);
-  var inicio=Math.max(2,last-99);
-  var vals=ws.getRange(inicio,cId+1,last-inicio+1,1).getDisplayValues();
-  var max=0;
-  for(var i=0;i<vals.length;i++){
-    var m=String(vals[i][0]||"").match(/^C-(\d+)$/i);
-    if(m) max=Math.max(max,Number(m[1]));
-  }
-  return "C-"+String(max+1).padStart(4,"0");
-}
+    const row=a.closest('.leadrow');
+    if(!row)return;
+    const txt=row.textContent||'';
+    const m=txt.match(/C-\d+/i);
+    if(!m)return;
+    const id=m[0];
 
-function _avisarNuevoLead(vendedor, lead){
-  var email=_emailVendedor(vendedor);
-  if(!email) return {enviado:false,motivo:"sin email"};
+    // Sólo cambio automático si el lead todavía figura Nuevo.
+    if(!/\bNuevo\b/i.test(txt))return;
 
-  var asunto="Nuevo lead Lurati · "+lead.propiedad+" · "+lead.nombre;
-  var body=[
-    "Nuevo lead asignado",
-    "",
-    "Cliente: "+lead.nombre,
-    "Teléfono: "+lead.telefono,
-    "Propiedad: "+lead.propiedad,
-    "CRM: "+lead.id,
-    "",
-    "Abrí la Estación del Asesor para trabajarlo:",
-    URL_ESTACION_V15
-  ].join("\n");
-
-  var html=
-    '<div style="font-family:Arial,sans-serif;max-width:620px">'+
-    '<h2 style="color:#004d44">Nuevo lead Lurati</h2>'+
-    '<p><b>Cliente:</b> '+lead.nombre+'</p>'+
-    '<p><b>Teléfono:</b> '+lead.telefono+'</p>'+
-    '<p><b>Propiedad:</b> '+lead.propiedad+'</p>'+
-    '<p><b>CRM:</b> '+lead.id+'</p>'+
-    '<p style="margin-top:22px">'+
-    '<a href="'+URL_ESTACION_V15+'" style="background:#004d44;color:#fff;text-decoration:none;padding:12px 16px;border-radius:9px;font-weight:700">Abrir Estación del Asesor</a>'+
-    '</p></div>';
-
-  MailApp.sendEmail({
-    to:email,
-    subject:asunto,
-    body:body,
-    htmlBody:html,
-    name:"Lurati Consultora Inmobiliaria"
-  });
-  return {enviado:true,email:email};
-}
-
-function guardarNuevoLead(d){
-  var ws = ss().getSheetByName(SH_CONS);
-  if(!ws) return {ok:false,error:"No existe "+SH_CONS};
-
-  var nombre=String(d.nombre||"").trim();
-  var telefono=String(d.telefono||"").trim();
-  var propiedad=_tituloDireccion(d.propiedad||"");
-  var vendedor=String(d.vendedor||"").trim();
-  var cargadoPor=String(d.cargadoPor||"Flavia").trim();
-
-  if(!nombre) return {ok:false,error:"Falta nombre"};
-  if(!_soloDigitos(telefono)) return {ok:false,error:"Falta teléfono"};
-  if(!propiedad) return {ok:false,error:"Falta propiedad"};
-  if(!vendedor) return {ok:false,error:"Falta vendedor"};
-
-  var lock=LockService.getScriptLock();
-  lock.waitLock(10000);
-  try{
-    var cId=headerIndex(ws,"ID Cliente (auto)");
-    var cFec=headerIndex(ws,"Fecha ingreso");
-    var cCan=headerIndex(ws,"Canal");
-    var cNom=headerIndex(ws,"Nombre cliente");
-    var cTel=headerIndex(ws,"Teléfono");
-    var cMail=headerIndex(ws,"Correo");
-    var cProp=headerIndex(ws,"Propiedad consultada");
-    var cVend=headerIndex(ws,"Vendedor asignado");
-    var cEst=headerIndex(ws,"Estado inicial");
-    var cTipo=headerIndex(ws,"Tipo operación");
-    var cPri=headerIndex(ws,"Prioridad");
-    var cProx=headerIndex(ws,"Próxima acción");
-    var cCarg=headerIndex(ws,"Cargado por");
-    var cCamp=headerIndex(ws,"Campaña / anuncio");
-    var cObs=headerIndex(ws,"Observaciones");
-    var cUlt=headerIndex(ws,"Última actualización");
-
-    var fila=_ultimaFilaRealConsultas()+1;
-    var maxCol=ws.getLastColumn();
-
-    if(fila>ws.getMaxRows()) ws.insertRowsAfter(ws.getMaxRows(),20);
-
-    // Si la nueva fila no trae fórmula de ID, replicamos una fórmula existente.
-    var formulaBase=_formulaIdBase(ws,cId);
-    if(cId>=0 && !ws.getRange(fila,cId+1).getFormula() && formulaBase){
-      ws.getRange(fila,cId+1).setFormula(_adaptarFormulaFila(formulaBase,fila));
+    const advisor=currentAdvisor();
+    const api=stationApi();
+    if(api&&advisor){
+      fetch(api,{
+        method:'POST',mode:'no-cors',keepalive:true,
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({accion:'estado',id:id,valor:'Contactado',asesor:advisor})
+      }).catch(()=>{});
     }
 
-    function put(idx,val){ if(idx>=0) ws.getRange(fila,idx+1).setValue(val); }
-
-    put(cFec,new Date());
-    put(cCan,String(d.canal||"WhatsApp").trim()||"WhatsApp");
-    put(cNom,nombre);
-    put(cTel,telefono);
-    put(cMail,String(d.correo||"").trim());
-    put(cProp,propiedad);
-    put(cVend,vendedor);
-    put(cEst,"Nuevo");
-    put(cTipo,"Compra");
-    put(cPri,"Alta");
-    put(cProx,"Contactar lead nuevo");
-    put(cCarg,cargadoPor);
-    put(cCamp,propiedad);
-    put(cObs,"Alta rápida desde Estación / Redes");
-    put(cUlt,new Date());
-
-    SpreadsheetApp.flush();
-
-    var id=cId>=0?String(ws.getRange(fila,cId+1).getDisplayValue()||"").trim():"";
-    if(!id && cId>=0){
-      id=_siguienteIdManual(ws,cId);
-      ws.getRange(fila,cId+1).setValue(id);
-    }
-
-    guardarRegistro({
-      asesor:vendedor,
-      seccion:"Venta",
-      accion:"Nuevo lead",
-      detalle:id+" · "+nombre+" · "+propiedad,
-      tipo:"Redes",
-      estado:"Nuevo"
-    });
-
-    var aviso={enviado:false};
+    // Quita signos de apertura invertidos del texto prearmado de WhatsApp.
     try{
-      aviso=_avisarNuevoLead(vendedor,{
-        id:id,nombre:nombre,telefono:telefono,propiedad:propiedad
-      });
-    }catch(mailErr){
-      aviso={enviado:false,error:String(mailErr)};
-    }
-
-    return {
-      ok:true,
-      id:id,
-      vendedor:vendedor,
-      propiedad:propiedad,
-      avisoEmail:aviso
-    };
-  }finally{
-    lock.releaseLock();
-  }
-}
-
-// ============================================================
-//  FEED META → escribe la pestaña "FEED_META" en el formato exacto
-//  que pide el catálogo inmobiliario de Lurati en Meta.
-//
-//  Produce lo mismo que el Excel FEED_META_Lurati:
-//   - Constructoras: dirección limpia (sin nombre de edificio ni unidad),
-//     amenities extraídos del texto, observaciones ordenadas.
-//   - Campos: home_listing_group_id, sin latitude/country.
-//
-//  CÓMO USAR: elegí "generarFeedMeta" en el menú del editor y Ejecutar.
-//  Luego publicá la pestaña FEED_META como CSV y dale esa URL a Meta.
-//  Para automatizar: Activadores → generarFeedMeta → cada hora.
-// ============================================================
-function generarFeedMeta(){
-  var props = leerPropiedades();
-
-  var headers = ["home_listing_id","home_listing_group_id","name","description","availability","url",
-                 "neighborhood","address","num_rooms","num_baths","num_units","unit_price","price","currency",
-                 "area_size","area_unit","parking_spaces","property_type","listing_type",
-                 "construction_status","building_amenities","garden_type","visibility","special_offers","image[0].url"];
-
-  var filas = [headers];
-  var vistos = {};
-
-  for (var i=0; i<props.length; i++){
-    var p = props[i];
-    var esConstr = (p.origen === "Constructora");
-
-    var id = String(p.id || p.dir || ("P-"+i)).trim();
-    if (!id) id = "P-"+i;
-    if (vistos[id] != null){ vistos[id]++; id = id + "-" + vistos[id]; }
-    else { vistos[id] = 0; }
-
-    var tipo = String(p.tipo || "Propiedad").trim();
-    var zona = String(p.zona || "").trim();
-
-    // Dirección: en constructoras, extraer solo la calle (parte del medio)
-    var direccion = esConstr ? _direccionConstructora(p.dir) : String(p.dir||"").trim();
-
-    // num_units (piso + unidad)
-    var pu = [];
-    if (p.piso && String(p.piso).trim() && !/^[-_.\s]+$/.test(String(p.piso))) pu.push("Piso " + String(p.piso).trim());
-    if (p.unidad && String(p.unidad).trim()) pu.push("Unidad " + String(p.unidad).replace(".0","").trim());
-    var numUnits = pu.join(", ");
-
-    var nombre = tipo + " en " + direccion + (zona ? ", " + zona : "");
-
-    // Precio
-    var precioNum = _precioNum(p.valor);
-    var aConsultar = false;
-    if (!precioNum || Number(precioNum) <= 0){ precioNum = "1"; aConsultar = true; }
-
-    // Observaciones y amenities
-    var amenities = "", obsLimpia = "";
-    if (esConstr){
-      amenities = _extraerAmenities(p.observacion, p.captada);
-      obsLimpia = _limpiarObs(p.observacion, p.captada);
-    } else {
-      amenities = String(p.amenities||"").trim();
-      var ob = String(p.observacion||"").trim();
-      obsLimpia = (ob.toLowerCase() === "libre") ? "" : ob;
-    }
-
-    // Descripción
-    var descP = [nombre];
-    var dif = String(p.diferencial||"").trim();
-    if (dif && dif.toLowerCase() !== "demoler" && dif.toLowerCase() !== "no") descP.push(dif);
-    if (obsLimpia) descP.push(obsLimpia);
-    if (aConsultar) descP.push("Precio a consultar");
-    var desc = descP.join(". ");
-    if (desc.length > 4900) desc = desc.substring(0,4900);
-
-    var url = String(p.link || "").trim();
-    if (!url || url.toLowerCase().indexOf("http") !== 0) url = "https://lurati.com.ar";
-    url = url.replace(/^https?:\/\/Lurati/i, "https://lurati");
-
-    var construccion = "";
-    var estado = String(p.estadoTxt||"").toLowerCase();
-    if (estado.indexOf("obra")>=0 || estado.indexOf("construc")>=0 || estado.indexOf("pozo")>=0) construccion = "under_construction";
-    else if (estado.indexOf("estrenar")>=0 || estado.indexOf("entrega inmediata")>=0) construccion = "new";
-
-    var oferta = (estado.indexOf("promoci")>=0) ? "Promoción" : "";
-    var groupId = direccion.toLowerCase().replace(/[^a-z0-9]/g,"").substring(0,40) || "sin-grupo";
-
-    filas.push([
-      id, groupId, nombre, desc, "for_sale", url,
-      zona, direccion, _soloNumero(p.dorms), _soloNumero(p.banos), numUnits,
-      precioNum+" USD", precioNum+" USD", "USD", _soloNumero(p.m2), "sqm",
-      (p.cochera ? "1" : "0"), _tipoMeta(tipo), "for_sale_by_agent",
-      construccion, amenities, dif, String(p.orientacion||"").trim(), oferta, IMAGEN_TEMPORAL
-    ]);
-  }
-
-  // Escribe en el Sheet APARTE (separado del CRM), por seguridad de los datos de clientes.
-  if (!SHEET_FEED_ID || SHEET_FEED_ID.indexOf("PEGAR") === 0){
-    throw new Error("Falta pegar el ID del Sheet del feed en la variable SHEET_FEED_ID (arriba del código).");
-  }
-  var libroFeed = SpreadsheetApp.openById(SHEET_FEED_ID);
-  var hoja = libroFeed.getSheetByName("FEED_META");
-  if (!hoja) hoja = libroFeed.insertSheet("FEED_META");
-  hoja.clear();
-  hoja.getRange(1, 1, filas.length, headers.length).setValues(filas);
-  return "OK: " + (filas.length - 1) + " propiedades escritas en FEED_META (Sheet aparte)";
-}
-
-// Extrae solo la dirección (parte del medio) de una propiedad de constructora.
-// "Gandhi 26 - Francia 735 - Cocheras..." -> "Francia 735"
-function _direccionConstructora(prop){
-  var s = String(prop||"").trim();
-  var partes = s.split(" - ");
-  for (var i=0;i<partes.length;i++) partes[i] = partes[i].trim();
-  if (partes.length >= 3) return partes[1];
-  if (partes.length === 2) return /\d/.test(partes[1]) ? partes[1] : partes[0];
-  return partes[0];
-}
-
-// Precio: maneja número directo (239900) o texto ("U$S 11.940 c/u" -> 11940)
-function _precioNum(val){
-  if (val == null) return "";
-  if (typeof val === "number"){ var n=Math.round(val); return n>0 ? String(n) : ""; }
-  var s = String(val).replace(/U\$S|USD|\$/g,"");
-  var m = s.match(/[\d.,]+/);
-  if (!m) return "";
-  var raw = m[0].replace(/\./g,"").replace(/,/g,"");
-  var num = parseInt(raw, 10);
-  return (num && num>0) ? String(num) : "";
-}
-
-// Extrae amenities mencionadas en el texto de observaciones
-function _extraerAmenities(obs, captada){
-  var texto = (String(obs||"") + " " + String(captada||"")).toLowerCase();
-  var mapa = [["pileta","Pileta"],["solarium","Solárium"],["quincho","Quincho"],
-              ["laundry","Laundry"],["gimnasio","Gimnasio"],["gym","Gimnasio"],
-              ["sum","SUM"],["parrillero","Parrillero"],["cámaras","Seguridad"],
-              ["camaras","Seguridad"],["control de acceso","Control de acceso"],
-              ["bicicletero","Bicicletero"],["vestuario","Vestuarios"],["ducha","Ducha"]];
-  var res = [];
-  for (var i=0;i<mapa.length;i++){
-    if (texto.indexOf(mapa[i][0])>=0 && res.indexOf(mapa[i][1])<0) res.push(mapa[i][1]);
-  }
-  return res.join(", ");
-}
-
-// Limpia las observaciones: saca el prefijo técnico de agrupación
-function _limpiarObs(obs, captada){
-  var partes = [];
-  var vals = [obs, captada];
-  for (var i=0;i<vals.length;i++){
-    var v = vals[i];
-    if (v && String(v).trim() && String(v).trim().toLowerCase() !== "entrega inmediata"){
-      var t = String(v).trim();
-      t = t.replace(/^Agrupado por dirección y tipo\.\s*Total unidades:\s*\d+\.\s*Detalle:[\s\S]*?Notas:\s*/i, "");
-      t = t.replace(/^Agrupado por dirección y tipo\.\s*Total unidades:\s*\d+\.\s*Detalle:[\s\S]*$/i, "");
-      if (t.trim()) partes.push(t.trim());
-    }
-  }
-  return partes.join(" ").trim();
-}
-
-
-function _soloNumero(v){
-  if (v == null) return "";
-  var m = String(v).replace(",", ".").match(/\d+(?:\.\d+)?/);
-  if (!m) return "";
-  return String(Math.round(parseFloat(m[0])));
-}
-
-function _tipoMeta(t){
-  t = String(t||"").toLowerCase();
-  if (t.indexOf("depto")>=0 || t.indexOf("departamento")>=0) return "apartment";
-  if (t.indexOf("casa")>=0) return "house";
-  if (t.indexOf("lote")>=0 || t.indexOf("terreno")>=0) return "land";
-  if (t.indexOf("ph")>=0) return "townhouse";
-  return "other";
-}
-
-// ============================================================
-//  IMPORTAR LEADS DE META (Instagram/Facebook Lead Ads) AL CRM
-//
-//  Flujo: los leads de Meta llegan a una hoja "LEADS_META" (la llena
-//  el puente Albato/SaveMyLeads, o los pegás de la descarga manual).
-//  Esta función los lee y los carga como leads nuevos en la hoja
-//  01_Consultas(interno), sin duplicar.
-//
-//  La hoja LEADS_META debe tener (al menos) estas columnas, con estos
-//  nombres en la fila 1 (tal como vienen de la descarga de Meta):
-//    Fecha de creación | Nombre | Correo electrónico | Origen |
-//    Formulario | Canal | Teléfono | Número de WhatsApp
-//
-//  CÓMO USAR: elegí "importarLeadsMeta" en el editor y Ejecutar.
-//  Para automatizar: Activadores → importarLeadsMeta → cada hora.
-// ============================================================
-function importarLeadsMeta(){
-  var libro = SpreadsheetApp.getActiveSpreadsheet();
-  var hojaMeta = libro.getSheetByName("LEADS_META");
-  if (!hojaMeta) return "No existe la hoja LEADS_META.";
-
-  var hojaCRM = libro.getSheetByName(SH_CONS);
-  if (!hojaCRM) return "No existe la hoja " + SH_CONS;
-
-  var dM = hojaMeta.getDataRange().getValues();
-  if (dM.length < 2) return "LEADS_META esta vacia (solo encabezados o nada).";
-
-  // Indices en LEADS_META (formato CRUDO de Meta)
-  function colM(nombre){
-    var hdr = dM[0];
-    for (var i=0;i<hdr.length;i++){ if (String(hdr[i]).trim().toLowerCase()===nombre.toLowerCase()) return i; }
-    return -1;
-  }
-  var mFecha = colM("Fecha de creación");
-  var mNom   = colM("Nombre");
-  var mMail  = colM("Correo electrónico");
-  var mForm  = colM("Formulario");
-  var mCanal = colM("Canal");
-  var mOrigen= colM("Origen");
-  var mTel   = colM("Teléfono");
-  var mWsp   = colM("Número de WhatsApp");
-
-  // Indices en el CRM (01_Consultas) - 0-based
-  var cId   = headerIndex(hojaCRM,"ID Cliente (auto)");
-  var cFec  = headerIndex(hojaCRM,"Fecha ingreso");
-  var cCanal= headerIndex(hojaCRM,"Canal");
-  var cNom  = headerIndex(hojaCRM,"Nombre cliente");
-  var cTel  = headerIndex(hojaCRM,"Teléfono");
-  var cMail = headerIndex(hojaCRM,"Correo");
-  var cProp = headerIndex(hojaCRM,"Propiedad consultada");
-  var cVend = headerIndex(hojaCRM,"Vendedor asignado");
-  var cEst  = headerIndex(hojaCRM,"Estado inicial");
-  var cCarg = headerIndex(hojaCRM,"Cargado por");
-  var cCamp = headerIndex(hojaCRM,"Campaña / anuncio");
-
-  // Leer todo el CRM para: (a) detectar telefonos existentes, (b) hallar filas libres
-  var dCRM = hojaCRM.getDataRange().getValues();
-  var existentes = {};
-  for (var r=1;r<dCRM.length;r++){
-    var t = cTel>=0 ? _soloDigitos(dCRM[r][cTel]) : "";
-    if (t) existentes[t] = true;
-  }
-
-  // Detectar la formula de ID de la columna A (para replicarla en filas nuevas)
-  var formulaID = "";
-  if (cId>=0){
-    var rangoFormulas = hojaCRM.getRange(2, cId+1, Math.max(dCRM.length-1,1), 1).getFormulas();
-    for (var f=0; f<rangoFormulas.length; f++){
-      if (rangoFormulas[f][0]){ formulaID = rangoFormulas[f][0]; break; }
-    }
-  }
-
-  // Puntero para buscar la primera fila con Nombre (col E) vacio, reutilizando filas con formula
-  // Empezamos en la fila 2 (indice 1 de dCRM)
-  var punteroFila = 1; // indice en dCRM; fila real = punteroFila+1
-
-  function buscarFilaLibre(){
-    while (punteroFila < dCRM.length){
-      var nomActual = cNom>=0 ? String(dCRM[punteroFila][cNom]||"").trim() : "x";
-      if (!nomActual){ // fila con Nombre vacio = libre
-        return punteroFila + 1; // fila real (1-based)
+      const u=new URL(a.href);
+      if(u.searchParams.has('text')){
+        const t=(u.searchParams.get('text')||'').replaceAll('¿','').replaceAll('¡','');
+        u.searchParams.set('text',t);
+        a.href=u.toString();
       }
-      punteroFila++;
-    }
-    return -1; // no hay filas libres, hay que appendear
-  }
-
-  var nuevos = 0, duplicados = 0, maxCol = hojaCRM.getLastColumn();
-  for (var i=1;i<dM.length;i++){
-    var row = dM[i];
-    var nombre = mNom>=0 ? String(row[mNom]||"").trim() : "";
-    if (!nombre) continue;
-
-    var tel = "";
-    if (mWsp>=0 && String(row[mWsp]||"").trim()) tel = String(row[mWsp]).trim();
-    else if (mTel>=0) tel = String(row[mTel]||"").trim();
-    var telNorm = _soloDigitos(tel);
-
-    if (telNorm && existentes[telNorm]){ duplicados++; continue; }
-    if (telNorm) existentes[telNorm] = true;
-
-    var propiedad = mForm>=0 ? String(row[mForm]||"").trim() : "";
-    var canal = "";
-    if (mCanal>=0 && String(row[mCanal]||"").trim()) canal = String(row[mCanal]).trim();
-    else if (mOrigen>=0) canal = String(row[mOrigen]||"").trim();
-    if (!canal) canal = "Meta";
-
-    // Valores a escribir (sin tocar la columna de ID, que tiene su formula)
-    function setIfCol(fila, idx, val){ if (idx>=0) fila[idx] = val; }
-
-    var filaLibre = buscarFilaLibre();
-    if (filaLibre > 0){
-      // Escribir celda por celda en la fila libre (respetando la formula de ID)
-      if (cFec>=0)  hojaCRM.getRange(filaLibre, cFec+1).setValue(mFecha>=0 ? row[mFecha] : new Date());
-      if (cCanal>=0)hojaCRM.getRange(filaLibre, cCanal+1).setValue(canal);
-      if (cNom>=0)  hojaCRM.getRange(filaLibre, cNom+1).setValue(nombre);
-      if (cTel>=0)  hojaCRM.getRange(filaLibre, cTel+1).setValue(tel);
-      if (cMail>=0) hojaCRM.getRange(filaLibre, cMail+1).setValue(mMail>=0 ? String(row[mMail]||"").trim() : "");
-      if (cProp>=0) hojaCRM.getRange(filaLibre, cProp+1).setValue(propiedad);
-      if (cEst>=0)  hojaCRM.getRange(filaLibre, cEst+1).setValue("Nuevo");
-      if (cCarg>=0) hojaCRM.getRange(filaLibre, cCarg+1).setValue("Meta (auto)");
-      if (cCamp>=0) hojaCRM.getRange(filaLibre, cCamp+1).setValue(propiedad);
-      // marcar esa fila como ocupada en nuestra copia local
-      if (cNom>=0) dCRM[filaLibre-1][cNom] = nombre;
-      punteroFila = filaLibre; // seguir buscando desde aca
-    } else {
-      // No hay filas libres: appendear y copiar la formula de ID
-      var fila = [];
-      for (var c=0;c<maxCol;c++) fila.push("");
-      setIfCol(fila, cFec,  mFecha>=0 ? row[mFecha] : new Date());
-      setIfCol(fila, cCanal, canal);
-      setIfCol(fila, cNom,  nombre);
-      setIfCol(fila, cTel,  tel);
-      setIfCol(fila, cMail, mMail>=0 ? String(row[mMail]||"").trim() : "");
-      setIfCol(fila, cProp, propiedad);
-      setIfCol(fila, cEst,  "Nuevo");
-      setIfCol(fila, cCarg, "Meta (auto)");
-      setIfCol(fila, cCamp, propiedad);
-      hojaCRM.appendRow(fila);
-      // poner la formula de ID en la fila recien agregada, adaptando la referencia de fila
-      if (cId>=0 && formulaID){
-        var ultimaFila = hojaCRM.getLastRow();
-        // La formula original referencia una fila fija (ej E507). La adaptamos a la fila nueva:
-        // reemplazamos el numero que sigue a una letra de columna por la fila actual.
-        var formulaAdaptada = formulaID.replace(/([A-Z]\$?)(\d+)/g, function(m, col, num){
-          return col + ultimaFila;
-        });
-        hojaCRM.getRange(ultimaFila, cId+1).setFormula(formulaAdaptada);
-      }
-    }
-    nuevos++;
-  }
-
-  var resultado = "OK. Leads nuevos: " + nuevos + " | Duplicados omitidos: " + duplicados;
-  Logger.log(resultado);
-  return resultado;
+    }catch(_){}
+  },true);
 }
-
-// Deja solo los dígitos de un teléfono (para comparar sin formato)
-function _soloDigitos(v){
-  return String(v==null?"":v).replace(/\D/g, "");
-}
-
-// ============================================================
-//  DIAGNÓSTICO de la importación de leads (ejecutá esta para ver qué pasa)
-//  Muestra un cartel con: qué hojas existen, columnas de LEADS_META,
-//  columnas del CRM, y cuántos leads detecta.
-// ============================================================
-function diagnosticarLeadsMeta(){
-  var msg = "";
-  var libro;
-  try {
-    libro = SpreadsheetApp.getActiveSpreadsheet();
-  } catch(err){
-    Logger.log("ERROR: no hay Spreadsheet activo. " + err);
-    return "ERROR sin Sheet activo";
+frame.addEventListener('load',()=>{
+  setTimeout(enhanceStation,250);
+  setTimeout(loadConfig,120); // precarga antes de que Flavia toque el botón
+  if(new URLSearchParams(location.search).get('modo')==='redes'){
+    setTimeout(openModal,280);
   }
-  if (!libro){ Logger.log("ERROR: getActiveSpreadsheet null"); return "ERROR null"; }
-
-  var hojas = libro.getSheets();
-  var nombres = [];
-  for (var i=0;i<hojas.length;i++) nombres.push("'" + hojas[i].getName() + "'");
-  msg += "HOJAS: " + nombres.join(", ") + "\n";
-
-  var hojaMeta = libro.getSheetByName("LEADS_META");
-  if (!hojaMeta){
-    msg += "NO encontre LEADS_META aqui.\n";
-  } else {
-    var dM = hojaMeta.getDataRange().getValues();
-    msg += "LEADS_META: " + dM.length + " filas. ";
-    if (dM.length >= 1) msg += "Cols: " + dM[0].join(" | ") + ". ";
-    if (dM.length >= 2) msg += "Ej: " + dM[1].join(" | ");
-    msg += "\n";
-  }
-
-  var hojaCRM = libro.getSheetByName(SH_CONS);
-  if (!hojaCRM){
-    msg += "NO encontre CRM (" + SH_CONS + ").\n";
-  } else {
-    var dC = hojaCRM.getDataRange().getValues();
-    msg += "CRM cols: " + (dC.length>=1 ? dC[0].join(" | ") : "vacio") + "\n";
-  }
-
-  Logger.log(msg);
-  return msg;
-}
+});
+</script>
+</body>
+</html>
