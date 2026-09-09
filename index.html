@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#004d44">
+<title>Lurati · Estación del Asesor</title>
+<style>
+:root{
+  --green:#004d44;--green2:#0e352c;--teal:#128f8b;--paper:#f7faf9;
+  --line:#d7e3e0;--ink:#23332f;--muted:#5e716c;--red:#b42318;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:var(--paper);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+#station{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--paper)}
+#newLeadBtn{
+  position:fixed;right:18px;bottom:18px;z-index:1000;border:0;border-radius:999px;
+  background:var(--green);color:#fff;font-weight:800;font-size:15px;padding:14px 20px;
+  box-shadow:0 8px 28px rgba(0,77,68,.28);cursor:pointer
+}
+#newLeadBtn:hover{background:var(--green2)}
+.overlay{
+  display:none;position:fixed;inset:0;z-index:2000;background:rgba(14,53,44,.52);
+  padding:18px;overflow:auto
+}
+.overlay.open{display:block}
+.modal{
+  max-width:650px;margin:18px auto;background:#fff;border-radius:22px;padding:20px;
+  box-shadow:0 20px 70px rgba(0,0,0,.24)
+}
+.head{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.head .logo{width:42px;height:42px;border-radius:12px;background:var(--green);color:#fff;
+ display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px}
+.head h1{font-size:22px;color:var(--green2);margin:0}
+.head p{font-size:13px;color:var(--muted);margin:3px 0 0}
+.close{margin-left:auto;border:0;background:#eef4f2;color:var(--green);width:36px;height:36px;border-radius:10px;font-size:19px;cursor:pointer}
+.section{margin:15px 0}
+.label{font-size:12px;font-weight:800;color:#475467;margin-bottom:7px}
+.sellers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.seller{border:1px solid var(--line);background:#fff;border-radius:13px;padding:10px;text-align:left;cursor:pointer}
+.seller strong{display:block;font-size:14px;color:var(--ink)}
+.seller small{display:block;color:#98a2b3;margin-top:2px}
+.seller.on{background:var(--green);border-color:var(--green)}
+.seller.on strong,.seller.on small{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+.chip{border:0;border-radius:999px;padding:7px 10px;background:#e8f1ef;color:var(--green);font-weight:800;font-size:12px;cursor:pointer}
+input{
+ width:100%;height:50px;border:1px solid #d0d5dd;border-radius:13px;padding:0 13px;
+ font-size:17px;outline:none;background:#fff;color:var(--ink)
+}
+input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
+.action{
+ width:100%;min-height:54px;border:0;border-radius:14px;background:var(--green);color:#fff;
+ font-size:16px;font-weight:900;cursor:pointer;margin-top:5px
+}
+.action:disabled{opacity:.55}
+.status{display:none;margin-top:13px;border-radius:14px;padding:13px;font-size:14px;line-height:1.45}
+.status.show{display:block}
+.ok{background:#e8f5ef;color:#175f49}.warn{background:#fff6e5;color:#795700}.err{background:#fee4e2;color:#b42318}
+.dupBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.miniBtn{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;font-weight:800;cursor:pointer}
+.miniBtn.continue{background:var(--green);color:#fff;border-color:var(--green)}
+.footerActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.footerActions a,.footerActions button{flex:1;min-width:145px;text-align:center;border-radius:10px;padding:10px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;text-decoration:none;cursor:pointer}
+@media(max-width:520px){
+  .overlay{padding:0}
+  .modal{min-height:100%;margin:0;border-radius:0;padding:18px 14px 28px}
+  .sellers{grid-template-columns:1fr 1fr}
+  #newLeadBtn{right:12px;bottom:12px;padding:12px 16px}
+}
+</style>
+</head>
+<body>
+<iframe id="station" src="./estacion-base.html" title="Estación del Asesor"></iframe>
+<button id="newLeadBtn" type="button">+ Cargar lead</button>
+
+<div id="overlay" class="overlay">
+  <div class="modal">
+    <div class="head">
+      <div class="logo">L</div>
+      <div>
+        <h1>Nueva consulta</h1>
+        <p>Se registra directamente en el CRM Lurati y avisa al vendedor. Sin salir de la Estación.</p>
+      </div>
+      <button id="close" class="close" type="button">×</button>
+    </div>
+
+    <div class="section">
+      <div class="label">1. Vendedor</div>
+      <div id="sellers" class="sellers"><small>Cargando vendedores…</small></div>
+    </div>
+
+    <div class="section">
+      <div class="label">2. Últimos inmuebles usados</div>
+      <div id="chips" class="chips"></div>
+      <div class="label">Buscar en el resto de propiedades</div>
+      <input id="property" list="propertyList" placeholder="Ej. Rodríguez 1671" autocomplete="off">
+      <datalist id="propertyList"></datalist>
+    </div>
+
+    <div class="section">
+      <div class="label">Nombre</div>
+      <input id="name" placeholder="Nombre del cliente" autocomplete="name">
+    </div>
+
+    <div class="section">
+      <div class="label">Teléfono</div>
+      <input id="phone" type="tel" inputmode="tel" placeholder="341..." autocomplete="tel">
+    </div>
+
+    <button id="save" class="action" type="button">REGISTRAR Y DERIVAR</button>
+    <div id="status" class="status"></div>
+  </div>
+</div>
+
+<script>
+const frame=document.getElementById('station');
+const overlay=document.getElementById('overlay');
+const sellersBox=document.getElementById('sellers');
+const property=document.getElementById('property');
+const propertyList=document.getElementById('propertyList');
+const nameInput=document.getElementById('name');
+const phone=document.getElementById('phone');
+const status=document.getElementById('status');
+const save=document.getElementById('save');
+let selectedSeller='';
+let apiUrl='';
+let configLoaded=false;
+let pendingData=null;
+
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function digits(s){return String(s||'').replace(/\D/g,'');}
+function titleAddress(s){
+  const lower=new Set(['de','del','la','las','los','y','e']);
+  return String(s||'').trim().replace(/\s+/g,' ').split(' ').map((p,i)=>{
+    if(/^\d/.test(p))return p;
+    const x=p.toLowerCase();
+    if(i>0&&lower.has(x))return x;
+    return x.charAt(0).toUpperCase()+x.slice(1);
+  }).join(' ');
+}
+function stationApi(){
+  if(apiUrl)return apiUrl;
+  try{
+    apiUrl=frame.contentWindow.eval("typeof SHEET_URL!=='undefined'?SHEET_URL:''")||'';
+  }catch(e){}
+  return apiUrl;
+}
+function currentAdvisor(){
+  try{
+    return frame.contentWindow.eval("typeof current!=='undefined'?current:''")||'';
+  }catch(e){return '';}
+}
+function recentProps(){
+  try{return JSON.parse(localStorage.getItem('lurati_v15_recent_props')||'[]')}catch(e){return[]}
+}
+function rememberProp(v){
+  v=titleAddress(v); if(!v)return;
+  let a=recentProps().filter(x=>x!==v);
+  a=[v,...a].slice(0,3);
+  localStorage.setItem('lurati_v15_recent_props',JSON.stringify(a));
+  renderChips();
+}
+function renderChips(){
+  const a=recentProps();
+  document.getElementById('chips').innerHTML=a.length
+    ? a.map(x=>`<button class="chip" type="button" data-v="${esc(x)}">${esc(x)}</button>`).join('')
+    : '<small style="color:#98a2b3">Todavía no hay inmuebles recientes.</small>';
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{property.value=b.dataset.v;nameInput.focus();});
+}
+function setStatus(type,html){
+  status.className='status show '+type;
+  status.innerHTML=html;
+}
+function openModal(){
+  overlay.classList.add('open');
+  status.className='status';
+  renderChips();
+  loadConfig();
+  setTimeout(()=>property.focus(),80);
+}
+function closeModal(){
+  overlay.classList.remove('open');
+}
+document.getElementById('newLeadBtn').onclick=openModal;
+document.getElementById('close').onclick=closeModal;
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+
+function sellersFromStation(){
+  try{
+    const arr=frame.contentWindow.eval(
+      "typeof VENDORS!=='undefined' ? VENDORS : []"
+    )||[];
+    return arr
+      .filter(x=>x && String(x).toLowerCase()!=='invitado')
+      .map(x=>({nombre:String(x),email:''}));
+  }catch(e){return [];}
+}
+
+function cachedProps(){
+  try{
+    const x=JSON.parse(localStorage.getItem('lurati_v15_props_cache')||'null');
+    if(!x || !Array.isArray(x.items)) return [];
+    return x.items;
+  }catch(e){return [];}
+}
+
+function savePropsCache(items){
+  try{
+    localStorage.setItem('lurati_v15_props_cache',JSON.stringify({
+      ts:Date.now(),
+      items:(items||[]).slice(0,700)
+    }));
+  }catch(e){}
+}
+
+function renderPropertyOptions(props){
+  propertyList.innerHTML=(props||[])
+    .map(p=>`<option value="${esc(titleAddress(p.dir||p.nombre||''))}"></option>`)
+    .join('');
+}
+
+async function refreshSellersBackground(){
+  const api=stationApi();
+  if(!api)return;
+  try{
+    const cr=await fetch(api+'?q=redesConfig').then(r=>r.json());
+    const sellers=(cr&&cr.config&&cr.config.vendedores)||[];
+    if(sellers.length) renderSellers(sellers);
+  }catch(e){}
+}
+
+async function refreshPropsBackground(){
+  const api=stationApi();
+  if(!api)return;
+  try{
+    const pr=await fetch(api+'?q=propiedades').then(r=>r.json());
+    const props=(pr&&pr.propiedades)||[];
+    if(props.length){
+      renderPropertyOptions(props);
+      savePropsCache(props);
+    }
+  }catch(e){}
+}
+
+function loadConfig(){
+  // 1) Vendedores instantáneos: salen del mismo index de la Estación.
+  const localSellers=sellersFromStation();
+  if(localSellers.length){
+    renderSellers(localSellers);
+  }else if(!configLoaded){
+    sellersBox.innerHTML='<small>Cargando vendedores…</small>';
+  }
+
+  // 2) Propiedades cacheadas: aparecen sin esperar a Google.
+  const cp=cachedProps();
+  if(cp.length) renderPropertyOptions(cp);
+
+  // 3) Refresco silencioso desde el CRM. No bloquea el formulario.
+  refreshSellersBackground();
+  refreshPropsBackground();
+
+  configLoaded=true;
+}
+function renderSellers(sellers){
+  sellersBox.innerHTML=sellers.map(v=>`
+    <button type="button" class="seller" data-v="${esc(v.nombre)}">
+      <strong>${esc(v.nombre)}</strong>
+      <small>${v.email?'Aviso Gmail activo':'Gmail sin configurar'}</small>
+    </button>`).join('');
+  sellersBox.querySelectorAll('.seller').forEach(b=>{
+    b.onclick=()=>{
+      selectedSeller=b.dataset.v;
+      sellersBox.querySelectorAll('.seller').forEach(x=>x.classList.toggle('on',x===b));
+    };
+  });
+}
+async function checkDuplicate(data){
+  const api=stationApi();
+  if(!api)return null;
+  try{
+    const r=await fetch(api+'?q=duplicado&tel='+encodeURIComponent(data.telefono)+'&prop='+encodeURIComponent(data.propiedad));
+    const j=await r.json();
+    return j&&j.duplicado?j.duplicado:null;
+  }catch(e){return null;}
+}
+function duplicateMessage(d){
+  if(!d)return '';
+  const when=d.dias==null?'':(d.dias===0?'Consultó hoy.':`Consultó hace ${d.dias} día${d.dias===1?'':'s'}.`);
+  return `Ya figura ${esc(d.id||'')} por este inmueble, asignado a <b>${esc(d.vendedor||'sin vendedor')}</b>. ${esc(when)}`;
+}
+function postLead(data){
+  const api=stationApi();
+  fetch(api,{
+    method:'POST',mode:'no-cors',keepalive:true,
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({
+      accion:'nuevoLead',
+      vendedor:data.vendedor,
+      propiedad:data.propiedad,
+      nombre:data.nombre,
+      telefono:data.telefono,
+      cargadoPor:'Flavia',
+      canal:'WhatsApp'
+    })
+  }).catch(()=>{});
+}
+function completeSave(data){
+  postLead(data);
+  rememberProp(data.propiedad);
+  save.disabled=false;
+  setStatus('ok',
+    `<b>Consulta enviada al CRM.</b><br>${esc(data.nombre)} · ${esc(data.propiedad)}<br>`+
+    `Asignada a <b>${esc(data.vendedor)}</b>. El aviso por Gmail se procesa automáticamente.`+
+    `<div class="footerActions"><button id="sameProp" type="button">Otro del mismo inmueble</button>`+
+    `<button id="newProp" type="button">Nuevo inmueble</button></div>`
+  );
+  document.getElementById('sameProp').onclick=()=>{
+    nameInput.value='';phone.value='';status.className='status';nameInput.focus();
+  };
+  document.getElementById('newProp').onclick=()=>{
+    property.value='';nameInput.value='';phone.value='';status.className='status';property.focus();
+  };
+
+  // Si el asesor seleccionado es el que está abierto, refrescamos sus leads unos segundos después.
+  if(currentAdvisor()===data.vendedor){
+    setTimeout(()=>{
+      try{frame.contentWindow.eval("LEADS=null; loadLeads();");}catch(e){}
+    },1800);
+  }
+}
+async function submit(force){
+  const data={
+    vendedor:selectedSeller,
+    propiedad:titleAddress(property.value),
+    nombre:String(nameInput.value||'').trim(),
+    telefono:String(phone.value||'').trim()
+  };
+  if(!data.vendedor)return setStatus('err','Elegí el vendedor.');
+  if(!data.propiedad)return setStatus('err','Elegí o escribí el inmueble.');
+  if(!data.nombre)return setStatus('err','Falta el nombre.');
+  if(digits(data.telefono).length<7)return setStatus('err','Revisá el teléfono.');
+
+  save.disabled=true;
+  setStatus('warn','Guardando…');
+
+  if(!force){
+    const dup=await checkDuplicate(data);
+    if(dup){
+      pendingData=data;
+      save.disabled=false;
+      setStatus('warn',
+        duplicateMessage(dup)+
+        `<div class="dupBtns"><button id="noDup" class="miniBtn" type="button">No duplicar</button>`+
+        `<button id="yesDup" class="miniBtn continue" type="button">Cargar igual</button></div>`
+      );
+      document.getElementById('noDup').onclick=()=>{status.className='status';};
+      document.getElementById('yesDup').onclick=()=>completeSave(pendingData);
+      return;
+    }
+  }
+  completeSave(data);
+}
+save.onclick=()=>submit(false);
+
+// ---------- Mejora de la Estación: WhatsApp marca Contactado ----------
+function enhanceStation(){
+  let doc;
+  try{doc=frame.contentDocument;}catch(e){return;}
+  if(!doc||doc.__luratiV15)return;
+  doc.__luratiV15=true;
+
+  doc.addEventListener('click',function(e){
+    const a=e.target.closest&&e.target.closest('a.lead-wa');
+    if(!a || a.classList.contains('recontactar'))return;
+
+    const row=a.closest('.leadrow');
+    if(!row)return;
+    const txt=row.textContent||'';
+    const m=txt.match(/C-\d+/i);
+    if(!m)return;
+    const id=m[0];
+
+    // Sólo cambio automático si el lead todavía figura Nuevo.
+    if(!/\bNuevo\b/i.test(txt))return;
+
+    const advisor=currentAdvisor();
+    const api=stationApi();
+    if(api&&advisor){
+      fetch(api,{
+        method:'POST',mode:'no-cors',keepalive:true,
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({accion:'estado',id:id,valor:'Contactado',asesor:advisor})
+      }).catch(()=>{});
+    }
+
+    // Quita signos de apertura invertidos del texto prearmado de WhatsApp.
+    try{
+      const u=new URL(a.href);
+      if(u.searchParams.has('text')){
+        const t=(u.searchParams.get('text')||'').replaceAll('¿','').replaceAll('¡','');
+        u.searchParams.set('text',t);
+        a.href=u.toString();
+      }
+    }catch(_){}
+  },true);
+}
+frame.addEventListener('load',()=>{
+  setTimeout(enhanceStation,250);
+  setTimeout(loadConfig,120); // precarga antes de que Flavia toque el botón
+  if(new URLSearchParams(location.search).get('modo')==='redes'){
+    setTimeout(openModal,280);
+  }
+});
+</script>
+</body>
+</html>
