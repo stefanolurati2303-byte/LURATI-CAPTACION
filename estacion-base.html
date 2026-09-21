@@ -560,6 +560,26 @@ const EST_EN_GESTION=["Contactado","Interesado","Visitó","Seguimiento","Oferta"
 function esNoContactado(l){return EST_NO_CONTACTADO.indexOf((l.estado||"").trim())>=0;}
 function enGestion(l){return EST_EN_GESTION.indexOf((l.estado||"").trim())>=0;}
 function faltaPerfil(l){return !l.tienePerfil;}
+async function crmGet(q,params){
+  if(!SHEET_URL)throw new Error("La Estación no tiene configurada la dirección del CRM.");
+  const u=new URL(SHEET_URL);
+  u.searchParams.set("q",q);
+  Object.keys(params||{}).forEach(k=>u.searchParams.set(k,params[k]));
+  u.searchParams.set("_",Date.now());
+  let r;
+  try{r=await fetch(u.toString(),{cache:"no-store",redirect:"follow"});}
+  catch(e){throw new Error("No se pudo acceder al CRM. Revisá que la implementación permita acceso a Cualquier usuario.");}
+  const raw=await r.text();
+  let d;
+  try{d=JSON.parse(raw);}
+  catch(e){
+    if(/Servidor LURATI/i.test(raw))throw new Error("La implementación web está desactualizada. Publicá una versión nueva del Apps Script.");
+    if(/<html|accounts\.google|signin/i.test(raw))throw new Error("La implementación solicita iniciar sesión. Configurá el acceso para Cualquier usuario.");
+    throw new Error("El CRM respondió con un formato inválido. Volvé a publicar la aplicación web.");
+  }
+  if(!r.ok||d.ok===false)throw new Error(d.error||("Error del CRM ("+r.status+")."));
+  return d;
+}
 // Pendiente de contactar = sin contactar y NO descartado (Perdido)
 function pendienteContacto(l){return esNoContactado(l)&&(l.estado||"").trim()!=="Perdido";}
 function sortLeads(arr){return arr.slice().sort((a,b)=>(b.orden||0)-(a.orden||0));}
@@ -587,13 +607,16 @@ function waLink(l){
   if(l.link)msg+="\n\nFicha de la propiedad: "+l.link;
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
-function loadLeads(force){
+async function loadLeads(force){
   const list=$('#leadslist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
   if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus leads.");return;}
   if(LEADS&&!force){renderLeadsCRM();return;}
   list.innerHTML=empty("Cargando tus leads…");
-  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderLeadsCRM();fillPerfilSelect();renderBoard();renderNav();}).catch(()=>{list.innerHTML=empty("No se pudo leer tus leads. Revisá la conexión con el CRM.");});
+  try{
+    const d=await crmGet("leads",{vendedor:current});
+    LEADS=(d&&d.leads)||[];renderLeadsCRM();fillPerfilSelect();renderBoard();renderNav();
+  }catch(e){list.innerHTML=empty(e.message||"No se pudo leer tus leads. Revisá la conexión con el CRM.");}
 }
 function renderLeadsCRM(){
   const list=$('#leadslist'); if(!list)return;
