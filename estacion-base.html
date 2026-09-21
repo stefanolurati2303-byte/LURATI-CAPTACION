@@ -131,6 +131,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .leadrow .lact{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .lead-wa{font-size:12.5px;font-weight:600;color:#fff;background:#1d7a5f;padding:6px 12px;border-radius:8px;text-decoration:none}
 .lead-wa:hover{background:#0f6e56}
+.accept-lead{font-size:12.5px;font-weight:800;color:#fff;background:#004d44;padding:7px 12px;border:0;border-radius:8px;cursor:pointer}
+.accept-lead:hover{background:#0e352c}.accept-lead:disabled{opacity:.6;cursor:wait}
+.assign-badge{display:inline-flex;align-items:center;margin-top:4px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:800}
+.assign-ok{background:#e8f5ef;color:#175f49}.assign-warn{background:#fff1cc;color:#7a5200}.assign-late{background:#fee4e2;color:#b42318}.assign-done{background:#e8f1ef;color:#004d44}
 .estsel{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);max-width:150px}
 .alertmark{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#c0392b;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;line-height:1}
 .alertmark.sm{width:18px;height:18px;font-size:12px}
@@ -608,14 +612,44 @@ function renderLeadsCRM(){
   if(!arr.length){list.innerHTML=empty(q?"No se encontró ningún lead con esa búsqueda.":"No hay leads con ese filtro.");return;}
   list.innerHTML=arr.map(l=>{
     const est=l.estado||"Nuevo";
+    const pendiente=(l.estadoAsignacion||"").trim()==="Pendiente de aceptación";
+    const ctrl=controlVisualAsignacion(l);
     const wa=l.tel?`<a href="${waLink(l)}" target="_blank" rel="noopener" class="lead-wa" data-waid="${esc(l.id)}">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
     let opts=ESTADOS.map(s=>`<option ${s===est?'selected':''}>${s}</option>`).join("");
     if(!ESTADOS.includes(est)&&est){opts=`<option selected>${esc(est)}</option>`+opts;}
     const fecha=l.fecha?`<small style="color:var(--muted);font-weight:500;margin-left:6px">${esc(l.fecha)}</small>`:"";
+    const acciones=pendiente
+      ? `<button class="accept-lead" data-accept="${esc(l.id)}">Aceptar lead</button>`
+      : `${wa}<select class="estsel" data-id="${esc(l.id)}">${opts}</select>`;
     return `<div class="leadrow"><span class="dot" style="background:${estColor(est)}"></span>
-      <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small>${fecha}</b><span>${esc(l.propiedad)||'—'}</span></div>
-      <div class="lact">${wa}<select class="estsel" data-id="${esc(l.id)}">${opts}</select></div></div>`;
+      <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small>${fecha}</b><span>${esc(l.propiedad)||'—'}</span>${ctrl.html}</div>
+      <div class="lact">${acciones}</div></div>`;
   }).join("");
+}
+
+function controlVisualAsignacion(l){
+  const estado=(l.estadoAsignacion||"").trim();
+  if(estado==="Pendiente de aceptación"){
+    let min=Number(l.minutosRespuesta||0);
+    const ts=Number(l.asignadoTs||0);
+    if(ts)min=Math.max(0,Math.floor((Date.now()-ts)/60000));
+    const cls=min<=10?"assign-ok":(min<=20?"assign-warn":"assign-late");
+    const texto=min<=10?`Pendiente · ${min} min`:(min<=20?`Atención · ${min} min`:`Vencido · ${min} min`);
+    return {html:`<span class="assign-badge ${cls}">${texto}</span>`};
+  }
+  if(estado==="Aceptado")return {html:`<span class="assign-badge assign-done">✓ Lead aceptado</span>`};
+  return {html:""};
+}
+
+function aceptarLead(id,boton){
+  const l=LEADS&&LEADS.find(x=>x.id===id); if(!l||!SHEET_URL||!current)return;
+  if(boton){boton.disabled=true;boton.textContent="Aceptando…";}
+  l.estadoAsignacion="Aceptado";l.aceptadoTs=Date.now();
+  renderLeadsCRM();renderBoard();renderNav();
+  fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({accion:"aceptarLead",id:id,asesor:current})})
+    .then(()=>setTimeout(()=>{LEADS=null;loadLeads(true);},900))
+    .catch(()=>{if(LEADS){const x=LEADS.find(v=>v.id===id);if(x)x.estadoAsignacion="Pendiente de aceptación";}renderLeadsCRM();});
 }
 function fillPerfilSelect(){
   const sel=$('#pf-lead'); if(!sel||!LEADS)return;
@@ -1049,6 +1083,7 @@ document.addEventListener('click',async e=>{
   if(t.dataset.do!==undefined){state.opps.splice(+t.dataset.do,1);renderOpps();renderBoard();save();}
   // leads
   if(t.id==='reloadleads'){LEADS=null;loadLeads(true);}
+  if(t.dataset&&t.dataset.accept){aceptarLead(t.dataset.accept,t);}
   if(t.classList&&t.classList.contains('lead-wa')&&t.dataset.waid){const l=LEADS&&LEADS.find(x=>x.id===t.dataset.waid);if(l&&esNoContactado(l)&&(l.estado||"").trim()!=="Perdido"){setEstado(l.id,"Contactado");}}
   if(t.classList&&t.classList.contains('recontactar')&&t.dataset.rid){setEstado(t.dataset.rid,"Seguimiento");setTimeout(()=>{renderSugerencias();renderNav();},80);}
   if(t.classList&&t.classList.contains('omitir')&&t.dataset.oid){OMITIDOS[t.dataset.oid]=true;renderSugerencias();renderNav();}
@@ -1097,6 +1132,13 @@ document.addEventListener('keydown',e=>{
   if(a==='op-nombre'||a==='op-tel'||a==='op-zona'||a==='op-obs')$('#addop').click();
   if(a==='vi-cli'||a==='vi-tel'||a==='vi-prop'||a==='vi-dia'||a==='vi-hora')$('#addvi').click();
 });
+
+// Actualiza el contador visible de los leads pendientes cada 30 segundos.
+setInterval(function(){
+  if(activeNav==="v-leads"&&LEADS&&LEADS.some(function(l){
+    return (l.estadoAsignacion||"").trim()==="Pendiente de aceptación";
+  })) renderLeadsCRM();
+},30000);
 
 function switchMode(m){
   mode=m;
