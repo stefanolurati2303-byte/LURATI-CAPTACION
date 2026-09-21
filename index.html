@@ -62,6 +62,21 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
 .miniBtn.continue{background:var(--green);color:#fff;border-color:var(--green)}
 .footerActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
 .footerActions a,.footerActions button{flex:1;min-width:145px;text-align:center;border-radius:10px;padding:10px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;text-decoration:none;cursor:pointer}
+.queuePanel{display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.queuePanel.show{display:block}
+.queueHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.queueHead strong{font-size:13px;color:var(--ink)}
+.queueHead span{font-size:12px;color:var(--muted)}
+.queueList{display:grid;gap:7px}
+.queueItem{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:9px;border:1px solid var(--line);border-radius:11px;padding:9px;background:#fff}
+.queueDot{width:9px;height:9px;border-radius:50%;background:#98a2b3}
+.queueItem.waiting .queueDot,.queueItem.sending .queueDot,.queueItem.checking .queueDot{background:#ef9f27}
+.queueItem.saved .queueDot{background:#1d9e75}
+.queueItem.error .queueDot{background:var(--red)}
+.queueInfo{min-width:0}
+.queueInfo b{display:block;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.queueInfo small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.retryBtn{border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;border-radius:8px;padding:6px 8px;cursor:pointer}
 @media(max-width:520px){
   .overlay{padding:0}
   .modal{min-height:100%;margin:0;border-radius:0;padding:18px 14px 28px}
@@ -110,6 +125,10 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
 
     <button id="save" class="action" type="button">REGISTRAR Y DERIVAR</button>
     <div id="status" class="status"></div>
+    <div id="queuePanel" class="queuePanel">
+      <div class="queueHead"><strong>Cargas recientes</strong><span id="queueSummary"></span></div>
+      <div id="queueList" class="queueList"></div>
+    </div>
   </div>
 </div>
 
@@ -123,10 +142,16 @@ const nameInput=document.getElementById('name');
 const phone=document.getElementById('phone');
 const status=document.getElementById('status');
 const save=document.getElementById('save');
+const queuePanel=document.getElementById('queuePanel');
+const queueList=document.getElementById('queueList');
+const queueSummary=document.getElementById('queueSummary');
 let selectedSeller='';
 let apiUrl='';
 let configLoaded=false;
 let pendingData=null;
+let queueProcessing=false;
+const QUEUE_KEY='lurati_v16_lead_queue';
+let leadQueue=loadLeadQueue();
 
 const FALLBACK_ACTIVE_SELLERS = [
   "Stefano","Julio","Pablo","Flavia","Ariel","Roberto","Virginia","Pedro","Maxi"
@@ -176,10 +201,67 @@ function setStatus(type,html){
   status.className='status show '+type;
   status.innerHTML=html;
 }
+function requestId(){
+  try{return 'L-'+crypto.randomUUID();}
+  catch(e){return 'L-'+Date.now()+'-'+Math.random().toString(36).slice(2,10);}
+}
+function loadLeadQueue(){
+  try{
+    const a=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]');
+    if(!Array.isArray(a))return [];
+    return a.slice(-20).map(x=>{
+      if(x.status==='sending'||x.status==='checking')x.status='error';
+      return x;
+    });
+  }catch(e){return [];}
+}
+function persistLeadQueue(){
+  leadQueue=leadQueue.slice(-20);
+  try{localStorage.setItem(QUEUE_KEY,JSON.stringify(leadQueue));}catch(e){}
+}
+function queueLabel(item){
+  if(item.status==='saved')return 'Guardado'+(item.crmId?' como '+item.crmId:'');
+  if(item.status==='sending')return 'Enviando al CRM…';
+  if(item.status==='checking')return 'Verificando guardado…';
+  if(item.status==='error')return item.error||'No se pudo confirmar';
+  return 'En espera';
+}
+function renderLeadQueue(){
+  const visible=leadQueue.slice(-6).reverse();
+  queuePanel.classList.toggle('show',visible.length>0);
+  const pending=leadQueue.filter(x=>['waiting','sending','checking'].includes(x.status)).length;
+  const errors=leadQueue.filter(x=>x.status==='error').length;
+  queueSummary.textContent=`En proceso: ${pending} · Con error: ${errors}`;
+  queueList.innerHTML=visible.map(item=>`
+    <div class="queueItem ${esc(item.status)}">
+      <span class="queueDot"></span>
+      <div class="queueInfo"><b>${esc(item.nombre)} · ${esc(item.propiedad)}</b><small>${esc(queueLabel(item))}</small></div>
+      ${item.status==='error'?`<button class="retryBtn" type="button" data-retry="${esc(item.requestId)}">Reintentar</button>`:''}
+    </div>`).join('');
+  queueList.querySelectorAll('[data-retry]').forEach(b=>{
+    b.onclick=()=>{
+      const item=leadQueue.find(x=>x.requestId===b.dataset.retry);
+      if(!item)return;
+      item.status='waiting';item.error='';persistLeadQueue();renderLeadQueue();processLeadQueue();
+    };
+  });
+  const active=leadQueue.filter(x=>['waiting','sending','checking'].includes(x.status)).length;
+  document.getElementById('newLeadBtn').textContent=active?`+ Cargar lead (${active})`:'+ Cargar lead';
+}
+function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+async function fetchJsonTimeout(url,ms){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),ms);
+  try{
+    const r=await fetch(url,{signal:controller.signal,cache:'no-store'});
+    return await r.json();
+  }finally{clearTimeout(timer);}
+}
 function openModal(){
   overlay.classList.add('open');
   status.className='status';
   renderChips();
+  renderLeadQueue();
   loadConfig();
   setTimeout(()=>property.focus(),80);
 }
@@ -304,8 +386,10 @@ async function checkDuplicate(data){
   const api=stationApi();
   if(!api)return null;
   try{
-    const r=await fetch(api+'?q=duplicado&tel='+encodeURIComponent(data.telefono)+'&prop='+encodeURIComponent(data.propiedad));
-    const j=await r.json();
+    const j=await fetchJsonTimeout(
+      api+'?q=duplicado&tel='+encodeURIComponent(data.telefono)+'&prop='+encodeURIComponent(data.propiedad),
+      7000
+    );
     return j&&j.duplicado?j.duplicado:null;
   }catch(e){return null;}
 }
@@ -314,45 +398,100 @@ function duplicateMessage(d){
   const when=d.dias==null?'':(d.dias===0?'Consultó hoy.':`Consultó hace ${d.dias} día${d.dias===1?'':'s'}.`);
   return `Ya figura ${esc(d.id||'')} por este inmueble, asignado a <b>${esc(d.vendedor||'sin vendedor')}</b>. ${esc(when)}`;
 }
-function postLead(data){
+async function postLead(item){
   const api=stationApi();
-  fetch(api,{
+  if(!api)throw new Error('No se encontró la conexión con el CRM.');
+  await fetch(api,{
     method:'POST',mode:'no-cors',keepalive:true,
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
       accion:'nuevoLead',
-      vendedor:data.vendedor,
-      propiedad:data.propiedad,
-      nombre:data.nombre,
-      telefono:data.telefono,
+      requestId:item.requestId,
+      vendedor:item.vendedor,
+      propiedad:item.propiedad,
+      nombre:item.nombre,
+      telefono:item.telefono,
       cargadoPor:'Flavia',
       canal:'WhatsApp'
     })
-  }).catch(()=>{});
+  });
 }
-function completeSave(data){
-  postLead(data);
+async function confirmLead(item){
+  const api=stationApi();
+  if(!api)throw new Error('No se encontró la conexión con el CRM.');
+  for(let i=0;i<15;i++){
+    await wait(i===0?700:1400);
+    try{
+      const r=await fetchJsonTimeout(
+        api+'?q=estadoCarga&requestId='+encodeURIComponent(item.requestId)+'&_='+Date.now(),
+        7000
+      );
+      if(r&&r.estado==='guardado')return r;
+      if(r&&r.estado==='error')throw new Error(r.error||'El CRM rechazó la carga.');
+    }catch(e){
+      if(e && /rechazó|Falta|No existe/i.test(String(e.message||e)))throw e;
+    }
+  }
+  throw new Error('No se pudo confirmar todavía. Podés reintentar sin duplicar.');
+}
+async function processLeadQueue(){
+  if(queueProcessing)return;
+  queueProcessing=true;
+  try{
+    while(true){
+      const item=leadQueue.find(x=>x.status==='waiting');
+      if(!item)break;
+      item.status='sending';item.error='';item.attempts=(item.attempts||0)+1;
+      persistLeadQueue();renderLeadQueue();
+      try{
+        await postLead(item);
+        item.status='checking';persistLeadQueue();renderLeadQueue();
+        const result=await confirmLead(item);
+        item.status='saved';item.crmId=result.id||'';item.savedAt=Date.now();
+        persistLeadQueue();renderLeadQueue();
+        if(currentAdvisor()===item.vendedor){
+          try{frame.contentWindow.eval("LEADS=null; loadLeads();");}catch(e){}
+        }
+      }catch(e){
+        item.status='error';item.error=String(e&&e.message?e.message:e||'Error de conexión');
+        persistLeadQueue();renderLeadQueue();
+      }
+    }
+  }finally{
+    queueProcessing=false;
+  }
+}
+function enqueueLead(data){
+  const item={
+    requestId:requestId(),
+    vendedor:data.vendedor,
+    propiedad:data.propiedad,
+    nombre:data.nombre,
+    telefono:data.telefono,
+    status:'waiting',
+    createdAt:Date.now(),
+    attempts:0,
+    error:''
+  };
+  leadQueue.push(item);
+  persistLeadQueue();
   rememberProp(data.propiedad);
   save.disabled=false;
-  setStatus('ok',
-    `<b>Consulta enviada al CRM.</b><br>${esc(data.nombre)} · ${esc(data.propiedad)}<br>`+
-    `Asignada a <b>${esc(data.vendedor)}</b>. El aviso por Gmail se procesa automáticamente.`+
+  nameInput.value='';phone.value='';
+  setStatus('warn',
+    `<b>Consulta agregada a la cola.</b><br>${esc(data.nombre)} · ${esc(data.propiedad)}<br>`+
+    `Podés cargar otro lead mientras confirmamos el guardado.`+
     `<div class="footerActions"><button id="sameProp" type="button">Otro del mismo inmueble</button>`+
     `<button id="newProp" type="button">Nuevo inmueble</button></div>`
   );
   document.getElementById('sameProp').onclick=()=>{
-    nameInput.value='';phone.value='';status.className='status';nameInput.focus();
+    status.className='status';nameInput.focus();
   };
   document.getElementById('newProp').onclick=()=>{
-    property.value='';nameInput.value='';phone.value='';status.className='status';property.focus();
+    property.value='';status.className='status';property.focus();
   };
-
-  // Si el asesor seleccionado es el que está abierto, refrescamos sus leads unos segundos después.
-  if(currentAdvisor()===data.vendedor){
-    setTimeout(()=>{
-      try{frame.contentWindow.eval("LEADS=null; loadLeads();");}catch(e){}
-    },1800);
-  }
+  renderLeadQueue();
+  processLeadQueue();
 }
 async function submit(force){
   const data={
@@ -367,7 +506,7 @@ async function submit(force){
   if(digits(data.telefono).length<7)return setStatus('err','Revisá el teléfono.');
 
   save.disabled=true;
-  setStatus('warn','Guardando…');
+  setStatus('warn','Verificando que no esté duplicado…');
 
   if(!force){
     const dup=await checkDuplicate(data);
@@ -380,13 +519,15 @@ async function submit(force){
         `<button id="yesDup" class="miniBtn continue" type="button">Cargar igual</button></div>`
       );
       document.getElementById('noDup').onclick=()=>{status.className='status';};
-      document.getElementById('yesDup').onclick=()=>completeSave(pendingData);
+      document.getElementById('yesDup').onclick=()=>enqueueLead(pendingData);
       return;
     }
   }
-  completeSave(data);
+  enqueueLead(data);
 }
 save.onclick=()=>submit(false);
+renderLeadQueue();
+setTimeout(processLeadQueue,250);
 
 // ---------- Mejora de la Estación: WhatsApp marca Contactado ----------
 function enhanceStation(){
