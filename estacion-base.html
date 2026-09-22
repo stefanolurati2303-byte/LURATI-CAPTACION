@@ -135,6 +135,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .accept-lead:hover{background:#0e352c}.accept-lead:disabled{opacity:.6;cursor:wait}
 .assign-badge{display:inline-flex;align-items:center;margin-top:4px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:800}
 .assign-ok{background:#e8f5ef;color:#175f49}.assign-warn{background:#fff1cc;color:#7a5200}.assign-late{background:#fee4e2;color:#b42318}.assign-done{background:#e8f1ef;color:#004d44}
+.control-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 18px}
+.control-kpi{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
+.control-kpi b{display:block;font-size:24px;color:var(--green-dark)}.control-kpi span{font-size:12px;color:var(--muted)}
+.control-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.control-tools select,.reassign-tools select{font:inherit;font-size:12.5px;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.control-row{padding:14px 0;border-bottom:1px solid var(--line)}.control-row:last-child{border-bottom:none}
+.control-main{display:flex;gap:12px;align-items:flex-start}.control-main .linfo{flex:1;min-width:0}.control-main .linfo b{display:block;font-size:14.5px}.control-main .linfo span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.reassign-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:10px 0 0 24px}.reassign-tools button{font:inherit;font-size:12.5px;font-weight:800;padding:8px 11px;border:0;border-radius:8px;background:var(--bordo);color:#fff;cursor:pointer}.reassign-tools button:disabled{opacity:.55;cursor:wait}
+.control-msg{font-size:12px;font-weight:600;margin-left:24px;margin-top:7px;min-height:16px;color:var(--muted)}
+@media(max-width:700px){.control-summary{grid-template-columns:1fr 1fr}.control-main{flex-wrap:wrap}.reassign-tools{margin-left:0}.reassign-tools select{width:100%}}
 .estsel{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);max-width:150px}
 .alertmark{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#c0392b;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;line-height:1}
 .alertmark.sm{width:18px;height:18px;font-size:12px}
@@ -275,6 +285,7 @@ const SECTIONS={
   venta:{color:"#7e2b26",nav:[["v-leads","LEAD"],["v-perfil","Perfil Cliente"],["v-sugerencias","Sugerencias"],["v-visitas","Visitas"],["v-guion","Guion"],["v-obj","Objeciones"],["v-tareas","Tareas"],["v-plan","Plan"]]},
   props:{color:"#128f8b",nav:[["p-stock","Stock"]]}
 };
+const SUPERVISORES_ASIGNACION=["Stefano","Flavia"];
 let mode="venta";
 let activeNav="v-leads";
 
@@ -283,6 +294,8 @@ const tick='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" 
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function normTxt(s){return String(s||"").toLowerCase().replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u");}
 function initials(n){return String(n).trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"·";}
+function esSupervisor(){return SUPERVISORES_ASIGNACION.indexOf(current)>=0;}
+function puedeReasignar(){return current==="Stefano";}
 
 /* ============ TABLERO ============ */
 function updateSubtitles(){
@@ -368,13 +381,15 @@ function pendientesCount(){
   return sc+sp;
 }
 function renderNav(){
-  const nav=SECTIONS[mode].nav;
+  const nav=SECTIONS[mode].nav.slice();
+  if(mode==="venta"&&esSupervisor())nav.push(["v-control","Control equipo"]);
   const pc=pendientesCount();
   const sc=sugerenciasCount();
   $('#nav').innerHTML=nav.map((n,i)=>{
     let label=n[1];
     if(n[0]==="v-tareas"&&pc>0)label+=` <span class="navalert">!</span>`;
     if(n[0]==="v-sugerencias"&&sc>0)label+=` <span class="navalert" style="background:#1d9e75">!</span>`;
+    if(n[0]==="v-control"&&CONTROL_LEADS){const cc=CONTROL_LEADS.filter(l=>l.estadoAsignacion==="Pendiente de aceptación").length;if(cc>0)label+=` <span class="navalert">${cc}</span>`;}
     return `<button data-go="${n[0]}" class="${n[0]===activeNav?'active':''}">${label}</button>`;
   }).join("");
 }
@@ -401,6 +416,7 @@ function renderPanel(){
   else if(id==="v-guion"){h=guionPanel(FRASES_V,PREG_V,MSGS_V);}
   else if(id==="v-obj"){h=objPanel(OBJS_V);}
   else if(id==="v-tareas"){h=pendientesPanel();}
+  else if(id==="v-control"&&esSupervisor()){h=controlEquipoPanel();}
   // -------- PROPIEDADES --------
   else if(id==="p-stock"){h=stockPanel();}
   P.innerHTML=`<section class="panel active">${h}</section>`;
@@ -413,6 +429,7 @@ function renderPanel(){
   if(id==="v-sugerencias")loadSugerencias();
   if(id==="v-perfil")loadLeadsForPerfil();
   if(id==="v-tareas")loadPendientes();
+  if(id==="v-control")loadControlEquipo();
   refreshLists();
 }
 
@@ -673,6 +690,63 @@ function aceptarLead(id,boton){
     body:JSON.stringify({accion:"aceptarLead",id:id,asesor:current})})
     .then(()=>setTimeout(()=>{LEADS=null;loadLeads(true);},900))
     .catch(()=>{if(LEADS){const x=LEADS.find(v=>v.id===id);if(x)x.estadoAsignacion="Pendiente de aceptación";}renderLeadsCRM();});
+}
+
+let CONTROL_LEADS=null;
+let CONTROL_VENDEDORES=[];
+function controlEquipoPanel(){
+  return `<div class="eyebrow">Supervisión comercial</div><h3>Control de asignaciones</h3><p class="sub">Stefano puede controlar y reasignar consultas. Flavia accede al panel en modo de consulta.</p>
+  <div id="controlbody"><div class="empty">Cargando control del equipo…</div></div>`;
+}
+async function loadControlEquipo(){
+  const body=$('#controlbody');if(!body)return;
+  if(!esSupervisor()){body.innerHTML=empty("Esta vista está reservada a Stefano y Flavia.");return;}
+  body.innerHTML=empty("Cargando control del equipo…");
+  try{
+    const d=await crmGet("controlLeads",{supervisor:current});
+    CONTROL_LEADS=d.leads||[];CONTROL_VENDEDORES=d.vendedores||[];renderControlEquipo();renderNav();
+  }catch(e){body.innerHTML=empty(e.message||"No se pudo cargar el control del equipo.");}
+}
+function minutosControl(l){
+  const a=Number(l.asignadoTs||0),z=Number(l.aceptadoTs||0);
+  return a?Math.max(0,Math.floor(((z||Date.now())-a)/60000)):Number(l.minutosRespuesta||0);
+}
+function renderControlEquipo(){
+  const body=$('#controlbody');if(!body||!CONTROL_LEADS)return;
+  const pendientes=CONTROL_LEADS.filter(l=>l.estadoAsignacion==="Pendiente de aceptación");
+  const aceptados=CONTROL_LEADS.filter(l=>l.estadoAsignacion==="Aceptado");
+  const enTiempo=pendientes.filter(l=>minutosControl(l)<=10).length;
+  const alerta=pendientes.filter(l=>minutosControl(l)>10&&minutosControl(l)<=20).length;
+  const vencidos=pendientes.filter(l=>minutosControl(l)>20).length;
+  const filtro=$('#controlfilter')?$('#controlfilter').value:"Pendientes";
+  let arr=filtro==="Aceptados hoy"?aceptados:(filtro==="Todos"?CONTROL_LEADS:pendientes);
+  const vendedores=CONTROL_VENDEDORES.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
+  const filas=arr.length?arr.map(l=>{
+    const min=minutosControl(l), pendiente=l.estadoAsignacion==="Pendiente de aceptación";
+    const cls=pendiente?(min<=10?"assign-ok":(min<=20?"assign-warn":"assign-late")):"assign-done";
+    const txt=pendiente?(min<=10?`En tiempo · ${min} min`:(min<=20?`Alerta · ${min} min`:`Reasignar · ${min} min`)):`Aceptado · ${min} min`;
+    const original=l.vendedorOriginal&&l.vendedorOriginal!==l.vendedor?` · Original: ${esc(l.vendedorOriginal)}`:"";
+    const obs=l.observaciones?`<span>Obs.: ${esc(l.observaciones)}</span>`:"";
+    const tools=pendiente&&puedeReasignar()?`<div class="reassign-tools"><select class="control-vendedor"><option value="">Nuevo vendedor…</option>${vendedores}</select><select class="control-motivo"><option value="">Motivo obligatorio…</option><option>Sin aceptación dentro de 20 minutos</option><option>Vendedor no disponible</option><option>Mejor conocimiento del inmueble</option><option>Decisión de coordinación comercial</option><option value="Otro">Otro motivo</option></select><button class="control-reassign" data-reassign="${esc(l.id)}">Reasignar</button></div><div class="control-msg"></div>`:(pendiente?`<div class="control-msg">Modo consulta · La reasignación corresponde a Stefano.</div>`:"");
+    return `<div class="control-row" data-control-id="${esc(l.id)}"><div class="control-main"><span class="dot" style="background:${pendiente?(min<=10?'#1d9e75':(min<=20?'#ef9f27':'#b42318')):'#004d44'}"></span><div class="linfo"><b>${esc(l.nombre)} <small>${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'}</span><span>Responsable: <b style="display:inline">${esc(l.vendedor)||'Sin asignar'}</b>${original}</span><span>${l.tel?esc(l.tel):'Sin teléfono'} · Estado comercial: ${esc(l.estado||'Nuevo')}</span>${obs}</div><span class="assign-badge ${cls}">${txt}</span></div>${tools}</div>`;
+  }).join(""):empty("No hay leads en esta categoría.");
+  body.innerHTML=`<div class="control-summary"><div class="control-kpi"><b>${enTiempo}</b><span>En tiempo</span></div><div class="control-kpi"><b>${alerta}</b><span>Con alerta</span></div><div class="control-kpi"><b>${vencidos}</b><span>Vencidos</span></div><div class="control-kpi"><b>${aceptados.length}</b><span>Aceptados hoy</span></div></div><div class="card"><div class="control-tools"><label>Ver:</label><select id="controlfilter"><option ${filtro==="Pendientes"?'selected':''}>Pendientes</option><option ${filtro==="Aceptados hoy"?'selected':''}>Aceptados hoy</option><option ${filtro==="Todos"?'selected':''}>Todos</option></select><button class="btn ghost" id="reloadcontrol" style="padding:7px 11px">Actualizar</button></div><div id="controllist">${filas}</div></div>`;
+}
+function reasignarDesdeControl(id,boton){
+  const row=document.querySelector(`[data-control-id="${id}"]`);if(!row)return;
+  const nuevo=row.querySelector('.control-vendedor').value;
+  let motivo=row.querySelector('.control-motivo').value;
+  const msg=row.querySelector('.control-msg');
+  if(!nuevo){msg.textContent="Elegí el nuevo vendedor.";msg.style.color="var(--bordo)";return;}
+  if(!motivo){msg.textContent="Seleccioná el motivo de la reasignación.";msg.style.color="var(--bordo)";return;}
+  if(motivo==="Otro"){motivo=prompt("Escribí el motivo de la reasignación:","")||"";if(!motivo.trim()){msg.textContent="El motivo es obligatorio.";msg.style.color="var(--bordo)";return;}}
+  const lead=CONTROL_LEADS.find(l=>l.id===id);
+  if(lead&&lead.vendedor===nuevo){msg.textContent="Ese vendedor ya es el responsable actual.";msg.style.color="var(--bordo)";return;}
+  if(!confirm(`¿Reasignar ${id} de ${lead?lead.vendedor:'su responsable actual'} a ${nuevo}?`))return;
+  boton.disabled=true;boton.textContent="Reasignando…";msg.textContent="Guardando cambio en el CRM…";msg.style.color="var(--muted)";
+  fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({accion:"reasignarLead",id:id,nuevoVendedor:nuevo,motivo:motivo,asesor:current})})
+    .then(()=>setTimeout(()=>{CONTROL_LEADS=null;loadControlEquipo();},1200))
+    .catch(()=>{boton.disabled=false;boton.textContent="Reasignar";msg.textContent="No se pudo enviar la reasignación.";msg.style.color="var(--bordo)";});
 }
 function fillPerfilSelect(){
   const sel=$('#pf-lead'); if(!sel||!LEADS)return;
@@ -1107,6 +1181,8 @@ document.addEventListener('click',async e=>{
   // leads
   if(t.id==='reloadleads'){LEADS=null;loadLeads(true);}
   if(t.dataset&&t.dataset.accept){aceptarLead(t.dataset.accept,t);}
+  if(t.dataset&&t.dataset.reassign){reasignarDesdeControl(t.dataset.reassign,t);}
+  if(t.id==='reloadcontrol'){CONTROL_LEADS=null;loadControlEquipo();}
   if(t.classList&&t.classList.contains('lead-wa')&&t.dataset.waid){const l=LEADS&&LEADS.find(x=>x.id===t.dataset.waid);if(l&&esNoContactado(l)&&(l.estado||"").trim()!=="Perdido"){setEstado(l.id,"Contactado");}}
   if(t.classList&&t.classList.contains('recontactar')&&t.dataset.rid){setEstado(t.dataset.rid,"Seguimiento");setTimeout(()=>{renderSugerencias();renderNav();},80);}
   if(t.classList&&t.classList.contains('omitir')&&t.dataset.oid){OMITIDOS[t.dataset.oid]=true;renderSugerencias();renderNav();}
@@ -1143,6 +1219,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='f-dorm'||e.target.id==='f-banos'||e.target.id==='f-precio'||e.target.id==='f-credito')renderStock();
   if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(e.target.dataset.id,e.target.value);}
   if(e.target.id==='leadfilter')renderLeadsCRM();
+  if(e.target.id==='controlfilter')renderControlEquipo();
   if(e.target.id==='pf-filter')fillPerfilSelect();
   if(e.target.id==='pf-lead')fillPerfilFromLead(e.target.value);
   if(e.target.id==='sg-cli')renderMatch(e.target.value);
@@ -1161,6 +1238,7 @@ setInterval(function(){
   if(activeNav==="v-leads"&&LEADS&&LEADS.some(function(l){
     return (l.estadoAsignacion||"").trim()==="Pendiente de aceptación";
   })) renderLeadsCRM();
+  if(activeNav==="v-control"&&CONTROL_LEADS)renderControlEquipo();
 },30000);
 
 function switchMode(m){
@@ -1173,6 +1251,7 @@ function switchMode(m){
 /* ============ ACCESO (clave + asesor) ============ */
 function startApp(name){
   loadFor(name);
+  if(activeNav==="v-control"&&!esSupervisor())activeNav="v-leads";
   const wn=$('#whoname'); if(wn)wn.textContent=name;
   renderNav();renderBoard();renderPanel();
 }
