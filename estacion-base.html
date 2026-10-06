@@ -245,7 +245,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
     <div class="wmsg-actions">
       <button id="wmsg-save" class="soft" type="button">Guardar texto</button>
       <button id="wmsg-copy" type="button">Copiar</button>
-      <button id="wmsg-send-app" class="primary" type="button">WhatsApp Windows</button>
+      <button id="wmsg-send-business" class="primary" type="button" style="display:none">WhatsApp Business</button>
+      <button id="wmsg-send-app" class="primary" type="button">WhatsApp App</button>
       <button id="wmsg-send-web" class="primary" type="button">WhatsApp Web</button>
     </div>
     <div id="wmsg-status"></div>
@@ -333,6 +334,39 @@ function logEvent(seccion,accion,detalle,tipo,estado){
 /* ============ WHATSAPP SIMPLE, RÁPIDO Y EDITABLE ============ */
 let WMSG_CTX=null;
 function wmsgStatus(kind,msg){const el=$('#wmsg-status');if(!el)return;el.className=kind||'';el.textContent=msg||'';}
+function isMobileDevice(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');}
+function isAndroid(){return /Android/i.test(navigator.userAgent||'');}
+function isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent||'');}
+function updateWhatsappChannelButtons(){
+  const business=$('#wmsg-send-business'), app=$('#wmsg-send-app'), web=$('#wmsg-send-web');
+  if(!business||!app||!web)return;
+  if(isMobileDevice()){
+    business.style.display='inline-block';
+    business.textContent='WhatsApp Business';
+    app.textContent='WhatsApp común';
+    web.style.display='none';
+  }else{
+    business.style.display='none';
+    app.textContent='WhatsApp App / Windows';
+    web.textContent='WhatsApp Web';
+    web.style.display='inline-block';
+  }
+}
+function buildWhatsappOpenUrl(destino,tel,texto){
+  const enc=encodeURIComponent(texto||'');
+  const phone=String(tel||'').replace(/\D/g,'');
+  if(destino==='business'){
+    if(isAndroid())return 'intent://send?phone='+phone+'&text='+enc+'#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end';
+    if(isIOS())return 'whatsapp-business://send?phone='+phone+'&text='+enc;
+    return 'https://wa.me/'+phone+'?text='+enc;
+  }
+  if(destino==='app'){
+    if(isAndroid())return 'intent://send?phone='+phone+'&text='+enc+'#Intent;scheme=whatsapp;package=com.whatsapp;end';
+    return 'whatsapp://send?phone='+phone+'&text='+enc;
+  }
+  if(destino==='web')return isMobileDevice() ? 'https://wa.me/'+phone+'?text='+enc : 'https://web.whatsapp.com/send?phone='+phone+'&text='+enc;
+  return 'https://wa.me/'+phone+'?text='+enc;
+}
 function wmsgNorm(s){return normTxt(String(s||'')).replace(/\s+/g,' ').trim();}
 function wmsgKey(ctx,modelo){return 'lurati_wmsg_'+wmsgNorm(ctx.vendedor)+'__'+wmsgNorm(ctx.propiedad)+'__'+wmsgNorm(modelo);}
 function getLocalSavedMsg(ctx,modelo){try{return localStorage.getItem(wmsgKey(ctx,modelo))||'';}catch(e){return '';}}
@@ -386,6 +420,7 @@ function openWhatsappComposer(a){
   $('#wmsg-property').textContent=WMSG_CTX.propiedad||'Propiedad consultada';
   $('#wmsg-model').value='Corto y formal';
   $('#wmsg-overlay').classList.add('open');
+  updateWhatsappChannelButtons();
   refreshWhatsappMessage();
 }
 function closeWhatsappComposer(){const el=$('#wmsg-overlay');if(el)el.classList.remove('open');}
@@ -401,7 +436,7 @@ function saveWhatsappText(){
 async function copyWhatsappText(){try{await navigator.clipboard.writeText($('#wmsg-text').value||'');wmsgStatus('ok','Mensaje copiado.');}catch(e){wmsgStatus('','No pude copiar automáticamente. Podés seleccionar el texto manualmente.');}}
 function registrarWhatsappPreparado(ctx,texto,url,destino){
   if(!SHEET_URL)return;
-  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'registrarContactoWhatsapp',idConsulta:ctx.id||'',vendedor:ctx.vendedor||'',asesor:ctx.vendedor||'',nombre:ctx.nombre||'',telefono:ctx.telefono||'',propiedad:ctx.propiedad||'',modelo:$('#wmsg-model').value,texto:texto,url:url,resultado:'WhatsApp '+(destino==='app'?'Windows':'Web')+' preparado',proximaAccion:''})}).catch(()=>{});
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'registrarContactoWhatsapp',idConsulta:ctx.id||'',vendedor:ctx.vendedor||'',asesor:ctx.vendedor||'',nombre:ctx.nombre||'',telefono:ctx.telefono||'',propiedad:ctx.propiedad||'',modelo:$('#wmsg-model').value,texto:texto,url:url,resultado:'WhatsApp '+(destino==='business'?'Business':(destino==='app'?(isMobileDevice()?'común':'App/Windows'):'Web'))+' preparado',proximaAccion:''})}).catch(()=>{});
 }
 function sendWhatsappPrepared(destino){
   if(!WMSG_CTX)return;
@@ -413,16 +448,15 @@ function sendWhatsappPrepared(destino){
     if(WMSG_CTX.isRecontactar)setEstado(WMSG_CTX.id,'Seguimiento');
     else {const l=leadFromId(WMSG_CTX.id);if(l&&esNoContactado(l)&&(l.estado||'').trim()!=='Perdido')setEstado(WMSG_CTX.id,'Contactado');}
   }
-  const webUrl='https://web.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(texto);
-  const appUrl='whatsapp://send?phone='+tel+'&text='+encodeURIComponent(texto);
-  const url=(destino==='app')?appUrl:webUrl;
+  const url=buildWhatsappOpenUrl(destino,tel,texto);
   registrarWhatsappPreparado(WMSG_CTX,texto,url,destino);
-  if(destino==='app'){
-    window.location.href=appUrl;
-    wmsgStatus('ok','Se solicitó abrir WhatsApp Windows.');
-  }else{
-    window.open(webUrl,'whatsapp_lurati');
+  if(destino==='web'&&!isMobileDevice()){
+    window.open(url,'whatsapp_lurati');
     wmsgStatus('ok','WhatsApp Web abierto. Intenta reutilizar la misma pestaña.');
+  }else{
+    window.location.href=url;
+    if(destino==='business')wmsgStatus('ok','Se solicitó abrir WhatsApp Business. Si el celular no lo permite, copiá el texto y pegalo manualmente.');
+    else wmsgStatus('ok','Se solicitó abrir WhatsApp.');
   }
 }
 
@@ -1350,6 +1384,7 @@ document.addEventListener('click',async e=>{
   if(t.id==='wmsg-close'){closeWhatsappComposer();return;}
   if(t.id==='wmsg-save'){saveWhatsappText();return;}
   if(t.id==='wmsg-copy'){copyWhatsappText();return;}
+  if(t.id==='wmsg-send-business'){sendWhatsappPrepared('business');return;}
   if(t.id==='wmsg-send-app'){sendWhatsappPrepared('app');return;}
   if(t.id==='wmsg-send-web'){sendWhatsappPrepared('web');return;}
   if(t.dataset.go)go(t.dataset.go);
