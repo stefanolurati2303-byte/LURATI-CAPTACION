@@ -380,26 +380,64 @@ function decodeWhatsappHref(href){
   }catch(e){ }
   return out;
 }
+function detalleLinea(etiqueta,valor){
+  valor=String(valor||'').trim();
+  return valor ? '• '+etiqueta+': '+valor+'\n' : '';
+}
 function defaultWhatsappMessage(ctx,modelo){
   const nombre=(ctx.nombre||'').split(/\s+/)[0]||'';
   const saludo=nombre?('Hola '+nombre+', cómo estás?'):'Hola, cómo estás?';
   const asesor=current||ctx.vendedor||'';
-  const prop=ctx.propiedad||'la propiedad que consultaste';
-  const link=ctx.link?('\n\nFicha de la propiedad: '+ctx.link):'';
+  const firma=asesor?('Soy '+asesor+' de Lurati Consultora Inmobiliaria.'):'Te escribimos de Lurati Consultora Inmobiliaria.';
+  const prop=String(ctx.propiedad||'la propiedad que consultaste').trim();
+  const link=ctx.link?('\n\nFicha de la propiedad:\n'+ctx.link):'';
+  const tipo=String(ctx.tipo||'').trim();
+  const zona=String(ctx.zona||'').trim();
+  const dorms=String(ctx.dorms||'').trim();
+  const banos=String(ctx.banos||'').trim();
+  const m2=String(ctx.m2||'').trim();
+  const precio=String(ctx.precio||'').trim();
+  const cochera=String(ctx.cochera||'').trim();
+  const exterior=String(ctx.exterior||'').trim();
+
   if(modelo==='Comercial'){
-    return saludo+' Soy '+asesor+' de Lurati Consultora Inmobiliaria.\n\nEstuve revisando tu consulta por '+prop+' y puede ser una buena opción para lo que estás buscando.\n\nTe propongo que coordinemos una visita para verla o, si preferís, primero te paso más detalles por acá.'+link;
+    return saludo+' '+firma+'\n\n'+
+      'Estuve revisando tu consulta por '+prop+' y puede ser una buena opción para lo que estás buscando.\n\n'+
+      'Por ubicación y características, vale la pena verla o al menos compararla con otras alternativas similares.\n\n'+
+      'Te paso la ficha para que la mires tranquilo y, si te parece, coordinamos una visita para esta semana.'+
+      link;
   }
+
   if(modelo==='Descriptivo con detalles'){
-    const datos=[ctx.tipo,ctx.dorms?ctx.dorms+' dormitorio/s':'',ctx.m2?ctx.m2+' m²':'',ctx.zona?('Zona '+ctx.zona):''].filter(Boolean).join(' · ');
-    return saludo+' Te comparto una opción que puede interesarte.\n\nPropiedad: '+prop+(datos?'\nCaracterísticas: '+datos:'')+'\n\nLa idea es que puedas evaluarla con información clara y, si te cierra, coordinamos una visita para verla personalmente.'+link;
+    let datos='';
+    datos+=detalleLinea('Tipo',tipo);
+    datos+=detalleLinea('Zona',zona);
+    datos+=detalleLinea('Dormitorios',dorms);
+    datos+=detalleLinea('Baños',banos);
+    datos+=detalleLinea('Superficie',m2?m2+' m²':'');
+    datos+=detalleLinea('Cochera',cochera);
+    datos+=detalleLinea('Balcón / patio / terraza',exterior);
+    datos+=detalleLinea('Valor',precio);
+    datos=datos.trim();
+
+    return saludo+' '+firma+'\n\n'+
+      'Te comparto el detalle de la propiedad que consultaste:\n\n'+
+      prop+'\n\n'+
+      (datos?('Datos principales:\n'+datos+'\n\n'):'')+
+      'Es una opción para analizar con calma por sus características y ubicación. Si te cierra, el próximo paso sería coordinar una visita para verla personalmente.'+
+      link;
   }
-  return saludo+' Soy '+asesor+' de Lurati Consultora Inmobiliaria.\n\nTe contacto por '+prop+'.\n\nTe parece que coordinemos una visita o querés que primero te pase más información?'+link;
+
+  return saludo+' '+firma+'\n\n'+
+    'Te contacto por '+prop+'.\n\n'+
+    'Te paso la información para que puedas verla. Si te interesa, coordinamos una visita o te amplio detalles por acá.'+
+    link;
 }
 function refreshWhatsappMessage(){
   if(!WMSG_CTX)return;
   const modelo=$('#wmsg-model').value;
   const local=getLocalSavedMsg(WMSG_CTX,modelo);
-  $('#wmsg-text').value=local || WMSG_CTX.originalText || defaultWhatsappMessage(WMSG_CTX,modelo);
+  $('#wmsg-text').value=local || defaultWhatsappMessage(WMSG_CTX,modelo);
   wmsgStatus(local?'ok':'', local?'Texto guardado recuperado.':'Mensaje listo. Podés editarlo antes de enviarlo.');
 }
 function leadFromId(id){return LEADS&&LEADS.find(x=>String(x.id||'').toLowerCase()===String(id||'').toLowerCase());}
