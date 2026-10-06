@@ -732,6 +732,8 @@ function renderOpps(){const el=$('#olist');if(!el)return;if(!state.opps.length){
 function renderVisitas(){const el=$('#vilist');if(!el)return;if(!state.visitas.length){el.innerHTML=empty("Cargá cada visita coordinada.");return;}
   el.innerHTML=state.visitas.map((v,i)=>`<div class="contact"><div class="av" style="background:var(--bordo-bg);color:var(--bordo)">▸</div><div class="info"><b>${esc(v.cli)} · ${esc(v.prop)}</b><span>${esc(v.fecha)} · ${esc(v.estado)}</span></div><div class="stat"><span class="del" data-dvi="${i}">×</span></div></div>`).join("");}
 function empty(t){return `<div class="empty">${t}</div>`;}
+function waitCrm(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function crmAccessError(){const e=new Error("El CRM está pidiendo iniciar sesión. Hay que republicar Apps Script con acceso para Cualquier usuario.");e.code="ACCESS";return e;}
 
 /* ============ LEADS (lee/escribe CRM) ============ */
 let LEADS=null;
@@ -757,7 +759,7 @@ async function crmGet(q,params){
   try{d=JSON.parse(raw);}
   catch(e){
     if(/Servidor LURATI/i.test(raw))throw new Error("La implementación web está desactualizada. Publicá una versión nueva del Apps Script.");
-    if(/<html|accounts\.google|signin/i.test(raw))throw new Error("La implementación solicita iniciar sesión. Configurá el acceso para Cualquier usuario.");
+    if(/<html|accounts\.google|signin/i.test(raw))throw crmAccessError();
     throw new Error("El CRM respondió con un formato inválido. Volvé a publicar la aplicación web.");
   }
   if(!r.ok||d.ok===false)throw new Error(d.error||("Error del CRM ("+r.status+")."));
@@ -795,11 +797,33 @@ async function loadLeads(force){
   if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
   if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus leads.");return;}
   if(LEADS&&!force){renderLeadsCRM();return;}
-  list.innerHTML=empty("Cargando tus leads…");
-  try{
-    const d=await crmGet("leads",{vendedor:current});
-    LEADS=(d&&d.leads)||[];renderLeadsCRM();fillPerfilSelect();renderBoard();renderNav();
-  }catch(e){list.innerHTML=empty(e.message||"No se pudo leer tus leads. Revisá la conexión con el CRM.");}
+
+  list.innerHTML=empty("Cargando leads del CRM…");
+  let lastErr=null;
+  for(let intento=1;intento<=3;intento++){
+    try{
+      const d=await crmGet("leads",{vendedor:current});
+      LEADS=(d&&d.leads)||[];
+      renderLeadsCRM();
+      fillPerfilSelect();
+      renderBoard();
+      renderNav();
+      return;
+    }catch(e){
+      lastErr=e;
+      if(e&&e.code==="ACCESS")break;
+      if(intento<3){
+        list.innerHTML=empty("Conectando con el CRM…");
+        await waitCrm(700*intento);
+      }
+    }
+  }
+
+  if(lastErr&&lastErr.code==="ACCESS"){
+    list.innerHTML=empty("No se pudieron cargar los leads porque Apps Script está pidiendo iniciar sesión.<br><br>Hay que republicar la implementación con acceso <b>Cualquier usuario</b> y después tocar <b>Actualizar</b>.");
+    return;
+  }
+  list.innerHTML=empty("No se pudieron cargar los leads en este intento.<br><br><button class=\"btn ghost\" id=\"reloadleads\" style=\"padding:7px 12px;font-size:13px\">Reintentar</button>");
 }
 function renderLeadsCRM(){
   const list=$('#leadslist'); if(!list)return;
