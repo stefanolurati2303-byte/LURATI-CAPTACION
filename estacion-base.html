@@ -220,8 +220,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
     <div class="wmsg-head">
       <div class="wmsg-logo">W</div>
       <div>
-        <h3 id="wmsg-title">Preparar mensaje de WhatsApp</h3>
-        <p>Elegí el modelo, editá si hace falta, guardá el texto y dejá próximo seguimiento.</p>
+        <h3 id="wmsg-title">Mensaje de WhatsApp</h3>
+        <p>Elegí un modelo, editá si hace falta y enviá. Sin pasos extra.</p>
       </div>
       <button id="wmsg-close" class="wmsg-close" type="button">×</button>
     </div>
@@ -229,37 +229,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
       <div class="wmsg-pill"><b>Cliente</b><span id="wmsg-client">—</span></div>
       <div class="wmsg-pill"><b>Propiedad</b><span id="wmsg-property">—</span></div>
     </div>
-    <div class="wmsg-grid2">
-      <div class="wmsg-field">
-        <div class="wmsg-label">Modelo de mensaje</div>
-        <select id="wmsg-model">
-          <option>Corto y formal</option>
-          <option>Comercial</option>
-          <option>Descriptivo con detalles</option>
-        </select>
-      </div>
-      <div class="wmsg-field">
-        <div class="wmsg-label">Próximo seguimiento</div>
-        <select id="wmsg-next">
-          <option value="Mañana">Mañana</option>
-          <option value="Hoy más tarde">Hoy más tarde</option>
-          <option value="En 3 días">En 3 días</option>
-          <option value="Coordinar visita">Coordinar visita</option>
-          <option value="Sin seguimiento">Sin seguimiento</option>
-        </select>
-      </div>
+    <div class="wmsg-field">
+      <div class="wmsg-label">Modelo de mensaje</div>
+      <select id="wmsg-model">
+        <option>Corto y formal</option>
+        <option>Comercial</option>
+        <option>Descriptivo con detalles</option>
+      </select>
     </div>
     <div class="wmsg-field">
-      <div class="wmsg-label">Texto a enviar</div>
+      <div class="wmsg-label">Texto editable</div>
       <textarea id="wmsg-text"></textarea>
       <div class="wmsg-help">Guardar texto lo deja como preferido para este vendedor + propiedad + modelo.</div>
     </div>
-    <label class="wmsg-pref"><input id="wmsg-remember-channel" type="checkbox"> Recordar el canal elegido para este vendedor</label>
     <div class="wmsg-actions">
       <button id="wmsg-save" class="soft" type="button">Guardar texto</button>
-      <button id="wmsg-copy" type="button">Copiar mensaje</button>
-      <button id="wmsg-send-app" class="primary" type="button">Abrir WhatsApp Windows</button>
-      <button id="wmsg-send-web" class="primary" type="button">Abrir WhatsApp Web</button>
+      <button id="wmsg-copy" type="button">Copiar</button>
+      <button id="wmsg-send-app" class="primary" type="button">WhatsApp Windows</button>
+      <button id="wmsg-send-web" class="primary" type="button">WhatsApp Web</button>
     </div>
     <div id="wmsg-status"></div>
   </div>
@@ -343,87 +330,46 @@ function logEvent(seccion,accion,detalle,tipo,estado){
 }
 
 
-/* ============ WHATSAPP MODELOS + SEGUIMIENTO ============ */
-const WMSG_MODELS=["Corto y formal","Comercial","Descriptivo con detalles"];
+/* ============ WHATSAPP SIMPLE, RÁPIDO Y EDITABLE ============ */
 let WMSG_CTX=null;
 function wmsgStatus(kind,msg){const el=$('#wmsg-status');if(!el)return;el.className=kind||'';el.textContent=msg||'';}
 function wmsgNorm(s){return normTxt(String(s||'')).replace(/\s+/g,' ').trim();}
 function wmsgKey(ctx,modelo){return 'lurati_wmsg_'+wmsgNorm(ctx.vendedor)+'__'+wmsgNorm(ctx.propiedad)+'__'+wmsgNorm(modelo);}
-function wmsgPrefKey(vendedor){return 'lurati_wmsg_pref_'+wmsgNorm(vendedor||current||'');}
 function getLocalSavedMsg(ctx,modelo){try{return localStorage.getItem(wmsgKey(ctx,modelo))||'';}catch(e){return '';}}
 function setLocalSavedMsg(ctx,modelo,texto){try{localStorage.setItem(wmsgKey(ctx,modelo),texto||'');}catch(e){}}
-function getLocalWmsgPref(vendedor){try{return localStorage.getItem(wmsgPrefKey(vendedor))||'';}catch(e){return '';}}
-function setLocalWmsgPref(vendedor,pref){try{localStorage.setItem(wmsgPrefKey(vendedor),pref||'');}catch(e){}}
-function fechaSeguimiento(valor){
-  const now=new Date();
-  if(valor==='Hoy más tarde')now.setHours(now.getHours()+3);
-  else if(valor==='Mañana')now.setDate(now.getDate()+1);
-  else if(valor==='En 3 días')now.setDate(now.getDate()+3);
-  else return '';
-  return now.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-}
 function decodeWhatsappHref(href){
   const out={phone:'',text:''};
   try{
     const u=new URL(href,location.href);
     out.phone=(u.searchParams.get('phone')||u.pathname.replace(/\D/g,'')||'').replace(/\D/g,'');
-    out.text=u.searchParams.get('text')||'';
+    out.text=(u.searchParams.get('text')||'').replaceAll('¿','').replaceAll('¡','');
   }catch(e){ }
   return out;
 }
 function defaultWhatsappMessage(ctx,modelo){
   const nombre=(ctx.nombre||'').split(/\s+/)[0]||'';
+  const saludo=nombre?('Hola '+nombre+', cómo estás?'):'Hola, cómo estás?';
+  const asesor=current||ctx.vendedor||'';
   const prop=ctx.propiedad||'la propiedad que consultaste';
   const link=ctx.link?('\n\nFicha de la propiedad: '+ctx.link):'';
   if(modelo==='Comercial'){
-    return 'Hola '+nombre+', cómo estás? Soy '+(current||'')+' de Lurati Consultora Inmobiliaria.\n\nEstuve revisando tu consulta por '+prop+' y puede ser una opción interesante para lo que estás buscando.\n\nTe propongo que coordinemos una visita o, si preferís, primero te paso algunos detalles para ver si encaja con tu búsqueda.'+link;
+    return saludo+' Soy '+asesor+' de Lurati Consultora Inmobiliaria.\n\nEstuve revisando tu consulta por '+prop+' y puede ser una buena opción para lo que estás buscando.\n\nTe propongo que coordinemos una visita para verla o, si preferís, primero te paso más detalles por acá.'+link;
   }
   if(modelo==='Descriptivo con detalles'){
     const datos=[ctx.tipo,ctx.dorms?ctx.dorms+' dormitorio/s':'',ctx.m2?ctx.m2+' m²':'',ctx.zona?('Zona '+ctx.zona):''].filter(Boolean).join(' · ');
-    return 'Hola '+nombre+', cómo estás? Te comparto una opción que puede interesarte.\n\nPropiedad: '+prop+(datos?'\nCaracterísticas: '+datos:'')+'\n\nLa idea es que puedas evaluarla con información clara y, si te cierra, coordinamos una visita para verla personalmente.'+link;
+    return saludo+' Te comparto una opción que puede interesarte.\n\nPropiedad: '+prop+(datos?'\nCaracterísticas: '+datos:'')+'\n\nLa idea es que puedas evaluarla con información clara y, si te cierra, coordinamos una visita para verla personalmente.'+link;
   }
-  return 'Hola '+nombre+', cómo estás? Soy '+(current||'')+' de Lurati Consultora Inmobiliaria.\n\nTe contacto por '+prop+'.\n\nTe parece que coordinemos una visita o querés que primero te pase más información?'+link;
+  return saludo+' Soy '+asesor+' de Lurati Consultora Inmobiliaria.\n\nTe contacto por '+prop+'.\n\nTe parece que coordinemos una visita o querés que primero te pase más información?'+link;
 }
-async function loadServerWhatsappMessage(ctx,modelo){
-  if(!SHEET_URL)return '';
-  try{
-    const u=new URL(SHEET_URL);
-    u.searchParams.set('q','mensajeWhatsapp');
-    u.searchParams.set('vendedor',ctx.vendedor||current||'');
-    u.searchParams.set('propiedad',ctx.propiedad||'');
-    u.searchParams.set('modelo',modelo||'');
-    u.searchParams.set('nombre',ctx.nombre||'');
-    u.searchParams.set('telefono',ctx.telefono||'');
-    u.searchParams.set('idConsulta',ctx.id||'');
-    u.searchParams.set('_',Date.now());
-    const d=await fetch(u.toString(),{cache:'no-store'}).then(r=>r.json());
-    return d&&d.ok&&d.texto?d.texto:'';
-  }catch(e){return '';}
-}
-async function loadServerWmsgPref(vendedor){
-  if(!SHEET_URL||!vendedor)return '';
-  try{
-    const u=new URL(SHEET_URL);
-    u.searchParams.set('q','preferenciaWhatsapp');
-    u.searchParams.set('vendedor',vendedor);
-    u.searchParams.set('_',Date.now());
-    const d=await fetch(u.toString(),{cache:'no-store'}).then(r=>r.json());
-    return d&&d.ok?String(d.preferencia||''):'';
-  }catch(e){return '';}
-}
-async function refreshWhatsappMessage(){
+function refreshWhatsappMessage(){
   if(!WMSG_CTX)return;
   const modelo=$('#wmsg-model').value;
   const local=getLocalSavedMsg(WMSG_CTX,modelo);
-  if(local){$('#wmsg-text').value=local;wmsgStatus('ok','Texto recuperado de este dispositivo.');return;}
-  $('#wmsg-text').value='Cargando mensaje…';
-  const server=await loadServerWhatsappMessage(WMSG_CTX,modelo);
-  if(server){$('#wmsg-text').value=server;wmsgStatus('ok','Texto recuperado del CRM.');return;}
-  $('#wmsg-text').value=WMSG_CTX.originalText||defaultWhatsappMessage(WMSG_CTX,modelo);
-  wmsgStatus('','Mensaje armado con el modelo base. Podés editarlo y guardarlo.');
+  $('#wmsg-text').value=local || WMSG_CTX.originalText || defaultWhatsappMessage(WMSG_CTX,modelo);
+  wmsgStatus(local?'ok':'', local?'Texto guardado recuperado.':'Mensaje listo. Podés editarlo antes de enviarlo.');
 }
 function leadFromId(id){return LEADS&&LEADS.find(x=>String(x.id||'').toLowerCase()===String(id||'').toLowerCase());}
-async function openWhatsappComposer(a){
+function openWhatsappComposer(a){
   const decoded=decodeWhatsappHref(a.href||'');
   const row=a.closest('.leadrow');
   const txt=row?(row.textContent||''):'';
@@ -439,34 +385,23 @@ async function openWhatsappComposer(a){
   $('#wmsg-client').textContent=(WMSG_CTX.nombre||'Cliente')+(WMSG_CTX.id?' · '+WMSG_CTX.id:'');
   $('#wmsg-property').textContent=WMSG_CTX.propiedad||'Propiedad consultada';
   $('#wmsg-model').value='Corto y formal';
-  $('#wmsg-next').value=WMSG_CTX.isRecontactar?'En 3 días':'Mañana';
-  $('#wmsg-remember-channel').checked=false;
   $('#wmsg-overlay').classList.add('open');
-  let pref=getLocalWmsgPref(WMSG_CTX.vendedor)||await loadServerWmsgPref(WMSG_CTX.vendedor);
-  if(pref==='app')wmsgStatus('', 'Preferencia guardada: WhatsApp Windows.');
-  else if(pref==='web')wmsgStatus('', 'Preferencia guardada: WhatsApp Web.');
-  await refreshWhatsappMessage();
+  refreshWhatsappMessage();
 }
 function closeWhatsappComposer(){const el=$('#wmsg-overlay');if(el)el.classList.remove('open');}
-async function saveWhatsappText(){
+function saveWhatsappText(){
   if(!WMSG_CTX)return;
   const modelo=$('#wmsg-model').value;
   const texto=String($('#wmsg-text').value||'').trim();
   if(!texto){wmsgStatus('err','El texto está vacío.');return;}
   setLocalSavedMsg(WMSG_CTX,modelo,texto);
   if(SHEET_URL){fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'guardarTextoWhatsapp',idConsulta:WMSG_CTX.id||'',vendedor:WMSG_CTX.vendedor||'',asesor:WMSG_CTX.vendedor||'',propiedad:WMSG_CTX.propiedad||'',modelo:modelo,texto:texto,nombre:WMSG_CTX.nombre||'',telefono:WMSG_CTX.telefono||''})}).catch(()=>{});}
-  wmsgStatus('ok','Texto guardado para futuras conversaciones de este vendedor, propiedad y modelo.');
+  wmsgStatus('ok','Texto guardado. La próxima vez aparece al instante en este dispositivo.');
 }
 async function copyWhatsappText(){try{await navigator.clipboard.writeText($('#wmsg-text').value||'');wmsgStatus('ok','Mensaje copiado.');}catch(e){wmsgStatus('','No pude copiar automáticamente. Podés seleccionar el texto manualmente.');}}
 function registrarWhatsappPreparado(ctx,texto,url,destino){
   if(!SHEET_URL)return;
-  const proxima=$('#wmsg-next')?$('#wmsg-next').value:'Seguimiento';
-  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'registrarContactoWhatsapp',idConsulta:ctx.id||'',vendedor:ctx.vendedor||'',asesor:ctx.vendedor||'',nombre:ctx.nombre||'',telefono:ctx.telefono||'',propiedad:ctx.propiedad||'',modelo:$('#wmsg-model').value,texto:texto,url:url,resultado:'WhatsApp '+(destino==='app'?'Windows':'Web')+' preparado',proximaAccion:proxima,fechaProximaAccion:fechaSeguimiento(proxima)})}).catch(()=>{});
-}
-function guardarPreferenciaCanal(destino){
-  const pref=destino==='app'?'app':'web';
-  setLocalWmsgPref(WMSG_CTX&&WMSG_CTX.vendedor||current,pref);
-  if(SHEET_URL){fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'guardarPreferenciaWhatsapp',vendedor:WMSG_CTX&&WMSG_CTX.vendedor||current,preferencia:pref})}).catch(()=>{});}
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'registrarContactoWhatsapp',idConsulta:ctx.id||'',vendedor:ctx.vendedor||'',asesor:ctx.vendedor||'',nombre:ctx.nombre||'',telefono:ctx.telefono||'',propiedad:ctx.propiedad||'',modelo:$('#wmsg-model').value,texto:texto,url:url,resultado:'WhatsApp '+(destino==='app'?'Windows':'Web')+' preparado',proximaAccion:''})}).catch(()=>{});
 }
 function sendWhatsappPrepared(destino){
   if(!WMSG_CTX)return;
@@ -474,7 +409,6 @@ function sendWhatsappPrepared(destino){
   if(!texto){wmsgStatus('err','El texto está vacío.');return;}
   const tel=String(WMSG_CTX.telefono||'').replace(/\D/g,'');
   if(!tel){wmsgStatus('err','No encontré teléfono para WhatsApp.');return;}
-  if($('#wmsg-remember-channel')&&$('#wmsg-remember-channel').checked)guardarPreferenciaCanal(destino);
   if(WMSG_CTX.id){
     if(WMSG_CTX.isRecontactar)setEstado(WMSG_CTX.id,'Seguimiento');
     else {const l=leadFromId(WMSG_CTX.id);if(l&&esNoContactado(l)&&(l.estado||'').trim()!=='Perdido')setEstado(WMSG_CTX.id,'Contactado');}
@@ -483,8 +417,13 @@ function sendWhatsappPrepared(destino){
   const appUrl='whatsapp://send?phone='+tel+'&text='+encodeURIComponent(texto);
   const url=(destino==='app')?appUrl:webUrl;
   registrarWhatsappPreparado(WMSG_CTX,texto,url,destino);
-  if(destino==='app'){window.location.href=appUrl;wmsgStatus('ok','Se solicitó abrir WhatsApp Windows. Si no se abre, usá WhatsApp Web.');}
-  else{window.open(webUrl,'whatsapp_lurati');wmsgStatus('ok','WhatsApp Web abierto. La próxima vez intenta reutilizar la misma pestaña.');}
+  if(destino==='app'){
+    window.location.href=appUrl;
+    wmsgStatus('ok','Se solicitó abrir WhatsApp Windows.');
+  }else{
+    window.open(webUrl,'whatsapp_lurati');
+    wmsgStatus('ok','WhatsApp Web abierto. Intenta reutilizar la misma pestaña.');
+  }
 }
 
 /* ============ DATOS ESTÁTICOS ============ */
