@@ -253,7 +253,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
       <div class="wmsg-logo">L</div>
       <div>
         <h3>Preparar mensaje de WhatsApp</h3>
-        <p>Elegí el modelo, editá el texto y guardalo para reutilizarlo.</p>
+        <p>Elegí el modelo, editá el texto, guardalo y después elegí si abrís WhatsApp Windows o Web.</p>
       </div>
       <button id="wmsg-close" class="wmsg-close" type="button">×</button>
     </div>
@@ -281,7 +281,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
     <div class="wmsg-actions">
       <button id="wmsg-save" class="soft" type="button">Guardar texto</button>
       <button id="wmsg-copy" type="button">Copiar</button>
-      <button id="wmsg-send" class="primary" type="button">Contactar por WhatsApp</button>
+      <button id="wmsg-send-app" class="primary" type="button">Abrir WhatsApp Windows</button>
+      <button id="wmsg-send-web" class="primary" type="button">Abrir WhatsApp Web</button>
     </div>
     <div id="wmsg-status"></div>
   </div>
@@ -854,7 +855,7 @@ function registrarWhatsappPreparado(ctx,texto,url){
     proximaAccion:'Seguimiento'
   })}).catch(()=>{});
 }
-function sendWhatsappPrepared(){
+function sendWhatsappPrepared(destino){
   if(!WMSG_CTX)return;
   const texto=String($('#wmsg-text').value||'').trim();
   if(!texto){wmsgStatus('err','El texto está vacío.');return;}
@@ -864,10 +865,19 @@ function sendWhatsappPrepared(){
     const l=leadFromId(WMSG_CTX.id);
     if(l && esNoContactado(l) && (l.estado||'').trim()!=='Perdido') setEstado(WMSG_CTX.id,'Contactado');
   }
-  const url='https://web.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(texto);
+  const webUrl='https://web.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(texto);
+  const appUrl='whatsapp://send?phone='+tel+'&text='+encodeURIComponent(texto);
+  const url=(destino==='app')?appUrl:webUrl;
   registrarWhatsappPreparado(WMSG_CTX,texto,url);
-  window.open(url,'whatsapp_lurati');
-  wmsgStatus('ok','WhatsApp abierto. Se reutilizará la misma pestaña cuando sea posible.');
+  if(destino==='app'){
+    // Usa el protocolo de WhatsApp Desktop/Windows. El navegador mostrará su propio aviso para abrir la app.
+    window.location.href=appUrl;
+    wmsgStatus('ok','Se solicitó abrir WhatsApp Windows. Si no se abre, usá el botón WhatsApp Web.');
+  }else{
+    // Usa siempre la misma pestaña creada por el CRM para evitar muchas pestañas nuevas.
+    window.open(webUrl,'whatsapp_lurati');
+    wmsgStatus('ok','WhatsApp Web abierto. La próxima vez intenta reutilizar esta misma pestaña.');
+  }
 }
 
 async function loadLeads(force){
@@ -1474,8 +1484,10 @@ const wmsgSave=$('#wmsg-save');
 if(wmsgSave)wmsgSave.addEventListener('click',saveWhatsappText);
 const wmsgCopy=$('#wmsg-copy');
 if(wmsgCopy)wmsgCopy.addEventListener('click',copyWhatsappText);
-const wmsgSend=$('#wmsg-send');
-if(wmsgSend)wmsgSend.addEventListener('click',sendWhatsappPrepared);
+const wmsgSendApp=$('#wmsg-send-app');
+if(wmsgSendApp)wmsgSendApp.addEventListener('click',()=>sendWhatsappPrepared('app'));
+const wmsgSendWeb=$('#wmsg-send-web');
+if(wmsgSendWeb)wmsgSendWeb.addEventListener('click',()=>sendWhatsappPrepared('web'));
 
 document.addEventListener('input',e=>{
   if(e.target.id==='leadsearch')renderLeadsCRM();
