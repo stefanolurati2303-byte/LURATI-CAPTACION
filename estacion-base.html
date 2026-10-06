@@ -131,34 +131,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .leadrow .lact{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .lead-wa{font-size:12.5px;font-weight:600;color:#fff;background:#1d7a5f;padding:6px 12px;border-radius:8px;text-decoration:none}
 .lead-wa:hover{background:#0f6e56}
-
-/* WHATSAPP MODELOS */
-.wmsg-overlay{display:none;position:fixed;inset:0;z-index:4000;background:rgba(14,53,44,.55);padding:18px;overflow:auto}
-.wmsg-overlay.open{display:block}
-.wmsg-modal{max-width:720px;margin:22px auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 22px 70px rgba(0,0,0,.24)}
-.wmsg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
-.wmsg-logo{width:40px;height:40px;border-radius:11px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900}
-.wmsg-head h3{font-size:20px;color:var(--green-dark);margin:0 0 2px}
-.wmsg-head p{font-size:13px;color:var(--muted);margin:0}
-.wmsg-close{margin-left:auto;border:0;background:#eef4f2;color:var(--green);width:36px;height:36px;border-radius:10px;font-size:19px;cursor:pointer}
-.wmsg-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 14px}
-.wmsg-pill{border:1px solid var(--line);border-radius:12px;padding:10px;background:#f8fbfa}
-.wmsg-pill b{display:block;font-size:11px;text-transform:uppercase;color:var(--teal);letter-spacing:.08em;margin-bottom:3px}
-.wmsg-pill span{font-size:13px;color:var(--ink)}
-.wmsg-field{margin:12px 0}
-.wmsg-label{font-size:12px;font-weight:800;color:#475467;margin-bottom:7px}
-#wmsg-model{width:100%;font:inherit;font-size:15px;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink)}
-#wmsg-text{width:100%;min-height:230px;font:inherit;font-size:14px;line-height:1.5;padding:13px;border-radius:12px;border:1px solid var(--line);resize:vertical;color:var(--ink);background:#fff}
-#wmsg-text:focus,#wmsg-model:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
-.wmsg-help{font-size:12px;color:var(--muted);margin-top:6px}
-.wmsg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.wmsg-actions button{flex:1;min-width:140px;border-radius:11px;padding:11px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;cursor:pointer}
-.wmsg-actions button.primary{background:var(--green);color:#fff;border-color:var(--green)}
-.wmsg-actions button.soft{background:#e8f1ef}
-#wmsg-status{font-size:13px;margin-top:10px;color:var(--muted)}
-#wmsg-status.ok{color:var(--ok)}#wmsg-status.err{color:var(--bordo)}
-@media(max-width:560px){.wmsg-overlay{padding:0}.wmsg-modal{min-height:100%;margin:0;border-radius:0}.wmsg-meta{grid-template-columns:1fr}}
-
 .accept-lead{font-size:12.5px;font-weight:800;color:#fff;background:#004d44;padding:7px 12px;border:0;border-radius:8px;cursor:pointer}
 .accept-lead:hover{background:#0e352c}.accept-lead:disabled{opacity:.6;cursor:wait}
 .assign-badge{display:inline-flex;align-items:center;margin-top:4px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:800}
@@ -197,6 +169,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .lockbox button:hover{background:var(--green-dark)}
 .lockerr{font-size:13px;color:var(--bordo);margin-top:10px;min-height:18px}
 @media(max-width:520px){.leadrow{flex-wrap:wrap}.leadrow .lact{width:100%;margin-left:24px}}
+
+/* WHATSAPP MODELOS + SEGUIMIENTO */
+.wmsg-overlay{display:none;position:fixed;inset:0;z-index:4000;background:rgba(14,53,44,.55);padding:18px;overflow:auto}
+.wmsg-overlay.open{display:block}
+.wmsg-modal{max-width:760px;margin:22px auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 22px 70px rgba(0,0,0,.24)}
+.wmsg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.wmsg-logo{width:40px;height:40px;border-radius:11px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900}
+.wmsg-head h3{font-size:20px;color:var(--green-dark);margin:0 0 2px}
+.wmsg-head p{font-size:13px;color:var(--muted);margin:0}
+.wmsg-close{margin-left:auto;border:0;background:#eef4f2;color:var(--green);width:36px;height:36px;border-radius:10px;font-size:19px;cursor:pointer}
+.wmsg-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 14px}
+.wmsg-pill{border:1px solid var(--line);border-radius:12px;padding:10px;background:#f8fbfa}
+.wmsg-pill b{display:block;font-size:11px;text-transform:uppercase;color:var(--teal);letter-spacing:.08em;margin-bottom:3px}
+.wmsg-pill span{font-size:13px;color:var(--ink)}
+.wmsg-field{margin:12px 0}
+.wmsg-label{font-size:12px;font-weight:800;color:#475467;margin-bottom:7px}
+#wmsg-model,#wmsg-next{width:100%;font:inherit;font-size:15px;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+#wmsg-text{width:100%;min-height:230px;font:inherit;font-size:14px;line-height:1.5;padding:13px;border-radius:12px;border:1px solid var(--line);resize:vertical;color:var(--ink);background:#fff}
+#wmsg-text:focus,#wmsg-model:focus,#wmsg-next:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
+.wmsg-help{font-size:12px;color:var(--muted);margin-top:6px}
+.wmsg-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wmsg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.wmsg-actions button{flex:1;min-width:140px;border-radius:11px;padding:11px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;cursor:pointer}
+.wmsg-actions button.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.wmsg-actions button.soft{background:#e8f1ef}
+.wmsg-pref{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);margin-top:8px;cursor:pointer}
+.wmsg-pref input{width:15px;height:15px;cursor:pointer}
+#wmsg-status{font-size:13px;margin-top:10px;color:var(--muted)}
+#wmsg-status.ok{color:var(--ok)}#wmsg-status.err{color:var(--bordo)}
+@media(max-width:560px){.wmsg-overlay{padding:0}.wmsg-modal{min-height:100%;margin:0;border-radius:0}.wmsg-meta,.wmsg-grid2{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -211,6 +214,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
     <div class="lockerr" id="lockerr"></div>
   </div>
 </div>
+
+<div id="wmsg-overlay" class="wmsg-overlay" aria-hidden="true">
+  <div class="wmsg-modal" role="dialog" aria-modal="true" aria-labelledby="wmsg-title">
+    <div class="wmsg-head">
+      <div class="wmsg-logo">W</div>
+      <div>
+        <h3 id="wmsg-title">Preparar mensaje de WhatsApp</h3>
+        <p>Elegí el modelo, editá si hace falta, guardá el texto y dejá próximo seguimiento.</p>
+      </div>
+      <button id="wmsg-close" class="wmsg-close" type="button">×</button>
+    </div>
+    <div class="wmsg-meta">
+      <div class="wmsg-pill"><b>Cliente</b><span id="wmsg-client">—</span></div>
+      <div class="wmsg-pill"><b>Propiedad</b><span id="wmsg-property">—</span></div>
+    </div>
+    <div class="wmsg-grid2">
+      <div class="wmsg-field">
+        <div class="wmsg-label">Modelo de mensaje</div>
+        <select id="wmsg-model">
+          <option>Corto y formal</option>
+          <option>Comercial</option>
+          <option>Descriptivo con detalles</option>
+        </select>
+      </div>
+      <div class="wmsg-field">
+        <div class="wmsg-label">Próximo seguimiento</div>
+        <select id="wmsg-next">
+          <option value="Mañana">Mañana</option>
+          <option value="Hoy más tarde">Hoy más tarde</option>
+          <option value="En 3 días">En 3 días</option>
+          <option value="Coordinar visita">Coordinar visita</option>
+          <option value="Sin seguimiento">Sin seguimiento</option>
+        </select>
+      </div>
+    </div>
+    <div class="wmsg-field">
+      <div class="wmsg-label">Texto a enviar</div>
+      <textarea id="wmsg-text"></textarea>
+      <div class="wmsg-help">Guardar texto lo deja como preferido para este vendedor + propiedad + modelo.</div>
+    </div>
+    <label class="wmsg-pref"><input id="wmsg-remember-channel" type="checkbox"> Recordar el canal elegido para este vendedor</label>
+    <div class="wmsg-actions">
+      <button id="wmsg-save" class="soft" type="button">Guardar texto</button>
+      <button id="wmsg-copy" type="button">Copiar mensaje</button>
+      <button id="wmsg-send-app" class="primary" type="button">Abrir WhatsApp Windows</button>
+      <button id="wmsg-send-web" class="primary" type="button">Abrir WhatsApp Web</button>
+    </div>
+    <div id="wmsg-status"></div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <div class="topbar">
@@ -246,48 +300,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
     Tus datos se guardan en este dispositivo. <span class="reset" id="reset">Borrar mis datos de la semana</span>
   </div>
 </div>
-
-<div id="wmsg-overlay" class="wmsg-overlay">
-  <div class="wmsg-modal">
-    <div class="wmsg-head">
-      <div class="wmsg-logo">L</div>
-      <div>
-        <h3>Preparar mensaje de WhatsApp</h3>
-        <p>Elegí el modelo, editá el texto, guardalo y después elegí si abrís WhatsApp Windows o Web.</p>
-      </div>
-      <button id="wmsg-close" class="wmsg-close" type="button">×</button>
-    </div>
-
-    <div class="wmsg-meta">
-      <div class="wmsg-pill"><b>Cliente</b><span id="wmsg-client">—</span></div>
-      <div class="wmsg-pill"><b>Propiedad</b><span id="wmsg-property">—</span></div>
-    </div>
-
-    <div class="wmsg-field">
-      <div class="wmsg-label">Modelo de mensaje</div>
-      <select id="wmsg-model">
-        <option value="Corto y formal">Corto y formal</option>
-        <option value="Comercial">Comercial</option>
-        <option value="Descriptivo con detalles">Descriptivo con detalles</option>
-      </select>
-      <div class="wmsg-help">Si tocás “Guardar texto”, se recupera para este vendedor, propiedad y modelo.</div>
-    </div>
-
-    <div class="wmsg-field">
-      <div class="wmsg-label">Texto previo editable</div>
-      <textarea id="wmsg-text" placeholder="Cargando mensaje…"></textarea>
-    </div>
-
-    <div class="wmsg-actions">
-      <button id="wmsg-save" class="soft" type="button">Guardar texto</button>
-      <button id="wmsg-copy" type="button">Copiar</button>
-      <button id="wmsg-send-app" class="primary" type="button">Abrir WhatsApp Windows</button>
-      <button id="wmsg-send-web" class="primary" type="button">Abrir WhatsApp Web</button>
-    </div>
-    <div id="wmsg-status"></div>
-  </div>
-</div>
-
 <script>
 /* ============ CONFIG ============ */
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbygRzmQntmyoRSgne5xg30jH9xiWc1W5oMPbLGDdxQuq5qTuOp6xvHPxmqNTJ9jAPmcgQ/exec";   // Pegá acá la URL del Apps Script (/exec). Vacío = no envía ni lee stock.
@@ -328,6 +340,151 @@ function logEvent(seccion,accion,detalle,tipo,estado){
   if(!SHEET_URL||!current)return;
   try{fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
     body:JSON.stringify({asesor:current,seccion:seccion||"",accion:accion||"",detalle:detalle||"",tipo:tipo||"",estado:estado||""})}).catch(function(){});}catch(e){}
+}
+
+
+/* ============ WHATSAPP MODELOS + SEGUIMIENTO ============ */
+const WMSG_MODELS=["Corto y formal","Comercial","Descriptivo con detalles"];
+let WMSG_CTX=null;
+function wmsgStatus(kind,msg){const el=$('#wmsg-status');if(!el)return;el.className=kind||'';el.textContent=msg||'';}
+function wmsgNorm(s){return normTxt(String(s||'')).replace(/\s+/g,' ').trim();}
+function wmsgKey(ctx,modelo){return 'lurati_wmsg_'+wmsgNorm(ctx.vendedor)+'__'+wmsgNorm(ctx.propiedad)+'__'+wmsgNorm(modelo);}
+function wmsgPrefKey(vendedor){return 'lurati_wmsg_pref_'+wmsgNorm(vendedor||current||'');}
+function getLocalSavedMsg(ctx,modelo){try{return localStorage.getItem(wmsgKey(ctx,modelo))||'';}catch(e){return '';}}
+function setLocalSavedMsg(ctx,modelo,texto){try{localStorage.setItem(wmsgKey(ctx,modelo),texto||'');}catch(e){}}
+function getLocalWmsgPref(vendedor){try{return localStorage.getItem(wmsgPrefKey(vendedor))||'';}catch(e){return '';}}
+function setLocalWmsgPref(vendedor,pref){try{localStorage.setItem(wmsgPrefKey(vendedor),pref||'');}catch(e){}}
+function fechaSeguimiento(valor){
+  const now=new Date();
+  if(valor==='Hoy más tarde')now.setHours(now.getHours()+3);
+  else if(valor==='Mañana')now.setDate(now.getDate()+1);
+  else if(valor==='En 3 días')now.setDate(now.getDate()+3);
+  else return '';
+  return now.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function decodeWhatsappHref(href){
+  const out={phone:'',text:''};
+  try{
+    const u=new URL(href,location.href);
+    out.phone=(u.searchParams.get('phone')||u.pathname.replace(/\D/g,'')||'').replace(/\D/g,'');
+    out.text=u.searchParams.get('text')||'';
+  }catch(e){ }
+  return out;
+}
+function defaultWhatsappMessage(ctx,modelo){
+  const nombre=(ctx.nombre||'').split(/\s+/)[0]||'';
+  const prop=ctx.propiedad||'la propiedad que consultaste';
+  const link=ctx.link?('\n\nFicha de la propiedad: '+ctx.link):'';
+  if(modelo==='Comercial'){
+    return 'Hola '+nombre+', cómo estás? Soy '+(current||'')+' de Lurati Consultora Inmobiliaria.\n\nEstuve revisando tu consulta por '+prop+' y puede ser una opción interesante para lo que estás buscando.\n\nTe propongo que coordinemos una visita o, si preferís, primero te paso algunos detalles para ver si encaja con tu búsqueda.'+link;
+  }
+  if(modelo==='Descriptivo con detalles'){
+    const datos=[ctx.tipo,ctx.dorms?ctx.dorms+' dormitorio/s':'',ctx.m2?ctx.m2+' m²':'',ctx.zona?('Zona '+ctx.zona):''].filter(Boolean).join(' · ');
+    return 'Hola '+nombre+', cómo estás? Te comparto una opción que puede interesarte.\n\nPropiedad: '+prop+(datos?'\nCaracterísticas: '+datos:'')+'\n\nLa idea es que puedas evaluarla con información clara y, si te cierra, coordinamos una visita para verla personalmente.'+link;
+  }
+  return 'Hola '+nombre+', cómo estás? Soy '+(current||'')+' de Lurati Consultora Inmobiliaria.\n\nTe contacto por '+prop+'.\n\nTe parece que coordinemos una visita o querés que primero te pase más información?'+link;
+}
+async function loadServerWhatsappMessage(ctx,modelo){
+  if(!SHEET_URL)return '';
+  try{
+    const u=new URL(SHEET_URL);
+    u.searchParams.set('q','mensajeWhatsapp');
+    u.searchParams.set('vendedor',ctx.vendedor||current||'');
+    u.searchParams.set('propiedad',ctx.propiedad||'');
+    u.searchParams.set('modelo',modelo||'');
+    u.searchParams.set('nombre',ctx.nombre||'');
+    u.searchParams.set('telefono',ctx.telefono||'');
+    u.searchParams.set('idConsulta',ctx.id||'');
+    u.searchParams.set('_',Date.now());
+    const d=await fetch(u.toString(),{cache:'no-store'}).then(r=>r.json());
+    return d&&d.ok&&d.texto?d.texto:'';
+  }catch(e){return '';}
+}
+async function loadServerWmsgPref(vendedor){
+  if(!SHEET_URL||!vendedor)return '';
+  try{
+    const u=new URL(SHEET_URL);
+    u.searchParams.set('q','preferenciaWhatsapp');
+    u.searchParams.set('vendedor',vendedor);
+    u.searchParams.set('_',Date.now());
+    const d=await fetch(u.toString(),{cache:'no-store'}).then(r=>r.json());
+    return d&&d.ok?String(d.preferencia||''):'';
+  }catch(e){return '';}
+}
+async function refreshWhatsappMessage(){
+  if(!WMSG_CTX)return;
+  const modelo=$('#wmsg-model').value;
+  const local=getLocalSavedMsg(WMSG_CTX,modelo);
+  if(local){$('#wmsg-text').value=local;wmsgStatus('ok','Texto recuperado de este dispositivo.');return;}
+  $('#wmsg-text').value='Cargando mensaje…';
+  const server=await loadServerWhatsappMessage(WMSG_CTX,modelo);
+  if(server){$('#wmsg-text').value=server;wmsgStatus('ok','Texto recuperado del CRM.');return;}
+  $('#wmsg-text').value=WMSG_CTX.originalText||defaultWhatsappMessage(WMSG_CTX,modelo);
+  wmsgStatus('','Mensaje armado con el modelo base. Podés editarlo y guardarlo.');
+}
+function leadFromId(id){return LEADS&&LEADS.find(x=>String(x.id||'').toLowerCase()===String(id||'').toLowerCase());}
+async function openWhatsappComposer(a){
+  const decoded=decodeWhatsappHref(a.href||'');
+  const row=a.closest('.leadrow');
+  const txt=row?(row.textContent||''):'';
+  const m=txt.match(/C-\d+/i);
+  const id=(a.dataset.waid||a.dataset.rid||(m?m[0]:'')).trim();
+  let l=leadFromId(id);
+  if(!l&&typeof clienteActualSug==='function')l=clienteActualSug();
+  WMSG_CTX={
+    id:id||(l&&l.id)||'', vendedor:current||'', nombre:(l&&l.nombre)||'', telefono:(l&&l.tel)||decoded.phone||'',
+    propiedad:(l&&l.propiedad)||'Propiedad consultada', tipo:(l&&l.tipo)||'', zona:(l&&l.perfil&&(l.perfil.zona||l.perfil.busca))||'',
+    dorms:(l&&l.dorms)||'', banos:'', m2:'', cochera:'', exterior:'', precio:'', link:(l&&l.link)||'', originalText:decoded.text||'', isRecontactar:!!a.classList.contains('recontactar')
+  };
+  $('#wmsg-client').textContent=(WMSG_CTX.nombre||'Cliente')+(WMSG_CTX.id?' · '+WMSG_CTX.id:'');
+  $('#wmsg-property').textContent=WMSG_CTX.propiedad||'Propiedad consultada';
+  $('#wmsg-model').value='Corto y formal';
+  $('#wmsg-next').value=WMSG_CTX.isRecontactar?'En 3 días':'Mañana';
+  $('#wmsg-remember-channel').checked=false;
+  $('#wmsg-overlay').classList.add('open');
+  let pref=getLocalWmsgPref(WMSG_CTX.vendedor)||await loadServerWmsgPref(WMSG_CTX.vendedor);
+  if(pref==='app')wmsgStatus('', 'Preferencia guardada: WhatsApp Windows.');
+  else if(pref==='web')wmsgStatus('', 'Preferencia guardada: WhatsApp Web.');
+  await refreshWhatsappMessage();
+}
+function closeWhatsappComposer(){const el=$('#wmsg-overlay');if(el)el.classList.remove('open');}
+async function saveWhatsappText(){
+  if(!WMSG_CTX)return;
+  const modelo=$('#wmsg-model').value;
+  const texto=String($('#wmsg-text').value||'').trim();
+  if(!texto){wmsgStatus('err','El texto está vacío.');return;}
+  setLocalSavedMsg(WMSG_CTX,modelo,texto);
+  if(SHEET_URL){fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'guardarTextoWhatsapp',idConsulta:WMSG_CTX.id||'',vendedor:WMSG_CTX.vendedor||'',asesor:WMSG_CTX.vendedor||'',propiedad:WMSG_CTX.propiedad||'',modelo:modelo,texto:texto,nombre:WMSG_CTX.nombre||'',telefono:WMSG_CTX.telefono||''})}).catch(()=>{});}
+  wmsgStatus('ok','Texto guardado para futuras conversaciones de este vendedor, propiedad y modelo.');
+}
+async function copyWhatsappText(){try{await navigator.clipboard.writeText($('#wmsg-text').value||'');wmsgStatus('ok','Mensaje copiado.');}catch(e){wmsgStatus('','No pude copiar automáticamente. Podés seleccionar el texto manualmente.');}}
+function registrarWhatsappPreparado(ctx,texto,url,destino){
+  if(!SHEET_URL)return;
+  const proxima=$('#wmsg-next')?$('#wmsg-next').value:'Seguimiento';
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'registrarContactoWhatsapp',idConsulta:ctx.id||'',vendedor:ctx.vendedor||'',asesor:ctx.vendedor||'',nombre:ctx.nombre||'',telefono:ctx.telefono||'',propiedad:ctx.propiedad||'',modelo:$('#wmsg-model').value,texto:texto,url:url,resultado:'WhatsApp '+(destino==='app'?'Windows':'Web')+' preparado',proximaAccion:proxima,fechaProximaAccion:fechaSeguimiento(proxima)})}).catch(()=>{});
+}
+function guardarPreferenciaCanal(destino){
+  const pref=destino==='app'?'app':'web';
+  setLocalWmsgPref(WMSG_CTX&&WMSG_CTX.vendedor||current,pref);
+  if(SHEET_URL){fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'guardarPreferenciaWhatsapp',vendedor:WMSG_CTX&&WMSG_CTX.vendedor||current,preferencia:pref})}).catch(()=>{});}
+}
+function sendWhatsappPrepared(destino){
+  if(!WMSG_CTX)return;
+  const texto=String($('#wmsg-text').value||'').trim();
+  if(!texto){wmsgStatus('err','El texto está vacío.');return;}
+  const tel=String(WMSG_CTX.telefono||'').replace(/\D/g,'');
+  if(!tel){wmsgStatus('err','No encontré teléfono para WhatsApp.');return;}
+  if($('#wmsg-remember-channel')&&$('#wmsg-remember-channel').checked)guardarPreferenciaCanal(destino);
+  if(WMSG_CTX.id){
+    if(WMSG_CTX.isRecontactar)setEstado(WMSG_CTX.id,'Seguimiento');
+    else {const l=leadFromId(WMSG_CTX.id);if(l&&esNoContactado(l)&&(l.estado||'').trim()!=='Perdido')setEstado(WMSG_CTX.id,'Contactado');}
+  }
+  const webUrl='https://web.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(texto);
+  const appUrl='whatsapp://send?phone='+tel+'&text='+encodeURIComponent(texto);
+  const url=(destino==='app')?appUrl:webUrl;
+  registrarWhatsappPreparado(WMSG_CTX,texto,url,destino);
+  if(destino==='app'){window.location.href=appUrl;wmsgStatus('ok','Se solicitó abrir WhatsApp Windows. Si no se abre, usá WhatsApp Web.');}
+  else{window.open(webUrl,'whatsapp_lurati');wmsgStatus('ok','WhatsApp Web abierto. La próxima vez intenta reutilizar la misma pestaña.');}
 }
 
 /* ============ DATOS ESTÁTICOS ============ */
@@ -694,192 +851,6 @@ function waLink(l){
   if(l.link)msg+="\n\nFicha de la propiedad: "+l.link;
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
-
-/* ============ WHATSAPP CON MODELOS Y TEXTO GUARDADO ============ */
-let WMSG_CTX=null;
-const WMSG_KEY='lurati_whatsapp_textos_guardados_v1';
-
-function wmsgSavedMap(){
-  try{return JSON.parse(localStorage.getItem(WMSG_KEY)||'{}')||{};}catch(e){return {};}
-}
-function wmsgKey(ctx,modelo){
-  return [ctx.vendedor||'',ctx.propiedad||'',modelo||''].map(x=>String(x||'').trim().toLowerCase()).join('|');
-}
-function getLocalSavedMsg(ctx,modelo){return wmsgSavedMap()[wmsgKey(ctx,modelo)]||'';}
-function setLocalSavedMsg(ctx,modelo,texto){
-  const m=wmsgSavedMap();
-  m[wmsgKey(ctx,modelo)]=texto;
-  try{localStorage.setItem(WMSG_KEY,JSON.stringify(m));}catch(e){}
-}
-function decodeWhatsappHref(href){
-  const out={phone:'',text:''};
-  try{
-    const u=new URL(href,location.href);
-    out.phone=(u.searchParams.get('phone')||'').replace(/\D/g,'');
-    out.text=u.searchParams.get('text')||'';
-    if(!out.phone && /wa\.me/i.test(u.hostname)) out.phone=u.pathname.replace(/\D/g,'');
-  }catch(e){}
-  out.text=String(out.text||'').replaceAll('¿','').replaceAll('¡','');
-  return out;
-}
-function defaultWhatsappMessage(ctx,modelo){
-  const nombre=ctx.nombre?ctx.nombre.split(/\s+/)[0]:'';
-  const saludo=nombre?`Hola ${nombre}, cómo estás?`:'Hola, cómo estás?';
-  const prop=ctx.propiedad||'la propiedad';
-  const tipoZona=[ctx.tipo,ctx.zona].filter(Boolean).join(' en ');
-  const link=ctx.link?`\n\nTe paso el link para que puedas verla:\n${ctx.link}`:'';
-  if(modelo==='Comercial'){
-    return `${saludo} Te escribo de Lurati Consultora Inmobiliaria.\n\nEstuve viendo tu consulta y esta opción puede encajar bien: ${tipoZona||prop}.\n\n${ctx.dorms?`Cuenta con ${ctx.dorms} dormitorio/s.\n`:''}${ctx.precio?`Valor: ${ctx.precio}\n`:''}${link}\n\nSi te parece, coordinamos una visita y la vemos juntos. También puedo comentarte alternativas similares.`;
-  }
-  if(modelo==='Descriptivo con detalles'){
-    return `${saludo} Te comparto una opción que puede interesarte.\n\nSe trata de ${tipoZona||prop}.\n${ctx.dorms?`\nDormitorios: ${ctx.dorms}`:''}${ctx.banos?`\nBaños: ${ctx.banos}`:''}${ctx.m2?`\nSuperficie aproximada: ${ctx.m2}`:''}${ctx.cochera?`\nCochera: ${ctx.cochera}`:''}${ctx.exterior?`\nBalcón / patio / terraza: ${ctx.exterior}`:''}${ctx.precio?`\nValor: ${ctx.precio}`:''}${link}\n\nTe parece que coordinemos una visita para verla?`;
-  }
-  return `${saludo} Te contacto de Lurati Consultora Inmobiliaria.\n\nTe comparto esta propiedad que puede ajustarse a lo que estás buscando:\n\n${prop}${ctx.precio?`\nValor: ${ctx.precio}`:''}${link}\n\nTe parece que coordinemos para verla o querés que primero te pase más información?`;
-}
-async function loadServerWhatsappMessage(ctx,modelo){
-  if(!SHEET_URL)return '';
-  try{
-    const url=SHEET_URL+'?q=mensajeWhatsapp'+
-      '&vendedor='+encodeURIComponent(ctx.vendedor||'')+
-      '&propiedad='+encodeURIComponent(ctx.propiedad||'')+
-      '&modelo='+encodeURIComponent(modelo||'')+
-      '&nombre='+encodeURIComponent(ctx.nombre||'')+
-      '&telefono='+encodeURIComponent(ctx.telefono||'')+
-      '&idConsulta='+encodeURIComponent(ctx.id||'')+
-      '&_='+Date.now();
-    const r=await fetch(url,{cache:'no-store'});
-    const j=await r.json();
-    return j&&j.ok&&j.texto?String(j.texto):'';
-  }catch(e){return '';}
-}
-function wmsgStatus(tipo,msg){
-  const el=$('#wmsg-status'); if(!el)return;
-  el.className=tipo||'';
-  el.textContent=msg||'';
-}
-async function refreshWhatsappMessage(){
-  if(!WMSG_CTX)return;
-  const modelo=$('#wmsg-model').value;
-  const local=getLocalSavedMsg(WMSG_CTX,modelo);
-  if(local){
-    $('#wmsg-text').value=local;
-    wmsgStatus('ok','Texto recuperado de este dispositivo. Podés editarlo o enviarlo.');
-    return;
-  }
-  $('#wmsg-text').value='Cargando mensaje…';
-  const server=await loadServerWhatsappMessage(WMSG_CTX,modelo);
-  if(server){
-    $('#wmsg-text').value=server;
-    wmsgStatus('ok','Texto recuperado del CRM.');
-    return;
-  }
-  $('#wmsg-text').value=WMSG_CTX.originalText||defaultWhatsappMessage(WMSG_CTX,modelo);
-  wmsgStatus('','Mensaje armado con el modelo base. Podés editarlo y guardarlo.');
-}
-function leadFromId(id){
-  return LEADS&&LEADS.find(x=>String(x.id||'').toLowerCase()===String(id||'').toLowerCase());
-}
-async function openWhatsappComposer(a){
-  const decoded=decodeWhatsappHref(a.href||'');
-  const row=a.closest('.leadrow');
-  const txt=row?(row.textContent||''):'';
-  const m=txt.match(/C-\d+/i);
-  const id=(a.dataset.waid||a.dataset.rid||(m?m[0]:'')).trim();
-  let l=leadFromId(id);
-  if(!l && typeof clienteActualSug==='function') l=clienteActualSug();
-  WMSG_CTX={
-    id:id||(l&&l.id)||'',
-    vendedor:current||'',
-    nombre:(l&&l.nombre)||'',
-    telefono:(l&&l.tel)||decoded.phone||'',
-    propiedad:(l&&l.propiedad)||'Propiedad consultada',
-    tipo:(l&&l.tipo)||'',
-    zona:(l&&l.perfil&&(l.perfil.zona||l.perfil.busca))||'',
-    dorms:(l&&l.dorms)||'',
-    banos:'',
-    m2:'',
-    cochera:'',
-    exterior:'',
-    precio:'',
-    link:(l&&l.link)||'',
-    originalText:decoded.text||''
-  };
-  const client=$('#wmsg-client'), prop=$('#wmsg-property');
-  if(client)client.textContent=(WMSG_CTX.nombre||'Cliente')+(WMSG_CTX.id?' · '+WMSG_CTX.id:'');
-  if(prop)prop.textContent=WMSG_CTX.propiedad||'Propiedad consultada';
-  $('#wmsg-model').value='Corto y formal';
-  $('#wmsg-overlay').classList.add('open');
-  await refreshWhatsappMessage();
-}
-function closeWhatsappComposer(){
-  $('#wmsg-overlay').classList.remove('open');
-}
-async function saveWhatsappText(){
-  if(!WMSG_CTX)return;
-  const modelo=$('#wmsg-model').value;
-  const texto=String($('#wmsg-text').value||'').trim();
-  if(!texto){wmsgStatus('err','El texto está vacío.');return;}
-  setLocalSavedMsg(WMSG_CTX,modelo,texto);
-  if(SHEET_URL){
-    fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({
-      accion:'guardarTextoWhatsapp',
-      idConsulta:WMSG_CTX.id||'',
-      vendedor:WMSG_CTX.vendedor||'',
-      asesor:WMSG_CTX.vendedor||'',
-      propiedad:WMSG_CTX.propiedad||'',
-      modelo:modelo,
-      texto:texto,
-      nombre:WMSG_CTX.nombre||'',
-      telefono:WMSG_CTX.telefono||''
-    })}).catch(()=>{});
-  }
-  wmsgStatus('ok','Texto guardado para futuras conversaciones de este vendedor, propiedad y modelo.');
-}
-async function copyWhatsappText(){
-  try{await navigator.clipboard.writeText($('#wmsg-text').value||'');wmsgStatus('ok','Mensaje copiado.');}
-  catch(e){wmsgStatus('','No pude copiar automáticamente. Podés seleccionar el texto y copiarlo manualmente.');}
-}
-function registrarWhatsappPreparado(ctx,texto,url){
-  if(!SHEET_URL)return;
-  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({
-    accion:'registrarContactoWhatsapp',
-    idConsulta:ctx.id||'',
-    vendedor:ctx.vendedor||'',
-    asesor:ctx.vendedor||'',
-    nombre:ctx.nombre||'',
-    telefono:ctx.telefono||'',
-    propiedad:ctx.propiedad||'',
-    modelo:$('#wmsg-model').value,
-    texto:texto,
-    url:url,
-    proximaAccion:'Seguimiento'
-  })}).catch(()=>{});
-}
-function sendWhatsappPrepared(destino){
-  if(!WMSG_CTX)return;
-  const texto=String($('#wmsg-text').value||'').trim();
-  if(!texto){wmsgStatus('err','El texto está vacío.');return;}
-  const tel=String(WMSG_CTX.telefono||'').replace(/\D/g,'');
-  if(!tel){wmsgStatus('err','No encontré teléfono para WhatsApp.');return;}
-  if(WMSG_CTX.id){
-    const l=leadFromId(WMSG_CTX.id);
-    if(l && esNoContactado(l) && (l.estado||'').trim()!=='Perdido') setEstado(WMSG_CTX.id,'Contactado');
-  }
-  const webUrl='https://web.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(texto);
-  const appUrl='whatsapp://send?phone='+tel+'&text='+encodeURIComponent(texto);
-  const url=(destino==='app')?appUrl:webUrl;
-  registrarWhatsappPreparado(WMSG_CTX,texto,url);
-  if(destino==='app'){
-    // Usa el protocolo de WhatsApp Desktop/Windows. El navegador mostrará su propio aviso para abrir la app.
-    window.location.href=appUrl;
-    wmsgStatus('ok','Se solicitó abrir WhatsApp Windows. Si no se abre, usá el botón WhatsApp Web.');
-  }else{
-    // Usa siempre la misma pestaña creada por el CRM para evitar muchas pestañas nuevas.
-    window.open(webUrl,'whatsapp_lurati');
-    wmsgStatus('ok','WhatsApp Web abierto. La próxima vez intenta reutilizar esta misma pestaña.');
-  }
-}
-
 async function loadLeads(force){
   const list=$('#leadslist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
@@ -1411,6 +1382,13 @@ function needName(){if(!current){alert('Primero seleccioná tu nombre arriba, en
 
 document.addEventListener('click',async e=>{
   const t=e.target;
+  const waAnchor=t.closest&&t.closest('a.lead-wa');
+  if(waAnchor){e.preventDefault();await openWhatsappComposer(waAnchor);return;}
+  if(t.id==='wmsg-close'){closeWhatsappComposer();return;}
+  if(t.id==='wmsg-save'){saveWhatsappText();return;}
+  if(t.id==='wmsg-copy'){copyWhatsappText();return;}
+  if(t.id==='wmsg-send-app'){sendWhatsappPrepared('app');return;}
+  if(t.id==='wmsg-send-web'){sendWhatsappPrepared('web');return;}
   if(t.dataset.go)go(t.dataset.go);
   if(t.dataset.mode){switchMode(t.dataset.mode);}
   if(t.classList&&t.classList.contains('sg-copyone')){const it=MATCH_INDEX[t.dataset.k];if(it){try{await navigator.clipboard.writeText(matchMensaje([it]));}catch(_){}; sgFlash("Mensaje copiado ✓");}}
@@ -1439,11 +1417,6 @@ document.addEventListener('click',async e=>{
   if(t.dataset&&t.dataset.accept){aceptarLead(t.dataset.accept,t);}
   if(t.dataset&&t.dataset.reassign){reasignarDesdeControl(t.dataset.reassign,t);}
   if(t.id==='reloadcontrol'){CONTROL_LEADS=null;loadControlEquipo();}
-  if(t.classList&&t.classList.contains('lead-wa')&&!t.classList.contains('recontactar')){
-    e.preventDefault();
-    await openWhatsappComposer(t);
-    return;
-  }
   if(t.classList&&t.classList.contains('lead-wa')&&t.dataset.waid){const l=LEADS&&LEADS.find(x=>x.id===t.dataset.waid);if(l&&esNoContactado(l)&&(l.estado||"").trim()!=="Perdido"){setEstado(l.id,"Contactado");}}
   if(t.classList&&t.classList.contains('recontactar')&&t.dataset.rid){setEstado(t.dataset.rid,"Seguimiento");setTimeout(()=>{renderSugerencias();renderNav();},80);}
   if(t.classList&&t.classList.contains('omitir')&&t.dataset.oid){OMITIDOS[t.dataset.oid]=true;renderSugerencias();renderNav();}
@@ -1460,7 +1433,7 @@ document.addEventListener('click',async e=>{
     renderVisitas();renderBoard();save();logEvent("Venta","Visita",c+" — "+prop,o.fecha,"Coordinada");
     const msg="*VISITA COORDINADA*\nVendedor: "+(current||"")+"\nInmueble: "+(prop||"-")+"\nCliente: "+c+"\nTeléfono cliente: "+(tel||"-")+"\nDía: "+(dia||"-")+"\nHora: "+(hora||"-");
     const vm=$('#vimsg'); if(vm){vm.textContent="✓ Visita registrada. Se abrió WhatsApp de la inmobiliaria para enviar el aviso.";vm.style.color="var(--ok)";}
-    window.open('https://wa.me/'+INMO_WA+'?text='+encodeURIComponent(msg),'whatsapp_lurati');
+    window.open('https://wa.me/'+INMO_WA+'?text='+encodeURIComponent(msg),'_blank');
   }
   if(t.dataset.dvi!==undefined){state.visitas.splice(+t.dataset.dvi,1);renderVisitas();renderBoard();save();}
   // tareas
@@ -1470,29 +1443,14 @@ document.addEventListener('click',async e=>{
   // reporte
   if(t.id==='reportview'){$('#reporttext').value=buildReport();$('#reportout').style.display='block';$('#reporttext').scrollIntoView({behavior:'smooth',block:'center'});}
   if(t.id==='copyreport'){try{await navigator.clipboard.writeText($('#reporttext').value);}catch(e){}t.textContent='¡Copiado!';setTimeout(()=>{t.textContent='Copiar reporte';},1400);}
-  if(t.id==='reportwa'){const txt=buildReport();$('#reporttext').value=txt;$('#reportout').style.display='block';logEvent(mode==="venta"?"Venta":"Captación","Reporte enviado","Resumen a Stefano","","Enviado");window.open('https://wa.me/'+REPORT_WA+'?text='+encodeURIComponent(txt),'whatsapp_lurati');}
+  if(t.id==='reportwa'){const txt=buildReport();$('#reporttext').value=txt;$('#reportout').style.display='block';logEvent(mode==="venta"?"Venta":"Captación","Reporte enviado","Resumen a Stefano","","Enviado");window.open('https://wa.me/'+REPORT_WA+'?text='+encodeURIComponent(txt),'_blank');}
   if(t.id==='reset'){if(confirm('¿Borrar tus datos de la semana?')){state=blank();renderBoard();renderPanel();save();}}
 });
-
-const wmsgCloseBtn=$('#wmsg-close');
-if(wmsgCloseBtn)wmsgCloseBtn.addEventListener('click',closeWhatsappComposer);
-const wmsgOverlay=$('#wmsg-overlay');
-if(wmsgOverlay)wmsgOverlay.addEventListener('click',e=>{if(e.target===wmsgOverlay)closeWhatsappComposer();});
-const wmsgModel=$('#wmsg-model');
-if(wmsgModel)wmsgModel.addEventListener('change',refreshWhatsappMessage);
-const wmsgSave=$('#wmsg-save');
-if(wmsgSave)wmsgSave.addEventListener('click',saveWhatsappText);
-const wmsgCopy=$('#wmsg-copy');
-if(wmsgCopy)wmsgCopy.addEventListener('click',copyWhatsappText);
-const wmsgSendApp=$('#wmsg-send-app');
-if(wmsgSendApp)wmsgSendApp.addEventListener('click',()=>sendWhatsappPrepared('app'));
-const wmsgSendWeb=$('#wmsg-send-web');
-if(wmsgSendWeb)wmsgSendWeb.addEventListener('click',()=>sendWhatsappPrepared('web'));
-
 document.addEventListener('input',e=>{
   if(e.target.id==='leadsearch')renderLeadsCRM();
 });
 document.addEventListener('change',e=>{
+  if(e.target.id==='wmsg-model'){refreshWhatsappMessage();}
   if(e.target.id==='f-dorm'||e.target.id==='f-banos'||e.target.id==='f-precio'||e.target.id==='f-credito')renderStock();
   if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(e.target.dataset.id,e.target.value);}
   if(e.target.id==='leadfilter')renderLeadsCRM();
