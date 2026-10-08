@@ -131,6 +131,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .leadrow .lact{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .lead-wa{font-size:12.5px;font-weight:600;color:#fff;background:#1d7a5f;padding:6px 12px;border-radius:8px;text-decoration:none}
 .lead-wa:hover{background:#0f6e56}
+.leadobs{display:block;margin-top:6px;padding:7px 9px;border-left:3px solid #ef9f27;background:#fff6e5;color:#795700;border-radius:8px;font-size:12.5px;line-height:1.35}
+.leadobs b{font-size:12.5px!important;display:inline!important;color:#795700}
 .accept-lead{font-size:12.5px;font-weight:800;color:#fff;background:#004d44;padding:7px 12px;border:0;border-radius:8px;cursor:pointer}
 .accept-lead:hover{background:#0e352c}.accept-lead:disabled{opacity:.6;cursor:wait}
 .assign-badge{display:inline-flex;align-items:center;margin-top:4px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:800}
@@ -725,7 +727,7 @@ function checkPanel(eb,title,items){
 function leadsPanel(){
   const filtros=["Todos","Sin contactar","En gestión",...ESTADOS];
   const opts=filtros.map(f=>`<option value="${f}">${f}</option>`).join("");
-  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Modo turbo: se cargan primero los leads nuevos/sin contactar y solo los últimos 5 ya contactados. Perfil y sugerencias se cargan recién cuando los necesitás.</p>
+  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Modo turbo v19: se cargan primero los leads nuevos/sin contactar y solo los últimos 5 ya contactados. Perfil y sugerencias se cargan recién cuando los necesitás.</p>
   <div class="card">
     <input id="leadsearch" placeholder="🔍 Buscar por nombre o código…" autocomplete="off" style="width:100%;font:inherit;font-size:14px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);outline:none;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--muted)">Ver:</span><select id="leadfilter" style="font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff">${opts}</select></div><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div>
@@ -994,8 +996,10 @@ function renderLeadsCRM(){
     const acciones=pendiente
       ? `<button class="accept-lead" data-accept="${esc(l.id)}">Aceptar lead</button>`
       : `${wa}<select class="estsel" data-id="${esc(l.id)}">${opts}</select>`;
+    const obs=(l.observaciones||'').trim();
+    const obsHtml=obs?`<span class="leadobs"><b>Obs:</b> ${esc(obs)}</span>`:'';
     return `<div class="leadrow"><span class="dot" style="background:${estColor(est)}"></span>
-      <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small>${fecha}</b><span>${esc(l.propiedad)||'—'}</span>${ctrl.html}</div>
+      <div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small>${fecha}</b><span>${esc(l.propiedad)||'—'}</span>${obsHtml}${ctrl.html}</div>
       <div class="lact">${acciones}</div></div>`;
   }).join("");
 }
@@ -1145,7 +1149,9 @@ function renderPendientes(){
   if(!sinContacto.length){h+=`<p style="font-size:14px;color:var(--ok)">✓ No tenés leads sin contactar. ¡Bien ahí!</p>`;}
   else{h+=sinContacto.map(l=>{
     const wa=l.tel?`<a href="${waLink(l)}" target="_blank" rel="noopener" class="lead-wa">WhatsApp</a>`:`<span style="font-size:12px;color:var(--muted)">sin teléfono</span>`;
-    return `<div class="leadrow"><span class="alertmark sm">!</span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'} · ${esc(l.estado||'sin estado')}</span></div><div class="lact">${wa}</div></div>`;
+    const obs=(l.observaciones||'').trim();
+    const obsHtml=obs?`<span class="leadobs"><b>Obs:</b> ${esc(obs)}</span>`:'';
+    return `<div class="leadrow"><span class="alertmark sm">!</span><div class="linfo"><b>${esc(l.nombre)} <small style="color:var(--muted);font-weight:600">${esc(l.id)}</small></b><span>${esc(l.propiedad)||'—'} · ${esc(l.estado||'sin estado')}</span>${obsHtml}</div><div class="lact">${wa}</div></div>`;
   }).join("");}
   h+=`</div>`;
   // bloque 2: contactados sin perfil
