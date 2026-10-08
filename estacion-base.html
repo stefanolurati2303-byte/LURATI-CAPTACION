@@ -725,11 +725,11 @@ function checkPanel(eb,title,items){
 function leadsPanel(){
   const filtros=["Todos","Sin contactar","En gestión",...ESTADOS];
   const opts=filtros.map(f=>`<option value="${f}">${f}</option>`).join("");
-  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Tus clientes del CRM, los más nuevos arriba. Escribiles por WhatsApp y cambiá el estado. Se guarda en el CRM.</p>
+  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Vista rápida: se cargan todos los leads nuevos o sin contactar, y los últimos 5 leads ya contactados. Esto hace que la Estación abra más rápido.</p>
   <div class="card">
     <input id="leadsearch" placeholder="🔍 Buscar por nombre o código…" autocomplete="off" style="width:100%;font:inherit;font-size:14px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);outline:none;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--muted)">Ver:</span><select id="leadfilter" style="font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff">${opts}</select></div><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div>
-    <div id="leadslist"><div class="empty">Cargando tus leads…</div></div></div>`;
+    <div id="leadslist"><div class="empty">Cargando vista rápida de leads…</div></div></div>`;
 }
 function perfilPanel(){
   return `<div class="eyebrow">Conocé al cliente</div><h3>Perfil de cliente</h3><p class="sub">Elegí uno de tus leads y completá qué busca, lo más detallado posible. Cuanto más completo, mejores sugerencias de propiedades. Se guarda en el CRM.</p>
@@ -809,6 +809,7 @@ function crmAccessError(){const e=new Error("El CRM está pidiendo iniciar sesi�
 
 /* ============ LEADS (lee/escribe CRM) ============ */
 let LEADS=null;
+let LEADS_MODE="";
 const ESTADOS=["Nuevo","Contactado","No respondió","Interesado","Visita coordinada","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio","Dormido","Perdido"];
 const EST_COLOR={"Nuevo":"#378add","Contactado":"#128f8b","No respondió":"#888780","Interesado":"#1d9e75","Visita coordinada":"#7f77dd","Visitó":"#534ab7","Seguimiento":"#ef9f27","Oferta":"#ba7517","Reserva":"#639922","Derivado a Julio":"#0c447c","Dormido":"#888780","Perdido":"#a32d2d"};
 function estColor(v){v=String(v||"").trim();return EST_COLOR[v]||"#888780";}
@@ -865,37 +866,70 @@ function waLink(l){
   return "https://wa.me/"+esc(l.tel)+"?text="+encodeURIComponent(msg);
 }
 async function loadLeads(force){
-  const list=$('#leadslist'); if(!list)return;
-  if(!SHEET_URL){list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
-  if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus leads.");return;}
-  if(LEADS&&!force){renderLeadsCRM();return;}
+  const list=$('#leadslist');
 
-  list.innerHTML=empty("Cargando leads del CRM…");
+  if(!SHEET_URL){
+    if(list) list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");
+    return;
+  }
+
+  if(!current){
+    if(list) list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus leads.");
+    return;
+  }
+
+  // En la pestaña LEAD usamos vista rápida.
+  // En Perfil Cliente / Sugerencias usamos lectura completa cuando haga falta.
+  const modoRapido = activeNav === "v-leads";
+  const endpoint = modoRapido ? "leadsRapidos" : "leads";
+  const modoDeseado = modoRapido ? "rapido" : "completo";
+
+  if(LEADS && !force && LEADS_MODE === modoDeseado){
+    if(list) renderLeadsCRM();
+    return;
+  }
+
+  if(list){
+    list.innerHTML = empty(modoRapido ? "Cargando vista rápida de leads…" : "Cargando tus leads…");
+  }
+
   let lastErr=null;
-  for(let intento=1;intento<=3;intento++){
+  for(let intento=1; intento<=3; intento++){
     try{
-      const d=await crmGet("leads",{vendedor:current});
-      LEADS=(d&&d.leads)||[];
-      renderLeadsCRM();
+      const params = modoRapido
+        ? {vendedor:current, limiteContactados:5}
+        : {vendedor:current};
+
+      const d = await crmGet(endpoint, params);
+
+      LEADS = (d && d.leads) || [];
+      LEADS_MODE = modoDeseado;
+
+      if(list) renderLeadsCRM();
       fillPerfilSelect();
       renderBoard();
       renderNav();
+      updateSubtitles();
       return;
     }catch(e){
       lastErr=e;
-      if(e&&e.code==="ACCESS")break;
+      if(e&&e.code==="ACCESS") break;
       if(intento<3){
-        list.innerHTML=empty("Conectando con el CRM…");
+        if(list) list.innerHTML=empty("Conectando con el CRM…");
         await waitCrm(700*intento);
       }
     }
   }
 
-  if(lastErr&&lastErr.code==="ACCESS"){
-    list.innerHTML=empty("No se pudieron cargar los leads porque Apps Script está pidiendo iniciar sesión.<br><br>Hay que republicar la implementación con acceso <b>Cualquier usuario</b> y después tocar <b>Actualizar</b>.");
-    return;
+  if(list){
+    if(lastErr&&lastErr.code==="ACCESS"){
+      list.innerHTML=empty("No se pudieron cargar los leads porque Apps Script está pidiendo iniciar sesión.<br><br>Hay que republicar la implementación con acceso <b>Cualquier usuario</b> y después tocar <b>Actualizar</b>.");
+    }else{
+      list.innerHTML=empty("No se pudieron cargar los leads en este intento.<br><br><button class=\"btn ghost\" id=\"reloadleads\" style=\"padding:7px 12px;font-size:13px\">Reintentar</button>");
+    }
+  }else{
+    console.warn(lastErr);
   }
-  list.innerHTML=empty("No se pudieron cargar los leads en este intento.<br><br><button class=\"btn ghost\" id=\"reloadleads\" style=\"padding:7px 12px;font-size:13px\">Reintentar</button>");
 }
 function renderLeadsCRM(){
   const list=$('#leadslist'); if(!list)return;
