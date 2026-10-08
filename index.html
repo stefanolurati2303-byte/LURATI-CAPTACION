@@ -44,11 +44,13 @@ html,body{margin:0;width:100%;height:100%;background:var(--paper);font-family:-a
 .seller.on strong,.seller.on small{color:#fff}
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
 .chip{border:0;border-radius:999px;padding:7px 10px;background:#e8f1ef;color:var(--green);font-weight:800;font-size:12px;cursor:pointer}
-input{
- width:100%;height:50px;border:1px solid #d0d5dd;border-radius:13px;padding:0 13px;
- font-size:17px;outline:none;background:#fff;color:var(--ink)
+input,textarea{
+ width:100%;border:1px solid #d0d5dd;border-radius:13px;padding:0 13px;
+ font-size:17px;outline:none;background:#fff;color:var(--ink);font-family:inherit
 }
-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
+input{height:50px}
+textarea{min-height:76px;padding-top:12px;resize:vertical;line-height:1.35}
+input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
 .action{
  width:100%;min-height:54px;border:0;border-radius:14px;background:var(--green);color:#fff;
  font-size:16px;font-weight:900;cursor:pointer;margin-top:5px
@@ -123,6 +125,11 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
       <input id="phone" type="tel" inputmode="tel" placeholder="341..." autocomplete="tel">
     </div>
 
+    <div class="section">
+      <div class="label">Observaciones</div>
+      <textarea id="obs" placeholder="Ej. Quiere visitar esta semana, paga contado, consulta por inversión, viene de Instagram, etc."></textarea>
+    </div>
+
     <button id="save" class="action" type="button">REGISTRAR Y DERIVAR</button>
     <div id="status" class="status"></div>
     <div id="queuePanel" class="queuePanel">
@@ -140,6 +147,7 @@ const property=document.getElementById('property');
 const propertyList=document.getElementById('propertyList');
 const nameInput=document.getElementById('name');
 const phone=document.getElementById('phone');
+const obsInput=document.getElementById('obs');
 const status=document.getElementById('status');
 const save=document.getElementById('save');
 const queuePanel=document.getElementById('queuePanel');
@@ -411,6 +419,7 @@ async function postLead(item){
       propiedad:item.propiedad,
       nombre:item.nombre,
       telefono:item.telefono,
+      observaciones:item.observaciones||'',
       cargadoPor:'Flavia',
       canal:'WhatsApp'
     })
@@ -468,6 +477,7 @@ function enqueueLead(data){
     propiedad:data.propiedad,
     nombre:data.nombre,
     telefono:data.telefono,
+    observaciones:data.observaciones||'',
     status:'waiting',
     createdAt:Date.now(),
     attempts:0,
@@ -477,9 +487,10 @@ function enqueueLead(data){
   persistLeadQueue();
   rememberProp(data.propiedad);
   save.disabled=false;
-  nameInput.value='';phone.value='';
+  nameInput.value='';phone.value='';obsInput.value='';
+  const obsLine=data.observaciones?`<br><b>Obs:</b> ${esc(data.observaciones)}`:'';
   setStatus('warn',
-    `<b>Consulta agregada a la cola.</b><br>${esc(data.nombre)} · ${esc(data.propiedad)}<br>`+
+    `<b>Consulta agregada a la cola.</b><br>${esc(data.nombre)} · ${esc(data.propiedad)}${obsLine}<br>`+
     `Podés cargar otro lead mientras confirmamos el guardado.`+
     `<div class="footerActions"><button id="sameProp" type="button">Otro del mismo inmueble</button>`+
     `<button id="newProp" type="button">Nuevo inmueble</button></div>`
@@ -498,7 +509,8 @@ async function submit(force){
     vendedor:selectedSeller,
     propiedad:titleAddress(property.value),
     nombre:String(nameInput.value||'').trim(),
-    telefono:String(phone.value||'').trim()
+    telefono:String(phone.value||'').trim(),
+    observaciones:String(obsInput.value||'').trim()
   };
   if(!data.vendedor)return setStatus('err','Elegí el vendedor.');
   if(!data.propiedad)return setStatus('err','Elegí o escribí el inmueble.');
