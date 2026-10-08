@@ -191,6 +191,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 #wmsg-text{width:100%;min-height:230px;font:inherit;font-size:14px;line-height:1.5;padding:13px;border-radius:12px;border:1px solid var(--line);resize:vertical;color:var(--ink);background:#fff}
 #wmsg-text:focus,#wmsg-model:focus,#wmsg-next:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(18,143,139,.10)}
 .wmsg-help{font-size:12px;color:var(--muted);margin-top:6px}
+.wmsg-altbox{margin:10px 0 4px;border:1px solid var(--line);border-radius:12px;background:#f8fbfa;overflow:hidden}
+.wmsg-altbox summary{cursor:pointer;list-style:none;padding:10px 12px;font-size:13px;font-weight:800;color:var(--green);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wmsg-altbox summary::-webkit-details-marker{display:none}
+.wmsg-altbox summary:after{content:'+';font-weight:900;color:var(--teal)}
+.wmsg-altbox[open] summary:after{content:'–'}
+.wmsg-altintro{padding:0 12px 8px;font-size:12px;color:var(--muted)}
+.wmsg-phrases{padding:0 12px 12px;display:grid;gap:7px}
+.wmsg-phrase{display:flex;gap:8px;align-items:flex-start;border-top:1px solid var(--line);padding-top:8px}
+.wmsg-phrase span{flex:1;min-width:0;font-size:12.5px;line-height:1.35;color:var(--ink)}
+.wmsg-phrase button{border:1px solid var(--line);background:#fff;color:var(--green);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.wmsg-phrase button:hover{background:#e8f1ef}
 .wmsg-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wmsg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .wmsg-actions button{flex:1;min-width:140px;border-radius:11px;padding:11px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;cursor:pointer}
@@ -237,12 +248,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
         <option>Corto y formal</option>
         <option>Comercial</option>
         <option>Descriptivo con detalles</option>
+        <option>Perfilador</option>
       </select>
     </div>
     <div class="wmsg-field">
       <div class="wmsg-label">Texto editable</div>
       <textarea id="wmsg-text"></textarea>
       <div class="wmsg-help">Guardar texto lo deja como preferido para este vendedor + propiedad + modelo.</div>
+      <details class="wmsg-altbox" id="wmsg-altbox">
+        <summary>Frases alternativas para copiar</summary>
+        <div class="wmsg-altintro">Espacio de apoyo para el vendedor. No modifica el mensaje principal salvo que copie y pegue una frase.</div>
+        <div class="wmsg-phrases" id="wmsg-phrases"></div>
+      </details>
     </div>
     <div class="wmsg-actions">
       <button id="wmsg-save" class="soft" type="button">Guardar texto</button>
@@ -386,13 +403,42 @@ function detalleLinea(etiqueta,valor){
   valor=String(valor||'').trim();
   return valor ? '• '+etiqueta+': '+valor+'\n' : '';
 }
+const WMSG_ALT_PHRASES=[
+  'Te puedo orientar mejor si me contás si la buscás para vivir o como inversión.',
+  'También puedo pasarte alternativas similares si esta propiedad no termina de encajar con lo que buscás.',
+  'Lo ideal sería visitarla para que puedas ver bien distribución, estado y entorno.',
+  'Si estás comparando opciones, te puedo ayudar a ordenar ventajas y diferencias entre propiedades.',
+  'Esta propiedad puede ser interesante por ubicación, funcionalidad y potencial de reventa.',
+  'Para avanzar con más precisión, te consulto: qué zona priorizás y hasta qué presupuesto estás evaluando?',
+  'Si ya tenés una forma de pago definida, puedo decirte si esta opción se ajusta bien.',
+  'En caso de que estés buscando algo con renta, podemos analizar el potencial de alquiler.',
+  'Si querés, coordinamos una visita y después vemos juntos si realmente se adapta a lo que necesitás.',
+  'No te quiero marear con información de más, pero sí ayudarte a ver si vale la pena avanzar.',
+  'La propiedad sigue disponible, pero conviene revisar disponibilidad de visita con anticipación.',
+  'Te paso esta opción porque puede coincidir con lo que venís buscando.',
+  'Si no es exactamente lo que buscás, me sirve saberlo para enviarte opciones más acertadas.',
+  'Para no hacerte perder tiempo, primero confirmemos si la zona, el valor y las comodidades te cierran.',
+  'Si te parece, damos el próximo paso y coordinamos una visita breve para que puedas verla bien.'
+];
+function renderWhatsappAltPhrases(){
+  const box=$('#wmsg-phrases');
+  if(!box)return;
+  box.innerHTML=WMSG_ALT_PHRASES.map((f,i)=>'<div class="wmsg-phrase"><span>'+esc(f)+'</span><button type="button" class="wmsg-copy-phrase" data-phrase="'+i+'">Copiar</button></div>').join('');
+}
+async function copyWhatsappPhrase(i,btn){
+  const txt=WMSG_ALT_PHRASES[Number(i)]||'';
+  if(!txt)return;
+  try{await navigator.clipboard.writeText(txt);if(btn){btn.textContent='Copiada';setTimeout(()=>{btn.textContent='Copiar';},1200);}wmsgStatus('ok','Frase copiada. Pegala donde quieras dentro del mensaje.');}
+  catch(e){wmsgStatus('','No pude copiar automáticamente. Seleccioná la frase manualmente.');}
+}
+
 function defaultWhatsappMessage(ctx,modelo){
   const nombre=(ctx.nombre||'').split(/\s+/)[0]||'';
   const saludo=nombre?('Hola '+nombre+', cómo estás?'):'Hola, cómo estás?';
   const asesor=current||ctx.vendedor||'';
-  const firma=asesor?('Soy '+asesor+' de Lurati Consultora Inmobiliaria.'):'Te escribimos de Lurati Consultora Inmobiliaria.';
+  const firma=asesor?('Soy '+asesor+', de Lurati Consultora Inmobiliaria.'):'Te escribo de Lurati Consultora Inmobiliaria.';
   const prop=String(ctx.propiedad||'la propiedad que consultaste').trim();
-  const link=ctx.link?('\n\nFicha de la propiedad:\n'+ctx.link):'';
+  const link=ctx.link?('\n\n'+ctx.link):'';
   const tipo=String(ctx.tipo||'').trim();
   const zona=String(ctx.zona||'').trim();
   const dorms=String(ctx.dorms||'').trim();
@@ -403,11 +449,12 @@ function defaultWhatsappMessage(ctx,modelo){
   const exterior=String(ctx.exterior||'').trim();
 
   if(modelo==='Comercial'){
-    return saludo+' '+firma+'\n\n'+
-      'Estuve revisando tu consulta por '+prop+' y puede ser una buena opción para lo que estás buscando.\n\n'+
-      'Por ubicación y características, vale la pena verla o al menos compararla con otras alternativas similares.\n\n'+
-      'Te paso la ficha para que la mires tranquilo y, si te parece, coordinamos una visita para esta semana.'+
-      link;
+    return saludo+'\n\n'+
+      firma+'\n\n'+
+      'Vi tu consulta por '+prop+'. Es una propiedad interesante por su ubicación, distribución y potencial, especialmente si estás buscando una opción para vivienda o inversión.\n\n'+
+      'Si querés, puedo pasarte más detalles y también coordinar una visita para que la conozcas personalmente.\n\n'+
+      'Tenés disponibilidad esta semana para verla?'+
+      (ctx.link?'\n\nFicha con más información:'+link:'');
   }
 
   if(modelo==='Descriptivo con detalles'){
@@ -422,19 +469,30 @@ function defaultWhatsappMessage(ctx,modelo){
     datos+=detalleLinea('Valor',precio);
     datos=datos.trim();
 
-    return saludo+' '+firma+'\n\n'+
-      'Te comparto el detalle de la propiedad que consultaste:\n\n'+
-      prop+'\n\n'+
-      (datos?('Datos principales:\n'+datos+'\n\n'):'')+
-      'Es una opción para analizar con calma por sus características y ubicación. Si te cierra, el próximo paso sería coordinar una visita para verla personalmente.'+
-      link;
+    return saludo+'\n\n'+
+      'Te paso información de la propiedad que consultaste:\n\n'+
+      'Propiedad: '+prop+'\n'+
+      (datos?datos+'\n\n':'')+
+      'Es una opción que puede funcionar muy bien para quienes buscan una propiedad en esa zona, ya sea para vivir, invertir o analizar una buena oportunidad de compra.\n\n'+
+      (ctx.link?'También te comparto la ficha con más información:'+link+'\n\n':'')+
+      'Si te interesa, podemos coordinar una visita para que la veas personalmente. Qué día te quedaría cómodo?';
   }
 
-  return saludo+' '+firma+'\n\n'+
-    'Te contacto por '+prop+'.\n\n'+
-    'Te paso la información para que puedas verla. Si te interesa, coordinamos una visita o te amplio detalles por acá.'+
-    link;
+  if(modelo==='Perfilador'){
+    return saludo+'\n\n'+
+      'Antes de coordinar, te consulto dos datos para orientarte mejor:\n\n'+
+      '- La buscás para vivir o como inversión?\n'+
+      '- Tenés un presupuesto aproximado definido?\n\n'+
+      'Con eso puedo decirte si '+prop+' encaja bien con lo que necesitás o si conviene pasarte alguna alternativa similar.';
+  }
+
+  return saludo+'\n\n'+
+    'Te escribo de Lurati Consultora Inmobiliaria por la consulta que hiciste sobre '+prop+'.\n\n'+
+    'La propiedad se encuentra disponible. Te puedo pasar más información y, si te interesa avanzar, coordinamos una visita.\n\n'+
+    'Te gustaría que veamos disponibilidad para visitarla?'+
+    (ctx.link?'\n\nFicha con más información:'+link:'');
 }
+
 function refreshWhatsappMessage(){
   if(!WMSG_CTX)return;
   const modelo=$('#wmsg-model').value;
@@ -460,6 +518,8 @@ function openWhatsappComposer(a){
   $('#wmsg-property').textContent=WMSG_CTX.propiedad||'Propiedad consultada';
   $('#wmsg-model').value='Corto y formal';
   $('#wmsg-overlay').classList.add('open');
+  renderWhatsappAltPhrases();
+  const altBox=$('#wmsg-altbox');if(altBox)altBox.open=false;
   updateWhatsappChannelButtons();
   refreshWhatsappMessage();
 }
@@ -727,11 +787,11 @@ function checkPanel(eb,title,items){
 function leadsPanel(){
   const filtros=["Todos","Sin contactar","En gestión",...ESTADOS];
   const opts=filtros.map(f=>`<option value="${f}">${f}</option>`).join("");
-  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Modo turbo v19: se cargan primero los leads nuevos/sin contactar y solo los últimos 5 ya contactados. Perfil y sugerencias se cargan recién cuando los necesitás.</p>
+  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Se muestran primero las consultas nuevas o sin contactar y las últimas consultas trabajadas, para que puedas responder más rápido.</p>
   <div class="card">
     <input id="leadsearch" placeholder="🔍 Buscar por nombre o código…" autocomplete="off" style="width:100%;font:inherit;font-size:14px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);outline:none;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--muted)">Ver:</span><select id="leadfilter" style="font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff">${opts}</select></div><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div>
-    <div id="leadslist"><div class="empty">Cargando vista rápida de leads…</div></div></div>`;
+    <div id="leadslist"><div class="empty">Cargando consultas asignadas…</div></div></div>`;
 }
 function perfilPanel(){
   return `<div class="eyebrow">Conocé al cliente</div><h3>Perfil de cliente</h3><p class="sub">Elegí uno de tus leads y completá qué busca, lo más detallado posible. Cuanto más completo, mejores sugerencias de propiedades. Se guarda en el CRM.</p>
@@ -807,7 +867,7 @@ function renderVisitas(){const el=$('#vilist');if(!el)return;if(!state.visitas.l
   el.innerHTML=state.visitas.map((v,i)=>`<div class="contact"><div class="av" style="background:var(--bordo-bg);color:var(--bordo)">▸</div><div class="info"><b>${esc(v.cli)} · ${esc(v.prop)}</b><span>${esc(v.fecha)} · ${esc(v.estado)}</span></div><div class="stat"><span class="del" data-dvi="${i}">×</span></div></div>`).join("");}
 function empty(t){return `<div class="empty">${t}</div>`;}
 function waitCrm(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
-function crmAccessError(){const e=new Error("El CRM está pidiendo iniciar sesión. Hay que republicar Apps Script con acceso para Cualquier usuario.");e.code="ACCESS";return e;}
+function crmAccessError(){const e=new Error("El CRM está pidiendo iniciar sesión. Revisá el acceso de la Estación para que el equipo pueda trabajar normalmente.");e.code="ACCESS";return e;}
 
 /* ============ LEADS (lee/escribe CRM) ============ */
 let LEADS=null;
@@ -829,12 +889,12 @@ async function crmGet(q,params){
   u.searchParams.set("_",Date.now());
   let r;
   try{r=await fetch(u.toString(),{cache:"no-store",redirect:"follow"});}
-  catch(e){throw new Error("No se pudo acceder al CRM. Revisá que la implementación permita acceso a Cualquier usuario.");}
+  catch(e){throw new Error("No se pudo acceder al CRM. Revisá que la Estación esté habilitada para el equipo.");}
   const raw=await r.text();
   let d;
   try{d=JSON.parse(raw);}
   catch(e){
-    if(/Servidor LURATI/i.test(raw))throw new Error("La implementación web está desactualizada. Publicá una versión nueva del Apps Script.");
+    if(/Servidor LURATI/i.test(raw))throw new Error("No se pudo conectar correctamente con el CRM. Revisá que el sistema esté publicado y habilitado.");
     if(/<html|accounts\.google|signin/i.test(raw))throw crmAccessError();
     throw new Error("El CRM respondió con un formato inválido. Volvé a publicar la aplicación web.");
   }
@@ -889,7 +949,7 @@ async function loadLeads(force){
   const list=$('#leadslist');
 
   if(!SHEET_URL){
-    if(list) list.innerHTML=empty("Los leads se activan cuando conectes el CRM (configurá la dirección del Apps Script).");
+    if(list) list.innerHTML=empty("Las consultas se activan cuando la Estación esté conectada al CRM.");
     return;
   }
 
@@ -922,7 +982,7 @@ async function loadLeads(force){
   }
 
   if(list){
-    list.innerHTML = empty(modoTurbo ? "Cargando leads en modo turbo…" : "Cargando datos completos del cliente…");
+    list.innerHTML = empty(modoTurbo ? "Cargando consultas asignadas…" : "Cargando información del cliente…");
   }
 
   let lastErr=null;
@@ -940,7 +1000,7 @@ async function loadLeads(force){
 
       if(list) renderLeadsCRM();
 
-      // En modo turbo no cargamos Perfil, Sugerencias ni Stock.
+      // En la vista principal no cargamos Perfil, Sugerencias ni Stock.
       // Eso se trae recién cuando el vendedor entra a esas pestañas.
       if(!modoTurbo){
         fillPerfilSelect();
@@ -962,7 +1022,7 @@ async function loadLeads(force){
 
   if(list){
     if(lastErr&&lastErr.code==="ACCESS"){
-      list.innerHTML=empty("No se pudieron cargar los leads porque Apps Script está pidiendo iniciar sesión.<br><br>Hay que republicar la implementación con acceso <b>Cualquier usuario</b> y después tocar <b>Actualizar</b>.");
+      list.innerHTML=empty("No se pudieron cargar las consultas porque el sistema está pidiendo iniciar sesión.<br><br>Revisá el acceso de la Estación y después tocá <b>Actualizar</b>.");
     }else{
       list.innerHTML=empty("No se pudieron cargar los leads en este intento.<br><br><button class=\"btn ghost\" id=\"reloadleads\" style=\"padding:7px 12px;font-size:13px\">Reintentar</button>");
     }
@@ -1104,7 +1164,7 @@ function loadLeadsForPerfil(){
   }else{
     fillPerfilSelect();
   }
-  if(!SHEET_URL){const m=$('#pfmsg');if(m)m.textContent="El perfil se guarda en el CRM cuando conectes la dirección del Apps Script.";}
+  if(!SHEET_URL){const m=$('#pfmsg');if(m)m.textContent="El perfil se guarda en el CRM cuando la Estación está conectada correctamente.";}
 }
 function fillPerfilFromLead(id){
   const l=LEADS&&LEADS.find(x=>x.id===id);
@@ -1440,7 +1500,7 @@ let STOCK=null, stockType="Todos";
 function loadStock(){
   const list=$('#stocklist'); if(!list)return;
   renderSubfilter();
-  if(!SHEET_URL){list.innerHTML=empty("El stock se activa cuando conectes el CRM (configurá la dirección del Apps Script).");return;}
+  if(!SHEET_URL){list.innerHTML=empty("El stock se activa cuando la Estación está conectada correctamente al CRM.");return;}
   if(STOCK){renderStock();return;}
   list.innerHTML=empty("Cargando propiedades…");
   fetch(SHEET_URL+"?q=propiedades").then(r=>r.json()).then(d=>{STOCK=(d&&d.propiedades)||[];renderStock();}).catch(()=>{list.innerHTML=empty("No se pudo leer el stock. Revisá la conexión con el CRM.");});
@@ -1505,6 +1565,7 @@ document.addEventListener('click',async e=>{
   if(t.id==='wmsg-close'){closeWhatsappComposer();return;}
   if(t.id==='wmsg-save'){saveWhatsappText();return;}
   if(t.id==='wmsg-copy'){copyWhatsappText();return;}
+  if(t.classList&&t.classList.contains('wmsg-copy-phrase')){copyWhatsappPhrase(t.dataset.phrase,t);return;}
   if(t.id==='wmsg-send-business'){sendWhatsappPrepared('business');return;}
   if(t.id==='wmsg-send-app'){sendWhatsappPrepared('app');return;}
   if(t.id==='wmsg-send-web'){sendWhatsappPrepared('web');return;}
@@ -1645,7 +1706,7 @@ function cambiarAsesor(){
 (function(){
   const cw=$('#changewho'); if(cw)cw.addEventListener('click',cambiarAsesor);
   renderNav();renderBoard();renderPanel();
-  if(!store.available){const w=$('#weeklabel');if(w)w.innerHTML='⚠️ Este navegador no guarda datos (¿modo incógnito?). Abrilo en una ventana normal.';}
+  if(!store.available){const w=$('#weeklabel');if(w)w.innerHTML='⚠️ Este navegador no puede guardar preferencias. Abrilo en una ventana normal para usar la Estación correctamente.';}
 })();
 </script>
 </body>
