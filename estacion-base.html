@@ -725,7 +725,7 @@ function checkPanel(eb,title,items){
 function leadsPanel(){
   const filtros=["Todos","Sin contactar","En gestión",...ESTADOS];
   const opts=filtros.map(f=>`<option value="${f}">${f}</option>`).join("");
-  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Vista rápida: se cargan todos los leads nuevos o sin contactar, y los últimos 5 leads ya contactados. Esto hace que la Estación abra más rápido.</p>
+  return `<div class="eyebrow">Tus clientes asignados</div><h3>Leads <span id="leadcount"></span></h3><p class="sub">Modo turbo: se cargan primero los leads nuevos/sin contactar y solo los últimos 5 ya contactados. Perfil y sugerencias se cargan recién cuando los necesitás.</p>
   <div class="card">
     <input id="leadsearch" placeholder="🔍 Buscar por nombre o código…" autocomplete="off" style="width:100%;font:inherit;font-size:14px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);outline:none;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--muted)">Ver:</span><select id="leadfilter" style="font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff">${opts}</select></div><button class="btn ghost" id="reloadleads" style="padding:6px 12px;font-size:13px">Actualizar</button></div>
@@ -810,6 +810,7 @@ function crmAccessError(){const e=new Error("El CRM está pidiendo iniciar sesi�
 /* ============ LEADS (lee/escribe CRM) ============ */
 let LEADS=null;
 let LEADS_MODE="";
+const LEADS_TURBO_CACHE_MS=30000;
 const ESTADOS=["Nuevo","Contactado","No respondió","Interesado","Visita coordinada","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio","Dormido","Perdido"];
 const EST_COLOR={"Nuevo":"#378add","Contactado":"#128f8b","No respondió":"#888780","Interesado":"#1d9e75","Visita coordinada":"#7f77dd","Visitó":"#534ab7","Seguimiento":"#ef9f27","Oferta":"#ba7517","Reserva":"#639922","Derivado a Julio":"#0c447c","Dormido":"#888780","Perdido":"#a32d2d"};
 function estColor(v){v=String(v||"").trim();return EST_COLOR[v]||"#888780";}
@@ -837,6 +838,23 @@ async function crmGet(q,params){
   }
   if(!r.ok||d.ok===false)throw new Error(d.error||("Error del CRM ("+r.status+")."));
   return d;
+}
+function turboCacheKey(){return "lurati_leads_turbo_"+(current||"").trim().toLowerCase();}
+function getTurboCache(){
+  try{
+    const raw=sessionStorage.getItem(turboCacheKey());
+    if(!raw)return null;
+    const obj=JSON.parse(raw);
+    if(!obj||!obj.ts||!Array.isArray(obj.leads))return null;
+    if(Date.now()-obj.ts>LEADS_TURBO_CACHE_MS)return null;
+    return obj.leads;
+  }catch(e){return null;}
+}
+function setTurboCache(leads){
+  try{sessionStorage.setItem(turboCacheKey(),JSON.stringify({ts:Date.now(),leads:leads||[]}));}catch(e){}
+}
+function clearTurboCache(){
+  try{sessionStorage.removeItem(turboCacheKey());}catch(e){}
 }
 // Pendiente de contactar = sin contactar y NO descartado (Perdido)
 function pendienteContacto(l){return esNoContactado(l)&&(l.estado||"").trim()!=="Perdido";}
@@ -878,11 +896,23 @@ async function loadLeads(force){
     return;
   }
 
-  // En la pestaña LEAD usamos vista rápida.
-  // En Perfil Cliente / Sugerencias usamos lectura completa cuando haga falta.
-  const modoRapido = activeNav === "v-leads";
-  const endpoint = modoRapido ? "leadsRapidos" : "leads";
-  const modoDeseado = modoRapido ? "rapido" : "completo";
+  const modoTurbo = activeNav === "v-leads";
+  const endpoint = modoTurbo ? "leadsTurbo" : "leads";
+  const modoDeseado = modoTurbo ? "turbo" : "completo";
+
+  if(modoTurbo && force)clearTurboCache();
+
+  if(modoTurbo && !force){
+    const cached=getTurboCache();
+    if(cached){
+      LEADS=cached;
+      LEADS_MODE="turbo";
+      if(list)renderLeadsCRM();
+      renderNav();
+      updateSubtitles();
+      return;
+    }
+  }
 
   if(LEADS && !force && LEADS_MODE === modoDeseado){
     if(list) renderLeadsCRM();
@@ -890,33 +920,40 @@ async function loadLeads(force){
   }
 
   if(list){
-    list.innerHTML = empty(modoRapido ? "Cargando vista rápida de leads…" : "Cargando tus leads…");
+    list.innerHTML = empty(modoTurbo ? "Cargando leads en modo turbo…" : "Cargando datos completos del cliente…");
   }
 
   let lastErr=null;
-  for(let intento=1; intento<=3; intento++){
+  for(let intento=1; intento<=2; intento++){
     try{
-      const params = modoRapido
-        ? {vendedor:current, limiteContactados:5}
+      const params = modoTurbo
+        ? {vendedor:current, limiteContactados:5, diasNuevos:30, limiteNuevos:80, force:force?1:0}
         : {vendedor:current};
 
       const d = await crmGet(endpoint, params);
 
       LEADS = (d && d.leads) || [];
       LEADS_MODE = modoDeseado;
+      if(modoTurbo)setTurboCache(LEADS);
 
       if(list) renderLeadsCRM();
-      fillPerfilSelect();
-      renderBoard();
+
+      // En modo turbo no cargamos Perfil, Sugerencias ni Stock.
+      // Eso se trae recién cuando el vendedor entra a esas pestañas.
+      if(!modoTurbo){
+        fillPerfilSelect();
+        renderBoard();
+      }
+
       renderNav();
       updateSubtitles();
       return;
     }catch(e){
       lastErr=e;
       if(e&&e.code==="ACCESS") break;
-      if(intento<3){
+      if(intento<2){
         if(list) list.innerHTML=empty("Conectando con el CRM…");
-        await waitCrm(700*intento);
+        await waitCrm(500*intento);
       }
     }
   }
@@ -980,6 +1017,7 @@ function controlVisualAsignacion(l){
 function aceptarLead(id,boton){
   const l=LEADS&&LEADS.find(x=>x.id===id); if(!l||!SHEET_URL||!current)return;
   if(boton){boton.disabled=true;boton.textContent="Aceptando…";}
+  clearTurboCache();
   l.estadoAsignacion="Aceptado";l.aceptadoTs=Date.now();
   renderLeadsCRM();renderBoard();renderNav();
   fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
@@ -1057,7 +1095,11 @@ function fillPerfilSelect(){
   if(prev)sel.value=prev;
 }
 function loadLeadsForPerfil(){
-  if(!LEADS){loadLeads();} else {fillPerfilSelect();}
+  if(!LEADS || LEADS_MODE!=="completo"){
+    loadLeads(true);
+  }else{
+    fillPerfilSelect();
+  }
   if(!SHEET_URL){const m=$('#pfmsg');if(m)m.textContent="El perfil se guarda en el CRM cuando conectes la dirección del Apps Script.";}
 }
 function fillPerfilFromLead(id){
@@ -1088,9 +1130,9 @@ function loadPendientes(){
   const list=$('#pendlist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Los pendientes se activan cuando conectes el CRM.");return;}
   if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus pendientes.");return;}
-  if(LEADS){renderPendientes();return;}
-  list.innerHTML=empty("Cargando pendientes…");
-  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderPendientes();renderBoard();renderNav();}).catch(()=>{list.innerHTML=empty("No se pudieron leer tus pendientes. Revisá la conexión.");});
+  if(LEADS && LEADS_MODE==="completo"){renderPendientes();return;}
+  list.innerHTML=empty("Cargando pendientes completos…");
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];LEADS_MODE="completo";renderPendientes();renderBoard();renderNav();}).catch(()=>{list.innerHTML=empty("No se pudieron leer tus pendientes. Revisá la conexión.");});
 }
 function renderPendientes(){
   const list=$('#pendlist'); if(!list)return;
@@ -1127,6 +1169,7 @@ function renderPendientes(){
   list.innerHTML=h;
 }
 function setEstado(id,val){
+  clearTurboCache();
   const idx=LEADS.findIndex(l=>l.id===id); if(idx<0)return;
   LEADS[idx].estado=val; renderLeadsCRM(); renderBoard(); renderNav();
   if(!SHEET_URL||!current)return;
@@ -1159,9 +1202,9 @@ function loadSugerencias(){
   const list=$('#suglist'); if(!list)return;
   if(!SHEET_URL){list.innerHTML=empty("Las sugerencias se activan cuando conectes el CRM.");return;}
   if(!current){list.innerHTML=empty("Seleccioná tu nombre arriba para ver tus sugerencias.");return;}
-  if(LEADS){renderSugerencias();fillSugCliSelect();ensureStockForMatch();return;}
-  list.innerHTML=empty("Cargando sugerencias…");
-  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];renderSugerencias();fillSugCliSelect();ensureStockForMatch();renderNav();updateSubtitles();}).catch(()=>{list.innerHTML=empty("No se pudieron leer las sugerencias. Revisá la conexión.");});
+  if(LEADS && LEADS_MODE==="completo"){renderSugerencias();fillSugCliSelect();ensureStockForMatch();return;}
+  list.innerHTML=empty("Cargando sugerencias completas…");
+  fetch(SHEET_URL+"?q=leads&vendedor="+encodeURIComponent(current)).then(r=>r.json()).then(d=>{LEADS=(d&&d.leads)||[];LEADS_MODE="completo";renderSugerencias();fillSugCliSelect();ensureStockForMatch();renderNav();updateSubtitles();}).catch(()=>{list.innerHTML=empty("No se pudieron leer las sugerencias. Revisá la conexión.");});
 }
 function ensureStockForMatch(){
   if(STOCK)return;
@@ -1483,7 +1526,7 @@ document.addEventListener('click',async e=>{
   }
   if(t.dataset.do!==undefined){state.opps.splice(+t.dataset.do,1);renderOpps();renderBoard();save();}
   // leads
-  if(t.id==='reloadleads'){LEADS=null;loadLeads(true);}
+  if(t.id==='reloadleads'){clearTurboCache();LEADS=null;loadLeads(true);}
   if(t.dataset&&t.dataset.accept){aceptarLead(t.dataset.accept,t);}
   if(t.dataset&&t.dataset.reassign){reasignarDesdeControl(t.dataset.reassign,t);}
   if(t.id==='reloadcontrol'){CONTROL_LEADS=null;loadControlEquipo();}
