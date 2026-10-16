@@ -268,6 +268,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
       <button id="wmsg-send-app" class="primary" type="button">WhatsApp App</button>
       <button id="wmsg-send-web" class="primary" type="button">WhatsApp Web</button>
     </div>
+    <div id="wmsg-ios-note" class="wmsg-help" style="display:none;margin-top:8px"></div>
     <div id="wmsg-status"></div>
   </div>
 </div>
@@ -357,26 +358,48 @@ function isMobileDevice(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigat
 function isAndroid(){return /Android/i.test(navigator.userAgent||'');}
 function isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent||'');}
 function updateWhatsappChannelButtons(){
-  const business=$('#wmsg-send-business'), app=$('#wmsg-send-app'), web=$('#wmsg-send-web');
+  const business=$('#wmsg-send-business'), app=$('#wmsg-send-app'), web=$('#wmsg-send-web'), note=$('#wmsg-ios-note');
   if(!business||!app||!web)return;
-  if(isMobileDevice()){
+
+  if(isIOS()){
+    business.style.display='inline-block';
+    business.textContent='Abrir WhatsApp en iPhone';
+    app.style.display='none';
+    web.style.display='none';
+    if(note){
+      note.style.display='block';
+      note.textContent='En iPhone usamos el enlace oficial de WhatsApp. Si tenés WhatsApp Business configurado para mensajería, iOS debería abrirlo allí.';
+    }
+    return;
+  }
+
+  if(isAndroid()){
     business.style.display='inline-block';
     business.textContent='WhatsApp Business';
+    app.style.display='inline-block';
     app.textContent='WhatsApp común';
     web.style.display='none';
-  }else{
-    business.style.display='none';
-    app.textContent='WhatsApp App / Windows';
-    web.textContent='WhatsApp Web';
-    web.style.display='inline-block';
+    if(note){note.style.display='none';note.textContent='';}
+    return;
   }
+
+  business.style.display='none';
+  app.style.display='inline-block';
+  app.textContent='WhatsApp App / Windows';
+  web.textContent='WhatsApp Web';
+  web.style.display='inline-block';
+  if(note){note.style.display='none';note.textContent='';}
 }
 function buildWhatsappOpenUrl(destino,tel,texto){
   const enc=encodeURIComponent(texto||'');
   const phone=String(tel||'').replace(/\D/g,'');
+
+  // iPhone/iPad: WhatsApp recomienda usar enlaces universales wa.me.
+  // No forzamos un esquema no oficial de WhatsApp Business.
+  if(isIOS())return 'https://wa.me/'+phone+'?text='+enc;
+
   if(destino==='business'){
     if(isAndroid())return 'intent://send?phone='+phone+'&text='+enc+'#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end';
-    if(isIOS())return 'whatsapp-business://send?phone='+phone+'&text='+enc;
     return 'https://wa.me/'+phone+'?text='+enc;
   }
   if(destino==='app'){
@@ -555,7 +578,8 @@ function sendWhatsappPrepared(destino){
     wmsgStatus('ok','WhatsApp Web abierto. Intenta reutilizar la misma pestaña.');
   }else{
     window.location.href=url;
-    if(destino==='business')wmsgStatus('ok','Se solicitó abrir WhatsApp Business. Si el celular no lo permite, copiá el texto y pegalo manualmente.');
+    if(isIOS())wmsgStatus('ok','Abriendo WhatsApp desde el enlace oficial de iPhone.');
+    else if(destino==='business')wmsgStatus('ok','Se solicitó abrir WhatsApp Business.');
     else wmsgStatus('ok','Se solicitó abrir WhatsApp.');
   }
 }
