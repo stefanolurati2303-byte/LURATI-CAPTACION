@@ -254,7 +254,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
     <div class="wmsg-field">
       <div class="wmsg-label">Texto editable</div>
       <textarea id="wmsg-text"></textarea>
-      <div class="wmsg-help">Guardar texto lo deja como preferido para este vendedor + propiedad + modelo.</div>
+      <div class="wmsg-help">Guardar texto lo deja como preferido para este vendedor + propiedad + modelo. La ficha de la propiedad se agrega automáticamente.</div>
       <details class="wmsg-altbox" id="wmsg-altbox">
         <summary>Frases alternativas para copiar</summary>
         <div class="wmsg-altintro">Espacio de apoyo para el vendedor. No modifica el mensaje principal salvo que copie y pegue una frase.</div>
@@ -455,6 +455,33 @@ async function copyWhatsappPhrase(i,btn){
   catch(e){wmsgStatus('','No pude copiar automáticamente. Seleccioná la frase manualmente.');}
 }
 
+function withPropertyLink(texto,link){
+  texto=String(texto||'').trim();
+  link=String(link||'').trim();
+  if(!link)return texto;
+  if(texto.indexOf(link)>=0)return texto;
+  return texto+'\n\nFicha de la propiedad:\n'+link;
+}
+async function loadWhatsappPropertyData(ctx){
+  if(!ctx || !ctx.propiedad || ctx.link)return ctx;
+  try{
+    const d=await crmGet('propiedadMensaje',{propiedad:ctx.propiedad});
+    const p=d&&d.propiedad?d.propiedad:{};
+    if(p&&Object.keys(p).length){
+      ctx.tipo=ctx.tipo||p.tipo||'';
+      ctx.zona=ctx.zona||p.zona||'';
+      ctx.dorms=ctx.dorms||p.dorms||'';
+      ctx.banos=ctx.banos||p.banos||'';
+      ctx.m2=ctx.m2||p.m2||'';
+      ctx.cochera=ctx.cochera||p.cochera||'';
+      ctx.exterior=ctx.exterior||p.exterior||'';
+      ctx.precio=ctx.precio||p.precio||'';
+      ctx.link=ctx.link||p.link||'';
+    }
+  }catch(e){console.warn('No se pudo recuperar la ficha de la propiedad',e);}
+  return ctx;
+}
+
 function defaultWhatsappMessage(ctx,modelo){
   const nombre=(ctx.nombre||'').split(/\s+/)[0]||'';
   const saludo=nombre?('Hola '+nombre+', cómo estás?'):'Hola, cómo estás?';
@@ -506,7 +533,8 @@ function defaultWhatsappMessage(ctx,modelo){
       'Antes de coordinar, te consulto dos datos para orientarte mejor:\n\n'+
       '- La buscás para vivir o como inversión?\n'+
       '- Tenés un presupuesto aproximado definido?\n\n'+
-      'Con eso puedo decirte si '+prop+' encaja bien con lo que necesitás o si conviene pasarte alguna alternativa similar.';
+      'Con eso puedo decirte si '+prop+' encaja bien con lo que necesitás o si conviene pasarte alguna alternativa similar.'+
+      (ctx.link?'\n\nFicha de la propiedad:'+link:'');
   }
 
   return saludo+'\n\n'+
@@ -520,11 +548,12 @@ function refreshWhatsappMessage(){
   if(!WMSG_CTX)return;
   const modelo=$('#wmsg-model').value;
   const local=getLocalSavedMsg(WMSG_CTX,modelo);
-  $('#wmsg-text').value=local || defaultWhatsappMessage(WMSG_CTX,modelo);
-  wmsgStatus(local?'ok':'', local?'Texto guardado recuperado.':'Mensaje listo. Podés editarlo antes de enviarlo.');
+  const base=local || defaultWhatsappMessage(WMSG_CTX,modelo);
+  $('#wmsg-text').value=withPropertyLink(base,WMSG_CTX.link);
+  wmsgStatus(local?'ok':'', local?'Texto guardado recuperado con la ficha de la propiedad.':'Mensaje listo. Podés editarlo antes de enviarlo.');
 }
 function leadFromId(id){return LEADS&&LEADS.find(x=>String(x.id||'').toLowerCase()===String(id||'').toLowerCase());}
-function openWhatsappComposer(a){
+async function openWhatsappComposer(a){
   const decoded=decodeWhatsappHref(a.href||'');
   const row=a.closest('.leadrow');
   const txt=row?(row.textContent||''):'';
@@ -545,6 +574,18 @@ function openWhatsappComposer(a){
   const altBox=$('#wmsg-altbox');if(altBox)altBox.open=false;
   updateWhatsappChannelButtons();
   refreshWhatsappMessage();
+
+  // Recupera en segundo plano la ficha/link puntual desde 00_Propiedades_Todos.
+  // No retrasa la carga general de leads.
+  const before=$('#wmsg-text').value;
+  await loadWhatsappPropertyData(WMSG_CTX);
+  if(WMSG_CTX.link){
+    const actual=$('#wmsg-text').value;
+    // Si el vendedor no cambió el texto mientras cargaba, regeneramos el modelo.
+    // Si ya estaba editando, solo agregamos la ficha al final sin pisar su trabajo.
+    if(actual===before) refreshWhatsappMessage();
+    else $('#wmsg-text').value=withPropertyLink(actual,WMSG_CTX.link);
+  }
 }
 function closeWhatsappComposer(){const el=$('#wmsg-overlay');if(el)el.classList.remove('open');}
 function saveWhatsappText(){
