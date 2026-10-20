@@ -204,8 +204,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .wmsg-phrase button:hover{background:#e8f1ef}
 .wmsg-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wmsg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.wmsg-actions button{flex:1;min-width:140px;border-radius:11px;padding:11px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;cursor:pointer}
-.wmsg-actions button.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.wmsg-actions button,.wmsg-actions a.wmsg-open-link{flex:1;min-width:140px;border-radius:11px;padding:11px;border:1px solid var(--line);background:#fff;color:var(--green);font-weight:800;cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center;text-decoration:none;font:inherit;font-size:14px;font-weight:800;line-height:1.35}
+.wmsg-actions button.primary,.wmsg-actions a.wmsg-open-link.primary{background:var(--green);color:#fff;border-color:var(--green)}
 .wmsg-actions button.soft{background:#e8f1ef}
 .wmsg-pref{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);margin-top:8px;cursor:pointer}
 .wmsg-pref input{width:15px;height:15px;cursor:pointer}
@@ -264,11 +264,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
     <div class="wmsg-actions">
       <button id="wmsg-save" class="soft" type="button">Guardar texto</button>
       <button id="wmsg-copy" type="button">Copiar</button>
+      <a id="wmsg-ios-link" class="wmsg-open-link primary" href="https://wa.me/" target="_blank" rel="noopener noreferrer" style="display:none">Abrir chat en iPhone</a>
+      <button id="wmsg-ios-copy" type="button" style="display:none">Copiar para Business</button>
       <button id="wmsg-send-business" class="primary" type="button" style="display:none">WhatsApp Business</button>
       <button id="wmsg-send-app" class="primary" type="button">WhatsApp App</button>
       <button id="wmsg-send-web" class="primary" type="button">WhatsApp Web</button>
     </div>
     <div id="wmsg-ios-note" class="wmsg-help" style="display:none;margin-top:8px"></div>
+    <button id="wmsg-ios-copy-phone" type="button" style="display:none;margin-top:6px;border:0;background:transparent;color:var(--green);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:5px 0">Copiar número del cliente</button>
     <div id="wmsg-status"></div>
   </div>
 </div>
@@ -358,18 +361,26 @@ function isMobileDevice(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigat
 function isAndroid(){return /Android/i.test(navigator.userAgent||'');}
 function isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent||'');}
 function updateWhatsappChannelButtons(){
-  const business=$('#wmsg-send-business'), app=$('#wmsg-send-app'), web=$('#wmsg-send-web'), note=$('#wmsg-ios-note');
+  const business=$('#wmsg-send-business'), app=$('#wmsg-send-app'), web=$('#wmsg-send-web');
+  const iosLink=$('#wmsg-ios-link'), iosCopy=$('#wmsg-ios-copy'), iosPhone=$('#wmsg-ios-copy-phone'), note=$('#wmsg-ios-note');
   if(!business||!app||!web)return;
+  if(iosLink)iosLink.style.display='none';
+  if(iosCopy)iosCopy.style.display='none';
+  if(iosPhone)iosPhone.style.display='none';
+  if(note){note.style.display='none';note.textContent='';}
 
   if(isIOS()){
-    business.style.display='inline-block';
-    business.textContent='Abrir WhatsApp en iPhone';
+    business.style.display='none';
     app.style.display='none';
     web.style.display='none';
+    if(iosLink)iosLink.style.display='flex';
+    if(iosCopy)iosCopy.style.display='inline-block';
+    if(iosPhone)iosPhone.style.display='inline-block';
     if(note){
       note.style.display='block';
-      note.textContent='En iPhone usamos el enlace oficial de WhatsApp. Si tenés WhatsApp Business configurado para mensajería, iOS debería abrirlo allí.';
+      note.textContent='El chat se intenta abrir fuera de la Estación. Si iPhone no elige WhatsApp Business, tocá «Copiar para Business», abrí esa app, buscá al cliente y pegá el mensaje.';
     }
+    updateIosWhatsappLink();
     return;
   }
 
@@ -379,7 +390,6 @@ function updateWhatsappChannelButtons(){
     app.style.display='inline-block';
     app.textContent='WhatsApp común';
     web.style.display='none';
-    if(note){note.style.display='none';note.textContent='';}
     return;
   }
 
@@ -388,8 +398,73 @@ function updateWhatsappChannelButtons(){
   app.textContent='WhatsApp App / Windows';
   web.textContent='WhatsApp Web';
   web.style.display='inline-block';
-  if(note){note.style.display='none';note.textContent='';}
 }
+
+// En iPhone un enlace real con target=_blank evita navegar el iframe de la Estación.
+// El sistema NO puede garantizar que iOS elija Business: la alternativa es copiar y pegar.
+function iosWhatsappData(){
+  if(!WMSG_CTX)return null;
+  const tel=String(WMSG_CTX.telefono||'').replace(/\D/g,'');
+  const textarea=$('#wmsg-text');
+  const texto=withPropertyLink(textarea?textarea.value:'',WMSG_CTX.link).trim();
+  if(!tel||!texto)return null;
+  return {tel:tel,texto:texto,url:buildWhatsappOpenUrl('business',tel,texto)};
+}
+function updateIosWhatsappLink(){
+  const a=$('#wmsg-ios-link');
+  if(!a||!isIOS())return;
+  const datos=iosWhatsappData();
+  if(datos){a.href=datos.url;a.removeAttribute('aria-disabled');}
+  else{a.removeAttribute('href');a.setAttribute('aria-disabled','true');}
+}
+function marcarWhatsappPreparado(){
+  if(!WMSG_CTX||!WMSG_CTX.id)return;
+  if(WMSG_CTX.isRecontactar)setEstado(WMSG_CTX.id,'Seguimiento');
+  else{
+    const l=leadFromId(WMSG_CTX.id);
+    if(l&&esNoContactado(l)&&(l.estado||'').trim()!=='Perdido')setEstado(WMSG_CTX.id,'Contactado');
+  }
+}
+function iniciarWhatsappIOS(e){
+  // No hacemos e.preventDefault() cuando hay datos válidos: Safari sigue el <a> real.
+  const datos=iosWhatsappData();
+  if(!datos){e.preventDefault();wmsgStatus('err','Revisá el teléfono y el texto del mensaje.');return;}
+  const a=$('#wmsg-ios-link');
+  if(a)a.href=datos.url;
+  marcarWhatsappPreparado();
+  registrarWhatsappPreparado(WMSG_CTX,datos.texto,datos.url,'business');
+  wmsgStatus('ok','Se solicitó abrir WhatsApp fuera de la Estación. Si no abre Business, usá «Copiar para Business».');
+}
+async function copiarTextoIOS(esTelefono){
+  const datos=iosWhatsappData();
+  if(!datos){wmsgStatus('err','No encontré teléfono o mensaje para copiar.');return;}
+  const texto=esTelefono?datos.tel:datos.texto;
+  let copiado=false;
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(texto);
+      copiado=true;
+    }
+  }catch(_){/* Intentar método clásico */}
+  if(!copiado){
+    try{
+      const aux=document.createElement('textarea');
+      aux.value=texto;aux.setAttribute('readonly','');
+      aux.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';
+      document.body.appendChild(aux);aux.focus();aux.select();
+      aux.setSelectionRange(0,aux.value.length);
+      copiado=!!document.execCommand('copy');aux.remove();
+    }catch(_){}
+  }
+  if(copiado){
+    wmsgStatus('ok',esTelefono?'Número copiado. Abrí WhatsApp Business y buscá al cliente.':'Mensaje copiado. Abrí WhatsApp Business, buscá al cliente y pegá el texto.');
+  }else{
+    const ta=$('#wmsg-text');
+    if(!esTelefono&&ta){ta.focus();ta.select();}
+    wmsgStatus('','El iPhone no permitió copiar automáticamente. '+(esTelefono?'Número: '+datos.tel:'Mantené presionado el texto seleccionado para copiarlo.') );
+  }
+}
+
 function buildWhatsappOpenUrl(destino,tel,texto){
   const enc=encodeURIComponent(texto||'');
   const phone=String(tel||'').replace(/\D/g,'');
@@ -574,6 +649,7 @@ async function openWhatsappComposer(a){
   const altBox=$('#wmsg-altbox');if(altBox)altBox.open=false;
   updateWhatsappChannelButtons();
   refreshWhatsappMessage();
+  updateIosWhatsappLink();
 
   // Recupera en segundo plano la ficha/link puntual desde 00_Propiedades_Todos.
   // No retrasa la carga general de leads.
@@ -586,6 +662,7 @@ async function openWhatsappComposer(a){
     if(actual===before) refreshWhatsappMessage();
     else $('#wmsg-text').value=withPropertyLink(actual,WMSG_CTX.link);
   }
+  updateIosWhatsappLink();
 }
 function closeWhatsappComposer(){const el=$('#wmsg-overlay');if(el)el.classList.remove('open');}
 function saveWhatsappText(){
@@ -603,6 +680,7 @@ function registrarWhatsappPreparado(ctx,texto,url,destino){
   fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'registrarContactoWhatsapp',idConsulta:ctx.id||'',vendedor:ctx.vendedor||'',asesor:ctx.vendedor||'',nombre:ctx.nombre||'',telefono:ctx.telefono||'',propiedad:ctx.propiedad||'',modelo:$('#wmsg-model').value,texto:texto,url:url,resultado:'WhatsApp '+(destino==='business'?'Business':(destino==='app'?(isMobileDevice()?'común':'App/Windows'):'Web'))+' preparado',proximaAccion:''})}).catch(()=>{});
 }
 function sendWhatsappPrepared(destino){
+  if(isIOS()){wmsgStatus('err','En iPhone, usá «Abrir chat en iPhone» o «Copiar para Business».');return;}
   if(!WMSG_CTX)return;
   const texto=String($('#wmsg-text').value||'').trim();
   if(!texto){wmsgStatus('err','El texto está vacío.');return;}
@@ -1627,6 +1705,9 @@ document.addEventListener('click',async e=>{
   const t=e.target;
   const waAnchor=t.closest&&t.closest('a.lead-wa');
   if(waAnchor){e.preventDefault();await openWhatsappComposer(waAnchor);return;}
+  if(t.id==='wmsg-ios-link'){iniciarWhatsappIOS(e);return;}
+  if(t.id==='wmsg-ios-copy'){copiarTextoIOS(false);return;}
+  if(t.id==='wmsg-ios-copy-phone'){copiarTextoIOS(true);return;}
   if(t.id==='wmsg-close'){closeWhatsappComposer();return;}
   if(t.id==='wmsg-save'){saveWhatsappText();return;}
   if(t.id==='wmsg-copy'){copyWhatsappText();return;}
@@ -1695,7 +1776,8 @@ document.addEventListener('input',e=>{
   if(e.target.id==='leadsearch')renderLeadsCRM();
 });
 document.addEventListener('change',e=>{
-  if(e.target.id==='wmsg-model'){refreshWhatsappMessage();}
+  if(e.target.id==='wmsg-model'){refreshWhatsappMessage();updateIosWhatsappLink();}
+  if(e.target.id==='wmsg-text'&&isIOS())updateIosWhatsappLink();
   if(e.target.id==='f-dorm'||e.target.id==='f-banos'||e.target.id==='f-precio'||e.target.id==='f-credito')renderStock();
   if(e.target.classList&&e.target.classList.contains('estsel')){setEstado(e.target.dataset.id,e.target.value);}
   if(e.target.id==='leadfilter')renderLeadsCRM();
