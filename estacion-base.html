@@ -241,6 +241,12 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
 .bc-summary{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 20px}.bc-summary span{background:#eef3ef;border:1px solid #d8e2dc;border-radius:10px;padding:12px 15px;font-size:13px}.bc-summary b{color:var(--green);font-size:18px;margin-right:5px}.bc-categories{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}.bc-categories button{border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 13px;border-radius:24px;font:inherit;font-size:13px;cursor:pointer;min-height:42px}.bc-categories button.chosen{background:var(--green);color:#fff;border-color:var(--green)}.bc-categories small{margin-left:7px;opacity:.7}.bc-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}.bc-controls label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:650}.bc-controls input,.bc-controls select{width:100%;min-width:0;height:44px;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--text)}.bc-note{font-size:12px!important;line-height:1.65;color:var(--muted);margin-top:15px}.bc-results-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;font-size:13px}.bc-results-head span{color:var(--muted)}.bc-table-wrap{overflow-x:auto;background:white;border:1px solid var(--line);border-radius:12px}.bc-table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}.bc-table th{background:#f1f4f0;color:var(--green);font-size:11px;padding:14px;text-transform:uppercase;letter-spacing:.04em}.bc-table td{border-top:1px solid var(--line);padding:16px 14px;vertical-align:top;min-width:130px;overflow-wrap:anywhere}.bc-table small{display:block;color:var(--muted);font-size:11px;line-height:1.6;margin-top:5px;max-width:260px}.bc-table td .btn{font-size:12px;white-space:nowrap;padding:9px 12px}.bc-table .bc-pending{color:#995d21}.bc-pager{display:flex;align-items:center;justify-content:center;gap:18px;margin:20px 0;font-size:12px}.bc-detail dl{margin:10px 0 24px}.bc-detail dt{font-size:11px;color:var(--muted);margin-top:15px}.bc-detail dd{margin:5px 0;font-size:14px;overflow-wrap:anywhere;white-space:pre-wrap}@media(max-width:650px){.bc-controls{grid-template-columns:1fr}.bc-summary span{flex:1;min-width:140px}.bc-categories{gap:6px}.bc-categories button{padding:9px 11px;font-size:12px}.bc-table{min-width:0}.bc-table thead{display:none}.bc-table tr{display:block;padding:12px;border-bottom:1px solid var(--line)}.bc-table td{display:block;padding:7px 3px;border:0;min-width:0}.bc-table td:first-child{font-size:16px}.bc-table td:first-child small{display:inline;margin-left:9px}.bc-table td:nth-child(3):before{content:'Presupuesto: ';font-weight:650}.bc-table td:nth-child(4):before{content:'Responsable: ';font-weight:650}.bc-table small{max-width:none}.bc-table td .btn{width:100%;min-height:42px}.bc-pager{gap:12px}}
 
 </style>
+<style>
+.rp-banner{border:1.5px solid #d88a87;border-left:4px solid #ae3e3b;border-radius:12px;background:#fff8f7;color:#493332;padding:18px 20px;margin:0 0 24px}.rp-banner[hidden]{display:none!important}.rp-heading{display:flex;justify-content:space-between;align-items:start;gap:14px}.rp-heading strong{font-size:15px;color:#923a36}.rp-heading p,.rp-note{font-size:12px;color:#705854;margin:6px 0;line-height:1.6}.rp-close{border:0;background:transparent;color:#923a36;font-size:24px;cursor:pointer;min-width:36px;min-height:36px;line-height:1}.rp-item{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 0;border-top:1px solid #efd9d6;margin-top:12px;overflow-wrap:anywhere}.rp-item b{font-size:13px}.rp-item small{font-size:11px;font-weight:400;color:#806865;margin-left:6px}.rp-item p{font-size:12px;margin:6px 0;line-height:1.6}.rp-item .rp-property{font-size:11px;color:var(--muted)}.rp-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;flex-shrink:0}.rp-actions .btn{font-size:11px;padding:8px 10px;min-height:36px}.rp-actions .text-link{font-size:11px}.rp-footer{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-top:1px solid #efd9d6;padding-top:13px;font-size:10px;color:#806865}.rp-footer .text-link{font-size:12px}.rp-error{color:#962e2a;font-size:12px;white-space:pre-wrap}.rp-inactive{margin-top:20px;font-size:13px}.rp-inactive summary{cursor:pointer;color:var(--green)}.rp-tasks h4{margin-bottom:5px}.rp-tasks .rp-item{border-color:var(--line)}@media(max-width:760px){.rp-banner{padding:14px}.rp-item{display:block}.rp-actions{margin-top:12px}.rp-actions .btn{min-height:40px}.rp-footer{display:block}.rp-footer span{display:block;margin-top:9px}.rp-heading p{font-size:12px}}
+
+@media(max-width:760px){.rp-banner .rp-item:nth-of-type(n+2){display:none}}
+
+</style>
 </head>
 <body>
 <div class="lockscreen" id="lockscreen">
@@ -869,6 +875,7 @@ function renderPanel(){
   if(id==="v-reactivar"&&current==="Stefano")rxLoadAdmin();
   if(id==="v-recuperar")rxLoadAsignadas();
   refreshLists();
+  rpRender();rpLoad(false);
 }
 
 /* ---- componentes ---- */
@@ -1611,13 +1618,13 @@ const COMMERCIAL_NAV=[
 ];
 function renderNav(){
   let group='';
-  const nav=COMMERCIAL_NAV.slice();
+  const nav=COMMERCIAL_NAV.filter(n=>n[0]!=='v-busquedas'||bcSoloStefano());
   nav.splice(nav.findIndex(n=>n[0]==='v-visitas')+1,0,['v-recuperar','Mis reactivaciones','leads','Tu jornada']);
   if(current==='Stefano')nav.push(['v-reactivar','Reactivación y equipo','suggest','Equipo']);
   if(esSupervisor())nav.push(['v-control','Supervisión','control','Equipo']);
   $('#nav').innerHTML=nav.map(n=>{
     let head='';if(group!==n[3]){group=n[3];head='<div class="side-label">'+group+'</div>';}
-    const count=n[0]==='v-leads'&&LEADS?LEADS.filter(l=>pendienteContacto(l)||l.estadoAsignacion==='Pendiente de aceptación').length:0;
+    const count=n[0]==='v-perfil'&&RP.owner===current?rpDueRows().length:n[0]==='v-leads'&&LEADS?LEADS.filter(l=>pendienteContacto(l)||l.estadoAsignacion==='Pendiente de aceptación').length:0;
     return head+'<button type="button" data-go="'+n[0]+'" class="'+(n[0]===activeNav?'active':'')+'" '+(n[0]===activeNav?'aria-current="page"':'')+'><span class="nav-icon">'+icon(n[2])+'</span><span class="nav-caption">'+n[1]+'</span>'+(count?'<span class="nav-count">'+count+'</span>':'')+'</button>';
   }).join('')+'<details class="nav-guide"><summary>Guías de trabajo</summary>'+[['v-guion','Conversación con compradores'],['v-obj','Objeciones de venta'],['v-plan','Proceso de venta'],['c-guion','Conversación de captación'],['c-msg','Mensajes de captación'],['c-obj','Objeciones de captación'],['c-check','Datos para captar'],['c-plan','Proceso de captación']].map(n=>'<button type="button" data-go="'+n[0]+'" class="'+(n[0]===activeNav?'active':'')+'">'+n[1]+'</button>').join('')+'</details>';
   const selected=nav.find(n=>n[0]===activeNav)||(activeNav==='v-cliente'?['v-cliente','Ficha del cliente']:null);
@@ -1626,6 +1633,7 @@ function renderNav(){
   document.querySelectorAll('.mobile-bar [data-go]').forEach(b=>b.classList.toggle('active',b.dataset.go===activeNav));
 }
 function go(id){
+  if(id==='v-busquedas'&&!bcSoloStefano())return;
   if(id==='v-control'&&!esSupervisor())return;
   if(id==='v-reactivar'&&current!=='Stefano')return;
   activeNav=id;mode=id.startsWith('c-')?'captacion':id.startsWith('p-')?'props':'venta';
@@ -1813,6 +1821,7 @@ function bcMoney(n){return 'USD '+new Intl.NumberFormat('es-AR').format(n);}
 function bcReset(){BC.epoch++;Object.assign(BC,{owner:current,rows:[],loaded:false,loading:false,error:'',alcance:'',fecha:''});BCF={dorm:'all',budget:'all',seller:'all',status:'all',search:'',page:1};}
 function bcPanel(){return '<div class="eyebrow">Compradores y sus necesidades</div><div class="gc-title"><div><h3>Búsquedas de clientes</h3><p class="sub">Encontrá a quién ofrecerle una propiedad según dormitorios y presupuesto.</p></div><button id="bc-refresh" class="btn ghost" type="button">Actualizar listado</button></div><div id="bc-content" aria-live="polite"></div>';}
 async function bcLoad(force){
+  if(!bcSoloStefano()){BC.rows=[];BC.loaded=false;BC.error="Búsquedas de clientes está disponible únicamente para Stefano.";bcRender();return;}
   if(BC.owner!==current)bcReset();
   if(!current){bcRender();return;}
   if(BC.loading&&!force)return;
@@ -1826,6 +1835,7 @@ async function bcLoad(force){
 }
 function bcRender(){
   const el=$('#bc-content');if(!el)return;
+  if(!bcSoloStefano()){el.innerHTML=empty('Búsquedas de clientes está disponible únicamente para Stefano.');return;}
   if(BC.owner!==current){el.innerHTML=empty('Ingresá para consultar tus búsquedas.');return;}
   if(!current){el.innerHTML=empty('Seleccioná tu nombre para consultar las búsquedas.');return;}
   if(!BC.loaded){el.innerHTML='<div class="card">'+(BC.error?'<p class="home-error">'+esc(BC.error)+'</p><button id="bc-retry" class="btn ghost">Reintentar</button>':'Cargando búsquedas del CRM…')+'</div>';return;}
@@ -1867,6 +1877,86 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{const key={'bc-budget':'budget','bc-seller':'seller','bc-status':'status'}[e.target.id];if(key){BCF[key]=e.target.value;BCF.page=1;bcResults();}});
 document.addEventListener('input',e=>{if(e.target.id==='bc-search'){BCF.search=e.target.value;BCF.page=1;bcResults();}});
+
+/* v31 · Avisos personales; cerrar no cambia el estado del perfil. */
+let RP={owner:'',epoch:0,rows:[],loaded:false,loading:false,error:'',readAt:0,busy:'',closed:'',timer:null};
+function bcSoloStefano(){return bcNorm(current)==='stefano';}
+function rpClosedKey(){return 'lurati_perfiles_cerrados_'+bcOwner(current);}
+function rpReset(){
+  if(RP.timer)clearTimeout(RP.timer);
+  RP.epoch++;Object.assign(RP,{owner:current,rows:[],loaded:false,loading:false,error:'',readAt:0,busy:'',closed:'',timer:null});
+  try{RP.closed=sessionStorage.getItem(rpClosedKey())||'';}catch(_){}
+  rpRender();
+}
+function rpDueRows(){return RP.rows.filter(r=>r.estadoAviso==='pendiente');}
+function rpFingerprint(){return JSON.stringify(rpDueRows().map(r=>[r.id,r.firma]));}
+async function rpLoad(force){
+  if(!current)return;
+  if(RP.owner!==current)rpReset();
+  if(RP.loading&&!force)return;
+  if(!force&&RP.loaded&&Date.now()-RP.readAt<120000)return;
+  const who=current,epoch=++RP.epoch;RP.loading=true;
+  try{
+    const d=await crmGet('perfilesPendientes',{asesor:who});
+    if(who!==current||epoch!==RP.epoch)return;
+    if(!Array.isArray(d.pendientes))throw new Error('Actualizá Apps Script para habilitar los recordatorios de perfiles.');
+    RP.rows=d.pendientes;RP.loaded=true;RP.readAt=Date.now();RP.error='';
+    if(RP.timer)clearTimeout(RP.timer);
+    const next=Math.min(...RP.rows.filter(x=>x.estadoAviso==='pospuesto'&&x.hasta>Date.now()).map(x=>x.hasta));
+    if(Number.isFinite(next))RP.timer=setTimeout(()=>{if(current===who)rpLoad(true);},Math.min(2147483647,Math.max(1000,next-Date.now()+500)));
+  }catch(e){if(who===current&&epoch===RP.epoch)RP.error=e.message;}
+  finally{if(who===current&&epoch===RP.epoch){RP.loading=false;rpRender();renderNav();}}
+}
+function rpRow(r,compact){
+  const saving=RP.busy===r.id,busy=!!RP.busy||GC.busy||!!GC.pending;
+  const when=r.estadoAviso==='pospuesto'?'Recordatorio: '+new Intl.DateTimeFormat('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(r.hasta)):r.estadoAviso==='omitido'?'Aviso omitido; perfil todavía incompleto':'';
+  return '<article class="rp-item"><div><b>'+esc(r.nombre)+' <small>'+esc(r.id)+'</small></b><p>Falta completar: '+esc(r.faltantes.join(', '))+'.</p>'+(!compact?'<p class="rp-property">'+esc(r.propiedad||'Consulta sin inmueble definido')+'</p>':'')+(when?'<p class="rp-property">'+esc(when)+'</p>':'')+'</div><div class="rp-actions"><button class="btn" type="button" data-rp-open="'+esc(r.id)+'" '+(busy?'disabled':'')+'>Completar perfil</button>'+
+    (r.estadoAviso==='pendiente'?'<button class="btn ghost" type="button" data-rp-action="posponer" data-rp-id="'+esc(r.id)+'" '+(busy?'disabled':'')+'>Más tarde · 1 h</button><button class="text-link" type="button" data-rp-action="omitir" data-rp-id="'+esc(r.id)+'" '+(busy?'disabled':'')+'>Omitir</button>':'<button class="btn ghost" type="button" data-rp-action="restaurar" data-rp-id="'+esc(r.id)+'" '+(busy?'disabled':'')+'>Volver a recordar</button>')+(saving?'<span role="status">Guardando…</span>':'')+'</div></article>';
+}
+function rpRender(){
+  const panels=$('#panels');if(!panels)return;
+  let banner=$('#rp-banner');
+  if(!banner){banner=document.createElement('aside');banner.id='rp-banner';banner.className='rp-banner';banner.setAttribute('aria-label','Recordatorio de perfiles pendientes');banner.setAttribute('aria-live','polite');panels.prepend(banner);}
+  const valid=RP.owner===current&&!!current,rows=valid?rpDueRows():[];
+  const hide=!valid||!RP.loaded||!rows.length||activeNav==='v-perfil'||RP.closed===rpFingerprint();
+  banner.hidden=hide;
+  if(!hide)banner.innerHTML='<div class="rp-heading"><div><strong>Perfiles por completar · '+rows.length+'</strong><p>Registraste contacto con estos clientes y faltan datos de su búsqueda.</p></div><button type="button" class="rp-close" id="rp-close" aria-label="Cerrar este recordatorio por esta sesión">×</button></div>'+rows.slice(0,2).map(r=>rpRow(r,true)).join('')+'<div class="rp-footer"><button type="button" class="text-link" id="rp-all">Ver todas las tareas de perfiles</button><span>Cerrar oculta el cartel por esta sesión. Omitir conserva la tarea para revisarla.</span></div>'+(RP.error?'<p class="rp-error" role="status">'+esc(RP.error)+'</p>':'');
+  let taskBox=$('#rp-tasks');
+  if(activeNav==='v-perfil'&&!taskBox){taskBox=document.createElement('section');taskBox.id='rp-tasks';taskBox.className='card rp-tasks';$('#panels .panel').prepend(taskBox);}
+  if(taskBox){
+    if(!valid){taskBox.innerHTML='';return;}
+    const inactive=RP.rows.filter(r=>r.estadoAviso!=='pendiente');
+    taskBox.innerHTML='<div class="gc-title"><div><h4>Mis perfiles pendientes</h4><p class="rp-note">Recordatorios personales de los clientes con los que registraste contacto.</p></div><button class="btn ghost" id="rp-refresh" type="button" '+(RP.loading?'disabled':'')+'>Actualizar tareas</button></div>'+
+      (RP.error?'<p class="rp-error" role="status">'+esc(RP.error)+'</p>':'')+
+      (!RP.loaded?'<p>'+(RP.loading?'Revisando tus perfiles…':'Los recordatorios requieren el servidor actualizado.')+'</p>':rows.length?rows.map(r=>rpRow(r,false)).join(''):'<p>No hay recordatorios de perfil pendientes en esta lectura.</p>')+
+      (inactive.length?'<details class="rp-inactive"><summary>Pospuestos u omitidos · '+inactive.length+'</summary>'+inactive.map(r=>rpRow(r,false)).join('')+'</details>':'');
+  }
+}
+async function rpAction(id,action){
+  const item=RP.rows.find(r=>r.id===id);if(!item||RP.busy||RP.owner!==current)return;
+  const who=current;RP.busy=id;RP.error='';rpRender();
+  try{
+    await gcSubmit({tipo:'recordatorioPerfil',idConsulta:id,accionRecordatorio:action,firma:item.firma});
+    if(who!==current)return;
+    await rpLoad(true);
+    gcToast(action==='posponer'?'Te lo recordaremos en una hora.':action==='omitir'?'Aviso omitido. Podés recuperarlo desde Perfil de cliente.':'Recordatorio restaurado.');
+  }catch(e){if(who===current){RP.error=e.message;gcToast(e.message);}}
+  finally{if(who===current){RP.busy='';rpRender();gcPendingNotice();}}
+}
+function rpOpen(id){
+  if(!RP.rows.some(r=>r.id===id)||RP.owner!==current)return;
+  pendingProfileId=id;go('v-perfil');
+  const field=$('#pf-lead');if(field&&LEADS_MODE==='completo'){field.value=id;fillPerfilFromLead(id);field.scrollIntoView({block:'center',behavior:'smooth'});}
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-rp-open],[data-rp-action],#rp-close,#rp-all,#rp-refresh');if(!t)return;
+  if(t.dataset.rpOpen)rpOpen(t.dataset.rpOpen);
+  if(t.dataset.rpAction)rpAction(t.dataset.rpId,t.dataset.rpAction);
+  if(t.id==='rp-close'){RP.closed=rpFingerprint();try{sessionStorage.setItem(rpClosedKey(),RP.closed);}catch(_){}rpRender();}
+  if(t.id==='rp-all'){go('v-perfil');$('#rp-tasks')?.scrollIntoView({block:'start',behavior:'smooth'});}
+  if(t.id==='rp-refresh')rpLoad(true);
+});
+window.addEventListener('focus',()=>{if(current)rpLoad(false);});
 
 /* Trabajo comercial: cliente → actividad → agenda → resultado → próximo paso. */
 let GC={name:'',epoch:0,agenda:[],loaded:false,loading:null,error:'',client:null,detail:null,detailEpoch:0,busy:false,pending:null,selected:'',edit:null,resolve:null,legacy:null};
@@ -2012,7 +2102,7 @@ async function savePerfil(){
   const id=$('#pf-lead').value,m=$('#pfmsg'),who=current;if(!id){m.textContent='Elegí un cliente primero.';return;}
   const perfil={busca:$('#pf-busca').value.trim(),tipo:$('#pf-tipo').value,dorms:$('#pf-dorms').value,banos:$('#pf-banos').value,m2:$('#pf-m2').value.trim(),estado:$('#pf-estado').value,antig:$('#pf-antig').value,presup:$('#pf-presup').value.trim(),pago:$('#pf-pago').value,obs:$('#pf-obs').value.trim()};
   const button=$('#savepf');button.disabled=true;m.textContent='Guardando perfil…';
-  try{await gcSubmit({tipo:'perfil',idConsulta:id,perfil});if(who!==current)return;const l=leadFromId(id);if(l){l.perfil={...perfil,zona:perfil.busca};l.tienePerfil=!!(perfil.busca||perfil.presup||perfil.tipo||perfil.dorms);}fillPerfilSelect();m.textContent='Perfil guardado y confirmado en el CRM. Elegí el próximo paso.';
+  try{await gcSubmit({tipo:'perfil',idConsulta:id,perfil});if(who!==current)return;const l=leadFromId(id);if(l){l.perfil={...perfil,zona:perfil.busca};l.tienePerfil=!!(perfil.busca||perfil.presup||perfil.tipo||perfil.dorms);}fillPerfilSelect();m.textContent='Perfil guardado y confirmado en el CRM. Elegí el próximo paso.';await rpLoad(true);
     let next=$('#gc-profile-next');if(!next){next=document.createElement('div');next.id='gc-profile-next';m.after(next);}next.innerHTML=gcActionButtons({id})+'<button class="text-link" data-client-match="'+esc(id)+'">Buscar alternativas</button>';
   }catch(e){if(who===current)m.textContent=e.message;}finally{if(who===current)button.disabled=false;gcPendingNotice();}
 }
@@ -2087,7 +2177,7 @@ function spEdit(p){SP.selected=p;gcDialog('<div class="gc-title"><h3>'+(SP.admin
 function spResolve(id,reject){const p=SP.propuestas.find(x=>x.id===id);if(!p)return;gcDialog('<div class="gc-title"><h3>'+(reject?'Rechazar propuesta':'Confirmar propuesta')+'</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.propiedad)+'</b> · '+esc(p.unidad)+'</p><p>'+esc(p.anterior)+' → <b>'+esc(p.estado)+'</b></p><p>'+esc(p.solicitante)+' · '+esc(p.fuente)+'</p><p>'+esc(p.motivo)+'</p><p class="rx-note">ID KiteProp propuesto: '+esc(p.kitepropId||'Sin vínculo nuevo')+'</p>'+(p.enlace?'<p class="rx-note">Respaldo: '+esc(p.enlace)+'</p>':'')+'<form id="sp-resolve-form" data-id="'+esc(id)+'" data-resolucion="'+(reject?'rechazar':'aprobar')+'"><label>Comentario de resolución<textarea name="comentario" rows="2" '+(reject?'required':'')+' maxlength="2000"></textarea></label>'+(!reject?'<label class="gc-check"><input name="confirmado" type="checkbox" required> Verifiqué la información y autorizo actualizar el estado.</label>':'')+'<div class="gc-status rx-form-status" role="status"></div><button class="btn" type="submit">'+(reject?'Confirmar rechazo':'Aprobar y actualizar stock')+'</button></form>');}
 async function spHistory(p){const who=current,epoch=SP.epoch;gcDialog('<h3>Historial de '+esc(p.dir)+'</h3><p>Cargando…</p><button class="btn ghost" data-gc-close>Cerrar</button>');try{const d=await crmGet('historialPropiedad',{asesor:who,clave:p.clave});if(who!==current||epoch!==SP.epoch||!$('#gc-dialog').open)return;$('#gc-dialog-body').innerHTML='<div class="gc-title"><h3>Historial de estado</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.dir)+'</b> · '+esc(p.unidad)+'</p>'+d.historial.map(h=>'<div class="sp-request"><b>'+esc(h.anterior)+' → '+esc(h.estado)+'</b><p>'+esc(h.fecha)+' · '+esc(h.responsable)+' · '+esc(h.fuente)+'</p><p>'+esc(h.motivo)+'</p><small>'+esc(h.resultado)+' '+esc(h.detalle)+'</small></div>').join('')+(!d.historial.length?'<p class="rx-note">Todavía no hay cambios de estado registrados desde esta función.</p>':'');}catch(e){if(who===current&&epoch===SP.epoch&&$('#gc-dialog').open)$('#gc-dialog-body').innerHTML='<p class="home-error">'+esc(e.message)+'</p><button class="btn ghost" data-gc-close>Cerrar</button>';}}
 function spInvalidate(){STOCK=null;RX.admin=null;}
-async function gcAfterSave(){const who=current;await gcAfterSaveBaseV29();if(who!==current)return;spInvalidate();BC.loaded=false;if(activeNav==='p-estados')await spLoad();}
+async function gcAfterSave(){const who=current;await gcAfterSaveBaseV29();if(who!==current)return;spInvalidate();BC.loaded=false;await rpLoad(true);if(activeNav==='p-estados')await spLoad();}
 async function rxMessage(id){const a=RX.asignadas.find(x=>x.id===id)||GC.detail?.reactivacion,who=current;if(a?.id===id&&a.propiedadId){try{const d=await crmGet('estadoAlternativa',{asesor:who,id:a.propiedadId,direccion:a.propiedad});if(who!==current)return;if(!d.disponible)return gcToast('La alternativa figura '+d.estado+'. Revisá el stock antes de ofrecerla.');}catch(e){return gcToast('No pudimos verificar la alternativa. Actualizá el stock antes de ofrecerla.');}}return rxMessageBaseV29(id);}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='sp-refresh')spLoad();if(b.id==='sp-open-pending')$('#sp-pending')?.scrollIntoView({behavior:'smooth'});if(b.id==='sp-next'||b.id==='sp-prev'){SP.page+=b.id==='sp-next'?1:-1;spRender();}if(b.dataset.spEdit!==undefined)spEdit(SP.rows[Number(b.dataset.spEdit)]);if(b.dataset.spHistory!==undefined)spHistory(SP.rows[Number(b.dataset.spHistory)]);if(b.dataset.spApprove)spResolve(b.dataset.spApprove,false);if(b.dataset.spReject)spResolve(b.dataset.spReject,true);});
 document.addEventListener('input',e=>{if(e.target.id==='sp-search'){const pos=e.target.selectionStart;SP.q=e.target.value;SP.page=1;spRender();$('#sp-search').focus();$('#sp-search').setSelectionRange(pos,pos);}});
@@ -2318,6 +2408,7 @@ function startApp(name){
   gcReset(name);
   loadFor(name);
   bcReset();
+  rpReset();
   try{const raw=localStorage.getItem(gcRequestKey(name));if(raw)GC.pending=JSON.parse(raw);}catch(_){}
   gcPendingNotice();
   if(activeNav==="v-control"&&!esSupervisor())activeNav="v-leads";
@@ -2328,6 +2419,8 @@ function cambiarAsesor(){
   try{store.set('lurati_acceso','');}catch(e){}
   leadEpoch++;leadRequest=null;closeWhatsappComposer();
   gcReset('');
+  rpReset();
+  const rpBanner=$('#rp-banner');if(rpBanner)rpBanner.hidden=true;
   const pendingNotice=$('#gc-pending');if(pendingNotice)pendingNotice.hidden=true;
   if($('#gc-dialog').open)$('#gc-dialog').close();
   const lock=$('#lockscreen'); if(lock){lock.style.display="flex";const li=$('#lockinput');if(li)li.value="";const lw=$('#lockwho');if(lw&&current)lw.value=current;setTimeout(()=>{if(lw)lw.focus();},100);}
