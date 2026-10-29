@@ -234,6 +234,12 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
 .rx-quick-form [hidden]{display:none!important}
 @media(max-width:760px){.rx-grid,.rx-quick-lead .rx-grid{grid-template-columns:1fr}.rx-card{padding:15px}.rx-quick-form input,.rx-quick-form select,.rx-quick-form textarea,.rx-team-form input{font-size:16px}.rx-quick-lead summary{font-size:13px}.rx-little-actions>*{max-width:100%}}
 
+
+.sp-filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin:18px 0}.sp-filters input,.sp-filters select{width:100%;min-height:42px;border:1px solid #c9d6cf;border-radius:9px;padding:9px 11px;font:inherit;background:#fff;color:var(--ink)}.sp-filters label{display:grid;gap:5px;font-size:12px}.sp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.sp-card{min-width:0}.sp-card h4{overflow-wrap:anywhere}.sp-request{padding:14px 0;border-bottom:1px solid var(--line)}.sp-request p{margin:6px 0;overflow-wrap:anywhere}@media(max-width:720px){.sp-filters,.sp-grid{grid-template-columns:1fr}}
+</style>
+<style>
+.bc-summary{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 20px}.bc-summary span{background:#eef3ef;border:1px solid #d8e2dc;border-radius:10px;padding:12px 15px;font-size:13px}.bc-summary b{color:var(--green);font-size:18px;margin-right:5px}.bc-categories{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}.bc-categories button{border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 13px;border-radius:24px;font:inherit;font-size:13px;cursor:pointer;min-height:42px}.bc-categories button.chosen{background:var(--green);color:#fff;border-color:var(--green)}.bc-categories small{margin-left:7px;opacity:.7}.bc-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}.bc-controls label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:650}.bc-controls input,.bc-controls select{width:100%;min-width:0;height:44px;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--text)}.bc-note{font-size:12px!important;line-height:1.65;color:var(--muted);margin-top:15px}.bc-results-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;font-size:13px}.bc-results-head span{color:var(--muted)}.bc-table-wrap{overflow-x:auto;background:white;border:1px solid var(--line);border-radius:12px}.bc-table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}.bc-table th{background:#f1f4f0;color:var(--green);font-size:11px;padding:14px;text-transform:uppercase;letter-spacing:.04em}.bc-table td{border-top:1px solid var(--line);padding:16px 14px;vertical-align:top;min-width:130px;overflow-wrap:anywhere}.bc-table small{display:block;color:var(--muted);font-size:11px;line-height:1.6;margin-top:5px;max-width:260px}.bc-table td .btn{font-size:12px;white-space:nowrap;padding:9px 12px}.bc-table .bc-pending{color:#995d21}.bc-pager{display:flex;align-items:center;justify-content:center;gap:18px;margin:20px 0;font-size:12px}.bc-detail dl{margin:10px 0 24px}.bc-detail dt{font-size:11px;color:var(--muted);margin-top:15px}.bc-detail dd{margin:5px 0;font-size:14px;overflow-wrap:anywhere;white-space:pre-wrap}@media(max-width:650px){.bc-controls{grid-template-columns:1fr}.bc-summary span{flex:1;min-width:140px}.bc-categories{gap:6px}.bc-categories button{padding:9px 11px;font-size:12px}.bc-table{min-width:0}.bc-table thead{display:none}.bc-table tr{display:block;padding:12px;border-bottom:1px solid var(--line)}.bc-table td{display:block;padding:7px 3px;border:0;min-width:0}.bc-table td:first-child{font-size:16px}.bc-table td:first-child small{display:inline;margin-left:9px}.bc-table td:nth-child(3):before{content:'Presupuesto: ';font-weight:650}.bc-table td:nth-child(4):before{content:'Responsable: ';font-weight:650}.bc-table small{max-width:none}.bc-table td .btn{width:100%;min-height:42px}.bc-pager{gap:12px}}
+
 </style>
 </head>
 <body>
@@ -829,6 +835,7 @@ function renderPanel(){
   else if(id==="v-actividad"){h=activityPanel();}
   else if(id==="v-leads"){h=leadsPanel();}
   else if(id==="v-sugerencias"){h=sugerenciasPanel();}
+  else if(id==="v-busquedas"){h=bcPanel();}
   else if(id==="v-perfil"){h=perfilPanel();}
   else if(id==="v-visitas"){h=visitaPanel();}
   else if(id==="v-agenda"){h=gcAgendaPanel(false);}
@@ -841,16 +848,19 @@ function renderPanel(){
   else if(id==="v-control"&&esSupervisor()){h=controlEquipoPanel();}
   // -------- PROPIEDADES --------
   else if(id==="p-stock"){h=stockPanel();}
+  else if(id==="p-estados"){h=spPanel();}
   P.innerHTML=`<section class="panel active">${h}</section>`;
   // post-render hooks
   if(id==="c-msg")bindReportFooter(id);
   if(id==="c-plan")appendReport();
   if(id==="v-plan")appendReport();
   if(id==="p-stock")loadStock();
+  if(id==="p-estados")spLoad();
   if(id==="v-inicio"){renderHomeContent();loadLeads();}
   if(id==="v-actividad"){renderActivityContent();loadLeads(false,{full:true});}
   if(id==="v-leads")loadLeads();
   if(id==="v-sugerencias")loadSugerencias();
+  if(id==="v-busquedas")bcLoad();
   if(id==="v-perfil")loadLeadsForPerfil();
   if(id==="v-tareas")loadPendientes();
   if(id==="v-control")loadControlEquipo();
@@ -1596,7 +1606,7 @@ const ICON_PATHS={home:'M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-
 function icon(name){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(ICON_PATHS[name]||ICON_PATHS.arrow)+'"/></svg>';}
 const COMMERCIAL_NAV=[
   ['v-inicio','Inicio','home','Tu jornada'],['v-leads','Mis leads','leads','Tu jornada'],['v-tareas','Seguimientos','tasks','Tu jornada'],['v-agenda','Agenda','visits','Tu jornada'],['v-visitas','Visitas','visits','Tu jornada'],
-  ['v-perfil','Perfil de cliente','profile','Herramientas'],['p-stock','Propiedades','stock','Herramientas'],['v-sugerencias','Sugerencias','suggest','Herramientas'],['v-mensajes','Mensajes','messages','Herramientas'],
+  ['v-busquedas','Búsquedas de clientes','leads','Herramientas'],['v-perfil','Perfil de cliente','profile','Herramientas'],['p-stock','Propiedades','stock','Herramientas'],['p-estados','Estado de propiedades','control','Herramientas'],['v-sugerencias','Sugerencias','suggest','Herramientas'],['v-mensajes','Mensajes','messages','Herramientas'],
   ['c-trabajo','Captación','capture','Desarrollo comercial'],['v-actividad','Mi actividad','activity','Desarrollo comercial']
 ];
 function renderNav(){
@@ -1737,6 +1747,127 @@ document.addEventListener('click',async e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.body.classList.remove('menu-open');$('#mobile-more').setAttribute('aria-expanded','false');closeWhatsappComposer();}});
 
+/* v30 · Búsquedas de clientes. No modifica perfiles al clasificar. */
+let BC={owner:'',epoch:0,rows:[],loaded:false,loading:false,error:'',alcance:'',fecha:''};
+let BCF={dorm:'all',budget:'all',seller:'all',status:'all',search:'',page:1};
+function bcNorm(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
+function bcOwner(v){const n=bcNorm(v);return /^tomas(?:\s|$)/.test(n)?'tomas':/^belen(?:\s|$)/.test(n)?'belen':n;}
+function bcDormTokens(value,explicit){
+  let s=bcNorm(value),found=new Set();if(!s)return [];
+  s=s.replace(/\b(un|uno)\b/g,'1').replace(/\bdos\b/g,'2').replace(/\btres\b/g,'3').replace(/\bcuatro\b/g,'4').replace(/\bcinco\b/g,'5');
+  if(/mono(?:ambiente)?|studio/.test(s)||explicit&&/^0(?:\.0)?$/.test(s))found.add('0');
+  if(explicit&&/^\d+(?:\.0)?\+?$/.test(s)){const n=parseInt(s);found.add(n>3?'4+':String(n));}
+  const re=/(\d+)(?:\s*(?:a|al|y|o|\/|–|-)\s*(\d+))?\s*(?:dorm(?:itorio)?s?\.?|hab(?:itacion(?:es)?)?\.?)(?:\b|$)/g;
+  for(const m of s.matchAll(re)){
+    const a=Number(m[1]),b=m[2]?Number(m[2]):a;
+    if(a>10||b>10)continue;
+    if(m[2]&&/\ba\b|\bal\b|–|-/.test(m[0])){for(let n=Math.min(a,b);n<=Math.max(a,b);n++)found.add(n>3?'4+':String(n));}
+    else [a,b].forEach(n=>found.add(n>3?'4+':String(n)));
+  }
+  if(explicit&&/^(?:[0-9]+\s*(?:y|o|\/|–|-)\s*)+[0-9]+$/.test(s))for(const m of s.matchAll(/\d+/g))found.add(Number(m[0])>3?'4+':String(Number(m[0])));
+  if(/mas de (?:3|tres)\s*dorm/.test(s)){found.delete('3');found.add('4+');}
+  return [...found];
+}
+function bcDorm(row){
+  const p=row.perfil||{},explicit=String(p.dorms??'').trim();
+  if(explicit!=='')return {values:bcDormTokens(explicit,true),source:'Perfil',raw:explicit};
+  const text=[p.zona,p.obs].filter(Boolean).join(' · '),v=bcDormTokens(text,false);
+  if(v.length)return {values:v,source:'Texto del perfil · confirmar',raw:text};
+  const named=bcDormTokens(row.propiedad,false);
+  if(named.length)return {values:named,source:'Consulta original · confirmar',raw:row.propiedad};
+  const fromStock=bcDormTokens(row.dormsConsulta,true);
+  return {values:fromStock,source:fromStock.length?'Inmueble consultado · confirmar':'Sin dato',raw:row.dormsConsulta||''};
+}
+function bcBudget(value){
+  const raw=String(value??'').trim(),s=bcNorm(raw);
+  if(!s)return {max:null,raw,reason:'Sin presupuesto'};
+  if(/\bars\b|pesos|\beur\b|euros/.test(s))return {max:null,raw,reason:'Moneda distinta de USD'};
+  if(/\bdesde\b|\ba partir\b|\bminimo\b/.test(s)&&! /\bhasta\b|\bmaximo\b/.test(s))return {max:null,raw,reason:'Falta presupuesto máximo'};
+  const tokens=[...s.matchAll(/\d+(?:[.,]\d+)*\s*(?:k\b|mil\b|millon(?:es)?\b)?/g)];
+  if(!tokens.length||tokens.length>2)return {max:null,raw,reason:'Revisar presupuesto'};
+  const sharedThousand=/k\b|mil\b/.test(s),nums=tokens.map(m=>{
+    let t=m[0],x=t.replace(/[^\d.,]/g,'');
+    if(/^\d{1,3}(?:[.,]\d{3})+$/.test(x))x=x.replace(/[.,]/g,'');
+    else if(x.includes('.')&&x.includes(','))x=x.lastIndexOf(',')>x.lastIndexOf('.')?x.replace(/\./g,'').replace(',','.'):x.replace(/,/g,'');
+    else x=x.replace(',','.');
+    let n=Number(x);if(/millon/.test(t))n*=1e6;else if(/k\b|mil\b/.test(t)||sharedThousand&&n<1000)n*=1000;return n;
+  });
+  if(nums.some(n=>!Number.isFinite(n)||n<1000))return {max:null,raw,reason:'Confirmar si el importe está expresado en miles'};
+  return {max:Math.max(...nums),min:tokens.length===2?Math.min(...nums):0,raw,reason:''};
+}
+function bcPrepare(row){return {...row,dormInfo:bcDorm(row),budgetInfo:bcBudget(row.perfil?.presup)};}
+function bcFiltered(rows,f){return rows.filter(r=>{
+  if(f.dorm!=='all'&&(f.dorm==='unknown'?r.dormInfo.values.length>0:!r.dormInfo.values.includes(f.dorm)))return false;
+  if(f.budget!=='all'){
+    const max=r.budgetInfo.max;
+    if(f.budget==='unknown'){if(max!==null)return false;}
+    else if(f.budget==='over'){if(max===null||max<=500000)return false;}
+    else if(max===null||max>Number(f.budget))return false;
+  }
+  if(f.seller!=='all'&&r.vendedor!==f.seller)return false;
+  if(f.status!=='all'&&r.estado!==f.status)return false;
+  const q=bcNorm(f.search);return !q||bcNorm([r.id,r.nombre,r.tel,r.vendedor,r.propiedad,r.perfil?.zona,r.perfil?.obs].join(' ')).includes(q);
+});}
+function bcDormLabel(values){return values.length?values.map(v=>v==='0'?'Monoambiente':v==='4+'?'Más de 3 dormitorios':v+' dormitorio'+(v==='1'?'':'s')).join(' / '):'Sin dato';}
+function bcMoney(n){return 'USD '+new Intl.NumberFormat('es-AR').format(n);}
+function bcReset(){BC.epoch++;Object.assign(BC,{owner:current,rows:[],loaded:false,loading:false,error:'',alcance:'',fecha:''});BCF={dorm:'all',budget:'all',seller:'all',status:'all',search:'',page:1};}
+function bcPanel(){return '<div class="eyebrow">Compradores y sus necesidades</div><div class="gc-title"><div><h3>Búsquedas de clientes</h3><p class="sub">Encontrá a quién ofrecerle una propiedad según dormitorios y presupuesto.</p></div><button id="bc-refresh" class="btn ghost" type="button">Actualizar listado</button></div><div id="bc-content" aria-live="polite"></div>';}
+async function bcLoad(force){
+  if(BC.owner!==current)bcReset();
+  if(!current){bcRender();return;}
+  if(BC.loading&&!force)return;
+  if(BC.loaded&&!force){bcRender();return;}
+  const who=current,epoch=++BC.epoch;BC.loading=true;BC.error='';bcRender();
+  try{const d=await crmGet('busquedasClientes',{asesor:who});if(who!==current||epoch!==BC.epoch)return;
+    if(!Array.isArray(d.clientes)||!['equipo','propios'].includes(d.alcance))throw new Error('Instalá el código de Apps Script actualizado para habilitar este listado.');
+    BC.rows=d.clientes.map(bcPrepare);BC.loaded=true;BC.alcance=d.alcance;BC.fecha=d.fechaLectura||'';
+  }catch(e){if(who!==current||epoch!==BC.epoch)return;BC.error=e.message;}
+  finally{if(who===current&&epoch===BC.epoch){BC.loading=false;bcRender();}}
+}
+function bcRender(){
+  const el=$('#bc-content');if(!el)return;
+  if(BC.owner!==current){el.innerHTML=empty('Ingresá para consultar tus búsquedas.');return;}
+  if(!current){el.innerHTML=empty('Seleccioná tu nombre para consultar las búsquedas.');return;}
+  if(!BC.loaded){el.innerHTML='<div class="card">'+(BC.error?'<p class="home-error">'+esc(BC.error)+'</p><button id="bc-retry" class="btn ghost">Reintentar</button>':'Cargando búsquedas del CRM…')+'</div>';return;}
+  const sellers=[...new Set(BC.rows.map(r=>r.vendedor))].sort((a,b)=>a.localeCompare(b));
+  const states=[...new Set(BC.rows.map(r=>r.estado).filter(Boolean))].sort();
+  const opts=(arr,selected)=>arr.map(([v,l])=>'<option value="'+esc(v)+'" '+(v===selected?'selected':'')+'>'+esc(l)+'</option>').join('');
+  const amounts=[];for(let n=40000;n<=300000;n+=10000)amounts.push([String(n),'Hasta '+bcMoney(n)]);amounts.push(['400000','Hasta USD 400.000'],['500000','Hasta USD 500.000'],['over','Más de USD 500.000'],['unknown','Sin máximo confirmado']);
+  const missingDorm=BC.rows.filter(r=>!r.dormInfo.values.length).length,missingBudget=BC.rows.filter(r=>r.budgetInfo.max===null).length;
+  el.innerHTML=(BC.error?'<p class="home-error">'+esc(BC.error)+' Se conserva la última lectura.</p>':'')+
+    '<div class="bc-summary"><span><b>'+BC.rows.length+'</b> consultas</span><span><b>'+missingDorm+'</b> sin dormitorios</span><span><b>'+missingBudget+'</b> sin presupuesto máximo confirmado</span></div>'+
+    '<div class="card bc-filter-card"><div class="bc-categories" role="group" aria-label="Cantidad de dormitorios">'+[['all','Todos'],['0','Monoambiente'],['1','1 dormitorio'],['2','2 dormitorios'],['3','3 dormitorios'],['4+','Más de 3'],['unknown','Sin dato']].map(([v,l])=>'<button type="button" data-bc-dorm="'+v+'" aria-pressed="'+(BCF.dorm===v)+'" class="'+(BCF.dorm===v?'chosen':'')+'">'+l+' <small>'+BC.rows.filter(r=>v==='all'||(v==='unknown'?!r.dormInfo.values.length:r.dormInfo.values.includes(v))).length+'</small></button>').join('')+'</div><div class="bc-controls"><label>Presupuesto máximo del cliente<select id="bc-budget">'+opts([['all','Todos los presupuestos'],...amounts],BCF.budget)+'</select></label>'+
+    (BC.alcance==='equipo'?'<label>Responsable<select id="bc-seller">'+opts([['all','Todo el equipo'],...sellers.map(v=>[v,v||'Sin asignar'])],BCF.seller)+'</select></label>':'')+
+    '<label>Estado comercial<select id="bc-status">'+opts([['all','Todos los estados'],...states.map(v=>[v,v])],BCF.status)+'</select></label><label>Buscar cliente, zona o consulta<input id="bc-search" value="'+esc(BCF.search)+'" placeholder="Nombre, zona, propiedad…" type="search"></label></div><p class="bc-note">“Hasta USD 60.000” reúne clientes cuyo presupuesto máximo registrado no supera ese valor. Los filtros se combinan. Las cifras sin unidad clara quedan pendientes de confirmar.</p><button type="button" class="text-link" id="bc-clear">Limpiar filtros</button></div><div id="bc-results"></div><p class="bc-note">'+(BC.alcance==='equipo'?'Vista del equipo para supervisión. Cada asesor gestiona sus propias consultas.':'Se muestran todas tus consultas asignadas, incluidas las antiguas.')+' La referencia “Consulta original” orienta la búsqueda y requiere confirmación del cliente.</p>';
+  bcResults();
+}
+function bcResults(){
+  const el=$('#bc-results');if(!el)return;
+  const rows=bcFiltered(BC.rows,BCF),pages=Math.max(1,Math.ceil(rows.length/40));BCF.page=Math.max(1,Math.min(BCF.page,pages));
+  const start=(BCF.page-1)*40,visible=rows.slice(start,start+40);
+  el.innerHTML='<div class="bc-results-head"><b>'+rows.length+' consulta'+(rows.length===1?'':'s')+' encontrada'+(rows.length===1?'':'s')+'</b><span>'+(rows.length?'Mostrando '+(start+1)+'–'+(start+visible.length):'Sin coincidencias')+'</span></div>'+
+    (visible.length?'<div class="bc-table-wrap"><table class="bc-table"><thead><tr><th>Cliente</th><th>Búsqueda</th><th>Presupuesto</th><th>Responsable y estado</th><th>Detalle</th></tr></thead><tbody>'+visible.map(r=>'<tr><td><b>'+esc(r.nombre)+'</b><small>'+esc(r.id)+'</small></td><td>'+esc(bcDormLabel(r.dormInfo.values))+'<small>'+esc(r.dormInfo.source)+'</small><small>'+esc(r.perfil?.zona||'Zona por confirmar')+'</small></td><td>'+esc(r.budgetInfo.max===null?'Por confirmar':bcMoney(r.budgetInfo.max))+'<small>'+esc(r.budgetInfo.raw||'Sin presupuesto cargado')+'</small>'+(r.budgetInfo.reason?'<small class="bc-pending">'+esc(r.budgetInfo.reason)+'</small>':'')+'</td><td>'+esc(r.vendedor||'Sin asignar')+'<small>'+esc(r.estado||'Sin estado')+'</small></td><td><button type="button" class="btn ghost" data-bc-detail="'+esc(r.id)+'">Ver búsqueda</button></td></tr>').join('')+'</tbody></table></div>':'<div class="card empty">No hay clientes con esta combinación. Podés ampliar los filtros o revisar los datos pendientes.</div>')+
+    '<div class="bc-pager"><button class="btn ghost" id="bc-prev" '+(BCF.page===1?'disabled':'')+'>Anterior</button><span>Página '+BCF.page+' de '+pages+'</span><button class="btn ghost" id="bc-next" '+(BCF.page===pages?'disabled':'')+'>Siguiente</button></div>';
+}
+function bcDetail(id){
+  const r=BC.rows.find(x=>x.id===id);if(!r||BC.owner!==current)return;
+  const p=r.perfil||{},own=bcOwner(current)===bcOwner(r.vendedor);
+  gcDialog('<div class="gc-title"><h3>'+esc(r.nombre)+'</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p>'+esc(r.id)+' · '+esc(r.vendedor)+'</p><div class="bc-detail"><dl>'+[
+    ['Dormitorios',bcDormLabel(r.dormInfo.values)],['Origen del dato',r.dormInfo.source],['Zona',p.zona||'Por confirmar'],['Tipo de inmueble',p.tipo||'Por confirmar'],['Presupuesto registrado',p.presup||'Sin dato'],['Forma de pago',p.pago||'Por confirmar'],['Cochera',p.cochera||'Por confirmar'],['Consulta original',r.propiedad],['Teléfono de la consulta',r.tel||'Sin dato'],['Estado comercial',r.estado||'Sin estado'],['Observaciones del perfil',p.obs||'Sin observaciones']
+  ].map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl></div>'+(own?'<button type="button" class="btn" data-bc-client="'+esc(id)+'">Abrir ficha del cliente</button>':'<p class="bc-note">La gestión continúa con '+esc(r.vendedor||'el responsable asignado')+'.</p>'));
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-bc-dorm],[data-bc-detail],[data-bc-client],#bc-refresh,#bc-retry,#bc-clear,#bc-prev,#bc-next');if(!t)return;
+  if(t.dataset.bcDorm!==undefined){BCF.dorm=t.dataset.bcDorm;BCF.page=1;bcRender();}
+  if(t.dataset.bcDetail)bcDetail(t.dataset.bcDetail);
+  if(t.dataset.bcClient)gcGoClient(t.dataset.bcClient);
+  if(['bc-refresh','bc-retry'].includes(t.id))bcLoad(true);
+  if(t.id==='bc-clear'){BCF={dorm:'all',budget:'all',seller:'all',status:'all',search:'',page:1};bcRender();}
+  if(t.id==='bc-prev'||t.id==='bc-next'){BCF.page+=t.id==='bc-next'?1:-1;bcResults();}
+});
+document.addEventListener('change',e=>{const key={'bc-budget':'budget','bc-seller':'seller','bc-status':'status'}[e.target.id];if(key){BCF[key]=e.target.value;BCF.page=1;bcResults();}});
+document.addEventListener('input',e=>{if(e.target.id==='bc-search'){BCF.search=e.target.value;BCF.page=1;bcResults();}});
+
 /* Trabajo comercial: cliente → actividad → agenda → resultado → próximo paso. */
 let GC={name:'',epoch:0,agenda:[],loaded:false,loading:null,error:'',client:null,detail:null,detailEpoch:0,busy:false,pending:null,selected:'',edit:null,resolve:null,legacy:null};
 function gcReset(name){GC.epoch++;GC.detailEpoch++;Object.assign(GC,{name:name||'',agenda:[],loaded:false,loading:null,error:'',client:null,detail:null,busy:false,pending:null,selected:'',edit:null,resolve:null,legacy:null});}
@@ -1797,7 +1928,7 @@ async function gcResume(){
     if(status.estado==='pendiente')fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(pending)}).catch(()=>{});
     await gcPoll(pending,who,GC.epoch);gcMsg('Guardado confirmado.');await gcAfterSave();}catch(e){gcMsg(e.message,true);}finally{if(who===current)GC.busy=false;gcPendingNotice();}
 }
-async function gcAfterSave(){
+async function gcAfterSaveBaseV29(){
   const who=current;await gcLoadAgenda(true);if(who!==current)return;
   refreshLeadViews();if(activeNav==='v-cliente'&&GC.client)await gcLoadClient(GC.client);
 }
@@ -1941,6 +2072,27 @@ document.addEventListener('change',e=>{
   if(['gc-ag-filter','gc-ag-from','gc-ag-to'].includes(e.target.id))gcRenderAgenda();
   if(e.target.id==='gc-ag-client'&&!GC.edit){const l=leadFromId(e.target.value);if(l)$('#gc-ag-property').value=l.propiedad||'';}
 });
+
+/* Gestión de estados de propiedades. Las propuestas no cambian disponibilidad. */
+let SP={epoch:0,rows:[],propuestas:[],estados:[],admin:false,loaded:false,q:'',estado:'',origen:'',page:1,selected:null};
+function spReset(){SP.epoch++;Object.assign(SP,{rows:[],propuestas:[],estados:[],admin:false,loaded:false,q:'',estado:'',origen:'',page:1,selected:null});}
+function spPanel(){return '<div class="eyebrow">Stock confirmado, propuestas con contexto</div><h3>Estado de propiedades</h3><p class="sub">Disponible, reservada, vendida, pausada o baja: registrá qué cambió y quién lo confirmó. Stefano y Julio aplican los cambios; los vendedores pueden proponerlos.</p><div class="rx-tabs"><button class="btn ghost" id="sp-refresh">Actualizar catálogo</button><button class="btn ghost" id="sp-open-pending">Ver propuestas</button></div><div id="sp-body"></div>';}
+async function spLoad(){const who=current,epoch=++SP.epoch,el=$('#sp-body');if(el)el.innerHTML=empty('Leyendo propiedades y propuestas…');try{const d=await crmGet('propiedadesGestion',{asesor:who});if(who!==current||epoch!==SP.epoch)return;if(!Array.isArray(d.propiedades))throw Error('Actualizá Apps Script a v29 para gestionar estados.');SP.rows=d.propiedades;SP.propuestas=d.propuestas||[];SP.estados=d.estados||[];SP.admin=!!d.puedeAprobar;SP.loaded=true;spRender();}catch(e){if(who===current&&epoch===SP.epoch&&el?.isConnected)el.innerHTML='<p class="home-error">'+esc(e.message)+'</p>';}}
+function spFiltered(){return SP.rows.filter(p=>(!SP.estado||p.estado===SP.estado)&&(!SP.origen||p.origen===SP.origen)&&(!SP.q||normTxt([p.id,p.dir,p.unidad,p.zona,p.kitepropId].join(' ')).includes(normTxt(SP.q))));}
+function spRender(){const el=$('#sp-body');if(!el)return;const rows=spFiltered(),pages=Math.max(1,Math.ceil(rows.length/20));SP.page=Math.max(1,Math.min(pages,SP.page));const pending=SP.propuestas.filter(p=>p.resolucion==='Pendiente');
+ el.innerHTML='<div class="rx-kpis"><span>'+SP.rows.length+' unidades en el catálogo</span><span>'+SP.rows.filter(p=>p.disponible).length+' disponibles según el estado registrado</span><span>'+pending.length+' propuestas pendientes'+(!SP.admin?' propias':'')+'</span></div><p class="rx-profile-note">Los cambios se guardan en las hojas de propiedades del CRM. Reservadas, vendidas, alquiladas, pausadas y bajas salen del stock ofrecible. El vínculo con KiteProp se prepara por ID; esta versión todavía no sincroniza con KiteProp ni modifica sus publicaciones.</p><div class="sp-filters"><label>Buscar<input id="sp-search" value="'+esc(SP.q)+'" placeholder="Dirección, ID, unidad, zona o código KiteProp"></label><label>Estado<select id="sp-state-filter">'+spOptions([...new Set(SP.rows.map(p=>p.estado))].sort(),SP.estado,'Todos')+'</select></label><label>Origen<select id="sp-origin-filter">'+spOptions(['Propia','Constructora'],SP.origen,'Todos')+'</select></label></div><div class="gc-title"><span>'+rows.length+' resultados · '+SP.page+' / '+pages+'</span><div class="gc-inline"><button class="btn ghost" id="sp-prev" '+(SP.page===1?'disabled':'')+'>Anterior</button><button class="btn ghost" id="sp-next" '+(SP.page===pages?'disabled':'')+'>Siguiente</button></div></div><div class="sp-grid">'+rows.slice((SP.page-1)*20,SP.page*20).map(p=>{const i=SP.rows.indexOf(p);return '<article class="card sp-card"><h4>'+esc(p.dir)+'</h4><p class="rx-note">'+esc(p.origen)+' · '+esc(p.id)+' · Unidad '+esc(p.unidad||'por confirmar')+'</p><p><span class="assign-badge '+(p.disponible?'assign-ok':'assign-warn')+'">'+esc(p.estado||'Sin estado')+'</span> '+(!p.disponible?'<small>Fuera del stock ofrecible</small>':'')+'</p><p class="rx-note">KiteProp: '+esc(p.kitepropId||'ID pendiente de vincular')+'<br>'+esc(p.verificada?'Última verificación: '+p.verificada+' · '+p.verificadaPor:'Sin verificación registrada desde la Estación')+'</p>'+(p.ambigua?'<p class="home-error">ID/dirección/unidad duplicados. Corregir identificación antes de editar.</p>':'')+'<div class="gc-inline"><button class="btn" data-sp-edit="'+i+'" '+(p.ambigua?'disabled':'')+'>'+(SP.admin?'Actualizar estado':'Proponer estado')+'</button><button class="btn ghost" data-sp-history="'+i+'" '+(p.ambigua?'disabled':'')+'>Historial</button></div></article>';}).join('')+'</div><div class="card" id="sp-pending"><h4>Propuestas de estado · '+pending.length+'</h4><p class="rx-note">'+(SP.admin?'Revisá la evidencia antes de aplicar. Si el registro cambió, se solicita una nueva revisión.':'Podés ver el resultado de tus propuestas. El estado se mantiene hasta que Stefano o Julio lo aprueben.')+'</p>'+SP.propuestas.slice(0,80).map(p=>'<div class="sp-request"><b>'+esc(p.propiedad)+'</b><p>'+esc(p.anterior)+' → '+esc(p.estado)+' · '+esc(p.resolucion)+'</p><p class="rx-note">'+esc(p.solicitante)+' · '+esc(p.fuente)+' · '+esc(p.motivo)+'</p>'+(p.comentario?'<p class="rx-note">Resolución: '+esc(p.comentario)+'</p>':'')+(SP.admin&&p.resolucion==='Pendiente'?'<div class="gc-inline"><button class="btn" data-sp-approve="'+esc(p.id)+'">Revisar aprobación</button><button class="btn ghost" data-sp-reject="'+esc(p.id)+'">Rechazar</button></div>':'')+'</div>').join('')+(!SP.propuestas.length?empty('Todavía no hay propuestas registradas.'):'')+'</div>';
+}
+function spOptions(arr,value,first){return (first?'<option value="">'+esc(first)+'</option>':'')+arr.map(v=>'<option value="'+esc(v)+'" '+(v===value?'selected':'')+'>'+esc(v)+'</option>').join('');}
+function spEdit(p){SP.selected=p;gcDialog('<div class="gc-title"><h3>'+(SP.admin?'Actualizar estado':'Proponer un estado')+'</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.dir)+'</b><br>'+esc(p.origen)+' · '+esc(p.id)+' · '+esc(p.unidad)+'</p><p>Estado actual: <b>'+esc(p.estado)+'</b></p><form id="sp-edit-form"><label>Nuevo estado<select name="estado" required>'+spOptions(SP.estados,SP.estados.includes(p.estado)?p.estado:'','Elegí un estado')+'</select></label><label>Fuente de verificación<select name="fuente">'+spOptions(['CRM Lurati','Propietario','Constructora','KiteProp verificado','Sabado Cloud'],p.fuente||'CRM Lurati')+'</select></label><label>Motivo / quién lo confirmó<textarea name="motivo" rows="3" required maxlength="2000" placeholder="Ej.: propietario confirmó reserva hoy"></textarea></label><label>Enlace de respaldo, opcional<input name="enlace" type="url" placeholder="Enlace de la ficha o documentación"></label><label>ID KiteProp, opcional<input name="kitepropId" value="'+esc(p.kitepropId)+'" placeholder="KP12345 o 12345" maxlength="30"></label><p class="rx-note">El ID vincula esta unidad para una futura integración. No ingreses claves de API. La verificación y el historial se registran con horario de Rosario.</p>'+(SP.admin?'<label class="gc-check"><input type="checkbox" name="confirmado"> Verifiqué el estado y autorizo aplicarlo al stock.</label>':'')+'<div class="gc-status rx-form-status" role="status" aria-live="polite"></div><div class="gc-inline">'+(SP.admin?'<button class="btn" type="submit" value="aplicar">Guardar estado confirmado</button>':'')+'<button class="btn '+(SP.admin?'ghost':'')+'" type="submit" value="proponer">Enviar propuesta para revisión</button></div></form>');}
+function spResolve(id,reject){const p=SP.propuestas.find(x=>x.id===id);if(!p)return;gcDialog('<div class="gc-title"><h3>'+(reject?'Rechazar propuesta':'Confirmar propuesta')+'</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.propiedad)+'</b> · '+esc(p.unidad)+'</p><p>'+esc(p.anterior)+' → <b>'+esc(p.estado)+'</b></p><p>'+esc(p.solicitante)+' · '+esc(p.fuente)+'</p><p>'+esc(p.motivo)+'</p><p class="rx-note">ID KiteProp propuesto: '+esc(p.kitepropId||'Sin vínculo nuevo')+'</p>'+(p.enlace?'<p class="rx-note">Respaldo: '+esc(p.enlace)+'</p>':'')+'<form id="sp-resolve-form" data-id="'+esc(id)+'" data-resolucion="'+(reject?'rechazar':'aprobar')+'"><label>Comentario de resolución<textarea name="comentario" rows="2" '+(reject?'required':'')+' maxlength="2000"></textarea></label>'+(!reject?'<label class="gc-check"><input name="confirmado" type="checkbox" required> Verifiqué la información y autorizo actualizar el estado.</label>':'')+'<div class="gc-status rx-form-status" role="status"></div><button class="btn" type="submit">'+(reject?'Confirmar rechazo':'Aprobar y actualizar stock')+'</button></form>');}
+async function spHistory(p){const who=current,epoch=SP.epoch;gcDialog('<h3>Historial de '+esc(p.dir)+'</h3><p>Cargando…</p><button class="btn ghost" data-gc-close>Cerrar</button>');try{const d=await crmGet('historialPropiedad',{asesor:who,clave:p.clave});if(who!==current||epoch!==SP.epoch||!$('#gc-dialog').open)return;$('#gc-dialog-body').innerHTML='<div class="gc-title"><h3>Historial de estado</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.dir)+'</b> · '+esc(p.unidad)+'</p>'+d.historial.map(h=>'<div class="sp-request"><b>'+esc(h.anterior)+' → '+esc(h.estado)+'</b><p>'+esc(h.fecha)+' · '+esc(h.responsable)+' · '+esc(h.fuente)+'</p><p>'+esc(h.motivo)+'</p><small>'+esc(h.resultado)+' '+esc(h.detalle)+'</small></div>').join('')+(!d.historial.length?'<p class="rx-note">Todavía no hay cambios de estado registrados desde esta función.</p>':'');}catch(e){if(who===current&&epoch===SP.epoch&&$('#gc-dialog').open)$('#gc-dialog-body').innerHTML='<p class="home-error">'+esc(e.message)+'</p><button class="btn ghost" data-gc-close>Cerrar</button>';}}
+function spInvalidate(){STOCK=null;RX.admin=null;}
+async function gcAfterSave(){const who=current;await gcAfterSaveBaseV29();if(who!==current)return;spInvalidate();BC.loaded=false;if(activeNav==='p-estados')await spLoad();}
+async function rxMessage(id){const a=RX.asignadas.find(x=>x.id===id)||GC.detail?.reactivacion,who=current;if(a?.id===id&&a.propiedadId){try{const d=await crmGet('estadoAlternativa',{asesor:who,id:a.propiedadId,direccion:a.propiedad});if(who!==current)return;if(!d.disponible)return gcToast('La alternativa figura '+d.estado+'. Revisá el stock antes de ofrecerla.');}catch(e){return gcToast('No pudimos verificar la alternativa. Actualizá el stock antes de ofrecerla.');}}return rxMessageBaseV29(id);}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='sp-refresh')spLoad();if(b.id==='sp-open-pending')$('#sp-pending')?.scrollIntoView({behavior:'smooth'});if(b.id==='sp-next'||b.id==='sp-prev'){SP.page+=b.id==='sp-next'?1:-1;spRender();}if(b.dataset.spEdit!==undefined)spEdit(SP.rows[Number(b.dataset.spEdit)]);if(b.dataset.spHistory!==undefined)spHistory(SP.rows[Number(b.dataset.spHistory)]);if(b.dataset.spApprove)spResolve(b.dataset.spApprove,false);if(b.dataset.spReject)spResolve(b.dataset.spReject,true);});
+document.addEventListener('input',e=>{if(e.target.id==='sp-search'){const pos=e.target.selectionStart;SP.q=e.target.value;SP.page=1;spRender();$('#sp-search').focus();$('#sp-search').setSelectionRange(pos,pos);}});
+document.addEventListener('change',e=>{if(e.target.id==='sp-state-filter'||e.target.id==='sp-origin-filter'){if(e.target.id==='sp-state-filter')SP.estado=e.target.value;else SP.origen=e.target.value;SP.page=1;spRender();}});
+document.addEventListener('submit',async e=>{const f=e.target;if(!['sp-edit-form','sp-resolve-form'].includes(f.id))return;e.preventDefault();let payload;if(f.id==='sp-edit-form'){const apply=e.submitter?.value==='aplicar',p=SP.selected;if(apply&&!f.elements.confirmado?.checked){f.querySelector('.rx-form-status').textContent='Confirmá que verificaste el estado antes de aplicarlo.';return;}payload={tipo:apply?'propiedadAplicar':'propiedadProponer',clave:p.clave,version:p.version,estado:f.elements.estado.value,fuente:f.elements.fuente.value,motivo:f.elements.motivo.value,enlace:f.elements.enlace.value,kitepropId:f.elements.kitepropId.value,confirmado:!!f.elements.confirmado?.checked};}else payload={tipo:'propiedadResolver',solicitudId:f.dataset.id,resolucion:f.dataset.resolucion,comentario:f.elements.comentario.value,confirmado:!!f.elements.confirmado?.checked};const who=current,buttons=[...f.querySelectorAll('button[type=submit]')];buttons.forEach(b=>b.disabled=true);const r=await rxSubmitForm(f,payload);buttons.forEach(b=>b.disabled=false);if(r&&who===current){$('#gc-dialog').close();spInvalidate();await spLoad();gcToast(r.aplicado?'Estado actualizado y confirmado en el CRM.':r.rechazada?'Propuesta rechazada.':'Propuesta registrada; el estado actual se conserva.');}});
 
 /* Calificación breve y reactivación por consulta, con guardado confirmado. */
 let RX={epoch:0,admin:null,equipo:[],asignadas:[],error:'',tab:'candidatos'};
@@ -2161,9 +2313,11 @@ function startApp(name){
   closeWhatsappComposer();
   Object.keys(OMITIDOS).forEach(k=>delete OMITIDOS[k]);
   activeNav='v-inicio';mode='venta';
+  spReset();
   rxReset();
   gcReset(name);
   loadFor(name);
+  bcReset();
   try{const raw=localStorage.getItem(gcRequestKey(name));if(raw)GC.pending=JSON.parse(raw);}catch(_){}
   gcPendingNotice();
   if(activeNav==="v-control"&&!esSupervisor())activeNav="v-leads";
@@ -2225,7 +2379,7 @@ function rxAssignmentReview(id){
  const x=RX.admin?.candidatos.find(x=>x.cliente.id===id),card=document.querySelector('[data-rx-candidate="'+CSS.escape(id)+'"]');if(!x||!card)return;const target=card.querySelector('[data-rx-target]').value,prop=card.querySelector('input[type=radio]:checked')?.value||'';if(!target)return gcToast('Elegí el vendedor que recibirá la consulta.');const m=x.alternativas.find(m=>m.propiedad.id===prop);
  gcDialog('<div class="gc-title"><h3>Revisar reasignación</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(x.cliente.nombre)+'</b> · '+esc(id)+'</p><p>Responsable actual: '+esc(x.cliente.vendedor)+' → <b>'+esc(target)+'</b></p><p>'+esc(m?'Alternativa: '+m.propiedad.dir+' · '+rxMoney(m.propiedad):'Modalidad: actualizar búsqueda y presupuesto')+'</p><p class="rx-profile-note">Se registra la reasignación conservando la consulta original y el aviso de correo habitual.</p><form id="rx-confirm-assignment" data-id="'+esc(id)+'" data-target="'+esc(target)+'" data-prop="'+esc(prop)+'" data-mode="'+(m?'alternativa':'busqueda')+'" data-previous="'+esc(x.cliente.vendedor)+'"><label class="rx-check"><input type="checkbox" name="revisionConfirmada" required> Revisé el historial y no hay una gestión vigente que deba continuar.</label>'+(!x.prioritario?'<label class="rx-check"><input type="checkbox" name="continuidadRevisada" required> Revisé la continuidad con el responsable del equipo actual.</label>':'')+'<div class="gc-status rx-form-status" role="status"></div><button type="submit" class="btn">Confirmar asignación a '+esc(target)+'</button></form>');
 }
-async function rxMessage(id){
+async function rxMessageBaseV29(id){
  let a=RX.asignadas.find(x=>x.id===id)||GC.detail?.reactivacion;
  if(a?.id===id&&!a.propiedadId){const l=leadFromId(a.idConsulta)||a.cliente;if(l.estadoAsignacion==='Pendiente de aceptación')return gcToast('Primero aceptá la asignación.');const who=current,epoch=RX.epoch,anchor=document.createElement('a');anchor.dataset.waid=l.id;anchor.className='lead-wa';anchor.href=waLink(l);await openWhatsappComposer(anchor);if(who!==current||epoch!==RX.epoch||WMSG_CTX?.id!==l.id)return;Object.assign(WMSG_CTX,{propiedad:'Búsqueda por actualizar',link:'',tipo:'',precio:'',dorms:'',zona:'',banos:'',m2:'',cochera:'',exterior:'',reactivation:{original:a.propiedadOriginal,busqueda:true}});$('#wmsg-property').textContent='Búsqueda por actualizar';if(![...$('#wmsg-model').options].some(o=>o.value==='Reactivar consulta'))$('#wmsg-model').add(new Option('Reactivar consulta','Reactivar consulta'));$('#wmsg-model').value='Reactivar consulta';refreshWhatsappMessage();updateIosWhatsappLink();return;}
  return rxMessageBaseV28(id);
