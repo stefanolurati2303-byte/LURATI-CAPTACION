@@ -89,7 +89,7 @@ input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18
 </head>
 <body>
 <iframe id="station" src="./estacion-base.html" title="Estación del Asesor"></iframe>
-<button id="newLeadBtn" type="button">+ Cargar lead</button>
+<button id="newLeadBtn" type="button" hidden>+ Cargar lead</button>
 
 <div id="overlay" class="overlay">
   <div class="modal">
@@ -183,6 +183,22 @@ function stationApi(){
   }catch(e){}
   return apiUrl;
 }
+
+// v33 · La carga rápida usa la sesión ya validada de la Estación.
+function stationSession(){try{return frame.contentWindow.LuratiAuth?.session()||null;}catch(_){return null;}}
+const PIN33_FRAME_FETCH=window.fetch.bind(window);
+window.fetch=async function(input,options){
+  const url=new URL(typeof input==='string'?input:input.url,location.href),api=stationApi();
+  if(!api)return PIN33_FRAME_FETCH(input,options);const target=new URL(api);
+  if(url.origin!==target.origin||url.pathname!==target.pathname)return PIN33_FRAME_FETCH(input,options);
+  const s=stationSession();if(!s)throw new Error('Ingresá con tu PIN personal en la Estación.');
+  const opts={...(options||{}),referrerPolicy:'no-referrer'};
+  if(String(opts.method||'GET').toUpperCase()==='POST'){const d=JSON.parse(opts.body);d.token=s.token;opts.body=JSON.stringify(d);}else url.searchParams.set('token',s.token);
+  return PIN33_FRAME_FETCH(url.toString(),opts);
+};
+let pin33LastActor='';
+setInterval(()=>{const s=stationSession(),actor=s?.nombre||'',btn=document.getElementById('newLeadBtn');if(btn)btn.hidden=!s;if(actor===pin33LastActor)return;pin33LastActor=actor;if(!s)closeModal();renderLeadQueue();if(s){loadConfig();processLeadQueue();}},700);
+
 function currentAdvisor(){
   try{
     return frame.contentWindow.eval("typeof current!=='undefined'?current:''")||'';
@@ -219,6 +235,7 @@ function loadLeadQueue(){
     if(!Array.isArray(a))return [];
     return a.slice(-20).map(x=>{
       if(x.status==='sending'||x.status==='checking')x.status='error';
+      if(!x.createdBy){x.status='error';x.error='Carga anterior al PIN: Stefano debe revisar antes de reintentar.';}
       return x;
     });
   }catch(e){return [];}
@@ -235,7 +252,7 @@ function queueLabel(item){
   return 'En espera';
 }
 function renderLeadQueue(){
-  const visible=leadQueue.slice(-6).reverse();
+  const visible=leadQueue.filter(x=>x.createdBy===currentAdvisor()||!x.createdBy&&currentAdvisor()==='Stefano').slice(-6).reverse();
   queuePanel.classList.toggle('show',visible.length>0);
   const pending=leadQueue.filter(x=>['waiting','sending','checking'].includes(x.status)).length;
   const errors=leadQueue.filter(x=>x.status==='error').length;
@@ -250,10 +267,11 @@ function renderLeadQueue(){
     b.onclick=()=>{
       const item=leadQueue.find(x=>x.requestId===b.dataset.retry);
       if(!item)return;
+      if(!item.createdBy&&currentAdvisor()==='Stefano')item.createdBy='Stefano';
       item.status='waiting';item.error='';persistLeadQueue();renderLeadQueue();processLeadQueue();
     };
   });
-  const active=leadQueue.filter(x=>['waiting','sending','checking'].includes(x.status)).length;
+  const active=leadQueue.filter(x=>x.createdBy===currentAdvisor()&&['waiting','sending','checking'].includes(x.status)).length;
   document.getElementById('newLeadBtn').textContent=active?`+ Cargar lead (${active})`:'+ Cargar lead';
 }
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
@@ -266,6 +284,7 @@ async function fetchJsonTimeout(url,ms){
   }finally{clearTimeout(timer);}
 }
 function openModal(){
+  if(!stationSession())return;
   overlay.classList.add('open');
   status.className='status';
   renderChips();
@@ -409,6 +428,7 @@ function duplicateMessage(d){
 async function postLead(item){
   const api=stationApi();
   if(!api)throw new Error('No se encontró la conexión con el CRM.');
+  if(item.createdBy!==stationSession()?.nombre)throw new Error('Volvé a ingresar con el perfil que creó esta carga.');
   await fetch(api,{
     method:'POST',mode:'no-cors',keepalive:true,
     headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -420,7 +440,7 @@ async function postLead(item){
       nombre:item.nombre,
       telefono:item.telefono,
       observaciones:item.observaciones||'',
-      cargadoPor:'Flavia',
+      cargadoPor:currentAdvisor(),
       canal:'WhatsApp'
     })
   });
@@ -448,7 +468,7 @@ async function processLeadQueue(){
   queueProcessing=true;
   try{
     while(true){
-      const item=leadQueue.find(x=>x.status==='waiting');
+      const item=leadQueue.find(x=>x.status==='waiting'&&x.createdBy===currentAdvisor()&&stationSession());
       if(!item)break;
       item.status='sending';item.error='';item.attempts=(item.attempts||0)+1;
       persistLeadQueue();renderLeadQueue();
@@ -456,9 +476,9 @@ async function processLeadQueue(){
         await postLead(item);
         item.status='checking';persistLeadQueue();renderLeadQueue();
         const result=await confirmLead(item);
-        item.status='saved';item.crmId=result.id||'';item.savedAt=Date.now();
+        item.status='saved';item.crmId=result.id||'';item.savedAt=Date.now();item.vendedorFinal=result.vendedor||item.vendedor;
         persistLeadQueue();renderLeadQueue();
-        if(currentAdvisor()===item.vendedor){
+        if(currentAdvisor()===item.vendedorFinal){
           try{frame.contentWindow.eval("LEADS=null; loadLeads();");}catch(e){}
         }
       }catch(e){
@@ -473,6 +493,7 @@ async function processLeadQueue(){
 function enqueueLead(data){
   const item={
     requestId:requestId(),
+    createdBy:currentAdvisor(),
     vendedor:data.vendedor,
     propiedad:data.propiedad,
     nombre:data.nombre,
@@ -512,6 +533,7 @@ async function submit(force){
     telefono:String(phone.value||'').trim(),
     observaciones:String(obsInput.value||'').trim()
   };
+  if(!stationSession())return setStatus('err','Ingresá con tu PIN antes de cargar una consulta.');
   if(!data.vendedor)return setStatus('err','Elegí el vendedor.');
   if(!data.propiedad)return setStatus('err','Elegí o escribí el inmueble.');
   if(!data.nombre)return setStatus('err','Falta el nombre.');
@@ -541,50 +563,8 @@ save.onclick=()=>submit(false);
 renderLeadQueue();
 setTimeout(processLeadQueue,250);
 
-// ---------- Mejora de la Estación: WhatsApp marca Contactado ----------
-function enhanceStation(){
-  let doc;
-  try{doc=frame.contentDocument;}catch(e){return;}
-  if(!doc||doc.__luratiV15)return;
-  doc.__luratiV15=true;
-
-  doc.addEventListener('click',function(e){
-    const a=e.target.closest&&e.target.closest('a.lead-wa');
-    if(!a || a.classList.contains('recontactar'))return;
-
-    const row=a.closest('.leadrow');
-    if(!row)return;
-    const txt=row.textContent||'';
-    const m=txt.match(/C-\d+/i);
-    if(!m)return;
-    const id=m[0];
-
-    // Sólo cambio automático si el lead todavía figura Nuevo.
-    if(!/\bNuevo\b/i.test(txt))return;
-
-    const advisor=currentAdvisor();
-    const api=stationApi();
-    if(api&&advisor){
-      fetch(api,{
-        method:'POST',mode:'no-cors',keepalive:true,
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({accion:'estado',id:id,valor:'Contactado',asesor:advisor})
-      }).catch(()=>{});
-    }
-
-    // Quita signos de apertura invertidos del texto prearmado de WhatsApp.
-    try{
-      const u=new URL(a.href);
-      if(u.searchParams.has('text')){
-        const t=(u.searchParams.get('text')||'').replaceAll('¿','').replaceAll('¡','');
-        u.searchParams.set('text',t);
-        a.href=u.toString();
-      }
-    }catch(_){}
-  },true);
-}
+// v34: el contacto se registra sólo al confirmarlo desde la Estación.
 frame.addEventListener('load',()=>{
-  setTimeout(enhanceStation,250);
   setTimeout(loadConfig,120); // precarga antes de que Flavia toque el botón
   if(new URLSearchParams(location.search).get('modo')==='redes'){
     setTimeout(openModal,280);
@@ -593,3 +573,4 @@ frame.addEventListener('load',()=>{
 </script>
 </body>
 </html>
+
