@@ -291,7 +291,7 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
     <div class="wmsg-field">
       <div class="wmsg-label">Texto editable</div>
       <textarea id="wmsg-text"></textarea>
-      <div class="wmsg-help">Guardar texto lo deja como preferido para este vendedor + propiedad + modelo. La ficha de la propiedad se agrega automáticamente.</div>
+      <div class="wmsg-help" id="wmsg-help">Guardar texto lo deja como preferido para este vendedor + propiedad + modelo. La ficha de la propiedad se agrega automáticamente.</div>
       <details class="wmsg-altbox" id="wmsg-altbox">
         <summary>Frases alternativas para copiar</summary>
         <div class="wmsg-altintro">Espacio de apoyo para el vendedor. No modifica el mensaje principal salvo que copie y pegue una frase.</div>
@@ -309,8 +309,8 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
     </div>
     <div id="wmsg-ios-note" class="wmsg-help" style="display:none;margin-top:8px"></div>
     <button id="wmsg-ios-copy-phone" type="button" style="display:none;margin-top:6px;border:0;background:transparent;color:var(--green);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:5px 0">Copiar número del cliente</button>
-    <button id="wmsg-confirm-contact" class="wmsg-confirm" type="button">Confirmar contacto realizado</button>
-    <div class="wmsg-help">Confirmá después de enviar el mensaje o hablar con el cliente.</div>
+    <button id="wmsg-confirm-contact" class="wmsg-confirm" type="button">Ya envié el mensaje</button>
+    <div class="wmsg-help">Después de enviar el mensaje, confirmalo acá: Nuevo pasa a Contactado. Abrir el chat no modifica el estado ni acredita una respuesta del cliente.</div>
     <details class="gc-detail"><summary>Continuar trabajo con este cliente</summary><div id="gc-wa-next" class="gc-inline"></div></details>
     <div id="wmsg-status" role="status" aria-live="polite"></div>
   </div>
@@ -385,12 +385,13 @@ function pin33Ticket(){const a=new Uint8Array(32);crypto.getRandomValues(a);retu
 function pin33Msg(message){const e=document.getElementById('lockerr');if(e)e.textContent=message||'';}
 function pin33Remember(s){Object.assign(PIN33,s);try{sessionStorage.setItem(PIN33_KEY,JSON.stringify(s));}catch(_){};}
 function pin33Lock(message){
+  if(typeof ED!=='undefined'){ED.lead=ED.prop=null;ED.epoch++;}
   Object.assign(PIN33,{token:'',nombre:'',expires:0});try{sessionStorage.removeItem(PIN33_KEY);localStorage.removeItem('lurati_acceso');}catch(_){}
   leadEpoch++;leadRequest=null;LEADS=null;CONTROL_LEADS=null;WMSG_CTX=null;GC.epoch++;GC.name='';GC.pending=null;GC.agenda=[];GC.anteriores=[];GC.detail=null;GC.loaded=false;RP.epoch++;RX.epoch++;SP.epoch++;BC.epoch++;current='';state=blank();dirReset();
   const panel=document.getElementById('panels');if(panel)panel.innerHTML='';
   for(const id of ['rp-banner','gc-pending','pin33-admin']){const el=document.getElementById(id);if(el)el.hidden=true;}
   const dialog=document.getElementById('gc-dialog');if(dialog?.open)dialog.close();
-  const modal=document.getElementById('wmsg-overlay');if(modal)modal.style.display='none';
+  const modal=document.getElementById('wmsg-overlay');if(modal){modal.style.display='none';modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
   const lock=document.getElementById('lockscreen');if(lock)lock.style.display='flex';const input=document.getElementById('lockinput');if(input)input.value='';
   pin33Msg(message);window.dispatchEvent(new CustomEvent('lurati-auth-changed'));
 }
@@ -548,7 +549,7 @@ function iosWhatsappData(){
   if(!WMSG_CTX)return null;
   const tel=String(WMSG_CTX.telefono||'').replace(/\D/g,'');
   const textarea=$('#wmsg-text');
-  const texto=withPropertyLink(textarea?textarea.value:'',WMSG_CTX.link).trim();
+  const texto=wmsgMessageText(textarea?textarea.value:'').trim();
   if(!tel||!texto)return null;
   return {tel:tel,texto:texto,url:buildWhatsappOpenUrl('business',tel,texto)};
 }
@@ -627,7 +628,7 @@ function buildWhatsappOpenUrl(destino,tel,texto){
   return 'https://wa.me/'+phone+'?text='+enc;
 }
 function wmsgNorm(s){return normTxt(String(s||'')).replace(/\s+/g,' ').trim();}
-function wmsgKey(ctx,modelo){return 'lurati_wmsg_'+wmsgNorm(ctx.vendedor)+'__'+wmsgNorm(ctx.propiedad)+'__'+wmsgNorm(modelo);}
+function wmsgKey(ctx,modelo){return 'lurati_wmsg_'+wmsgNorm(ctx.vendedor)+'__'+(modelo==='Recontacto'?'cliente_'+wmsgNorm(ctx.id||ctx.telefono):wmsgNorm(ctx.propiedad))+'__'+wmsgNorm(modelo);}
 function getLocalSavedMsg(ctx,modelo){try{return localStorage.getItem(wmsgKey(ctx,modelo))||'';}catch(e){return '';}}
 function setLocalSavedMsg(ctx,modelo,texto){try{localStorage.setItem(wmsgKey(ctx,modelo),texto||'');}catch(e){}}
 function decodeWhatsappHref(href){
@@ -766,8 +767,9 @@ function refreshWhatsappMessage(){
   const modelo=$('#wmsg-model').value;
   const local=getLocalSavedMsg(WMSG_CTX,modelo);
   const base=local || defaultWhatsappMessage(WMSG_CTX,modelo);
-  $('#wmsg-text').value=withPropertyLink(base,WMSG_CTX.link);
-  wmsgStatus(local?'ok':'', local?'Texto guardado recuperado con la ficha de la propiedad.':'Mensaje listo. Podés editarlo antes de enviarlo.');
+  $('#wmsg-text').value=wmsgMessageText(base);
+  wmsgModelHelp(modelo);
+  wmsgStatus(local?'ok':'', local?'Texto guardado recuperado.':'Mensaje listo. Podés editarlo antes de enviarlo.');
 }
 function leadFromId(id){return LEADS&&LEADS.find(x=>String(x.id||'').toLowerCase()===String(id||'').toLowerCase());}
 async function openWhatsappComposer(a){
@@ -786,8 +788,11 @@ async function openWhatsappComposer(a){
   $('#gc-wa-next').innerHTML='<button type="button" class="btn ghost" data-client="'+esc(WMSG_CTX.id)+'">Ficha del cliente</button><button type="button" class="btn ghost" data-schedule="'+esc(WMSG_CTX.id)+'">Agendar próximo paso</button>';
   $('#wmsg-client').textContent=(WMSG_CTX.nombre||'Cliente')+(WMSG_CTX.id?' · '+WMSG_CTX.id:'');
   $('#wmsg-property').textContent=WMSG_CTX.propiedad||'Propiedad consultada';
-  $('#wmsg-model').value='Corto y formal';
+  wmsgConfigureModels();
+  waResetConfirmButton();
+  $('#wmsg-overlay').style.display='';
   $('#wmsg-overlay').classList.add('open');
+  $('#wmsg-overlay').setAttribute('aria-hidden','false');
   renderWhatsappAltPhrases();
   const altBox=$('#wmsg-altbox');if(altBox)altBox.open=false;
   updateWhatsappChannelButtons();
@@ -805,11 +810,11 @@ async function openWhatsappComposer(a){
     // Si el vendedor no cambió el texto mientras cargaba, regeneramos el modelo.
     // Si ya estaba editando, solo agregamos la ficha al final sin pisar su trabajo.
     if(actual===before) refreshWhatsappMessage();
-    else $('#wmsg-text').value=withPropertyLink(actual,WMSG_CTX.link);
+    else $('#wmsg-text').value=wmsgMessageText(actual);
   }
   updateIosWhatsappLink();
 }
-function closeWhatsappComposer(){const el=$('#wmsg-overlay');if(el)el.classList.remove('open');}
+function closeWhatsappComposer(){const el=$('#wmsg-overlay');if(el){el.classList.remove('open');el.setAttribute('aria-hidden','true');}}
 function saveWhatsappText(){
   if(!WMSG_CTX)return;
   const modelo=$('#wmsg-model').value;
@@ -827,7 +832,7 @@ function registrarWhatsappPreparado(ctx,texto,url,destino){
 function sendWhatsappPrepared(destino){
   if(isIOS()){wmsgStatus('err','En iPhone, usá «Abrir chat en iPhone» o «Copiar para Business».');return;}
   if(!WMSG_CTX)return;
-  const texto=withPropertyLink($('#wmsg-text').value,WMSG_CTX.link).trim();
+  const texto=wmsgMessageText($('#wmsg-text').value).trim();
   if(!texto){wmsgStatus('err','El texto está vacío.');return;}
   const tel=String(WMSG_CTX.telefono||'').replace(/\D/g,'');
   if(!tel){wmsgStatus('err','No encontré teléfono para WhatsApp.');return;}
@@ -933,6 +938,7 @@ function renderPanel(){
   else if(id==="v-actividad"){h=activityPanel();}
   else if(id==="v-leads"){h=leadsPanel();}
   else if(id==="v-sugerencias"){h=sugerenciasPanel();}
+  else if(id==="v-editar"){h=edPanel();}
   else if(id==="v-direccion"){h=dirPanel();}
   else if(id==="v-busquedas"){h=bcPanel();}
   else if(id==="v-perfil"){h=perfilPanel();}
@@ -1041,7 +1047,7 @@ function visitaPanelAnterior(){
   <div id="vimsg" style="font-size:13px;color:var(--muted);margin-bottom:8px"></div><div id="vilist"></div></div>`;
 }
 function stockPanel(){
-  let r=`<div class="eyebrow">Stock real del CRM</div><h3>Propiedades en venta</h3><p class="sub">Elegí el tipo y afiná con los filtros. Se lee del CRM en vivo.</p>`;
+  let r=`<div class="gc-inline"><button type="button" class="btn ghost" data-go="p-estados">Cargar y gestionar fichas / captadores</button></div><div class="eyebrow">Stock real del CRM</div><h3>Propiedades en venta</h3><p class="sub">Elegí el tipo y afiná con los filtros. Se lee del CRM en vivo.</p>`;
   r+=`<div class="proptypes" id="ptypes">`+PTYPES.map((t,i)=>`<button class="ptbtn ${t===stockType?'active':''}" data-pt="${t}">${t}</button>`).join("")+`</div>`;
   r+=`<div class="subfilter" id="subfilter"></div>`;
   r+=`<div class="card"><div id="stocklist"><div class="empty">Cargando propiedades…</div></div></div>`;
@@ -1666,13 +1672,14 @@ const ICON_PATHS={home:'M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-
 function icon(name){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(ICON_PATHS[name]||ICON_PATHS.arrow)+'"/></svg>';}
 const COMMERCIAL_NAV=[['v-inicio','Hoy','home'],['v-leads','Clientes','leads'],['v-agenda','Agenda','visits'],['p-stock','Propiedades','stock']];
 function clGrupoNav(id){
-  if(id==='v-cliente'||id==='v-perfil'||id==='v-recuperar')return 'v-leads';
+  if(id==='v-cliente'||id==='v-perfil'||id==='v-recuperar'||id==='v-editar')return 'v-leads';
   if(id==='v-visitas')return 'v-agenda';
   if(id==='p-estados')return 'p-stock';
   return id;
 }
 function renderNav(){
   const extras=[['v-tareas','Pendientes de clientes','tasks'],['v-perfil','Perfiles por completar','profile'],['v-recuperar','Mis reactivaciones','leads'],['v-sugerencias','Buscar alternativas','suggest'],['v-mensajes','Modelos de mensajes','messages'],['p-estados','Estado de propiedades','control'],['c-trabajo','Captación','capture'],['v-actividad','Mi actividad','activity']];
+  if(['Stefano','Flavia'].includes(current))extras.push(['v-editar','Corregir consultas','leads']);
   if(bcSoloStefano())extras.push(['v-busquedas','Búsquedas de clientes','leads']);
   const equipo=[];if(current==='Stefano')equipo.push(['v-direccion','Dirección comercial','activity'],['v-reactivar','Reactivación y equipo','suggest']);if(esSupervisor())equipo.push(['v-control','Supervisión','control']);
   const guides=[['v-guion','Conversación con compradores'],['v-obj','Objeciones de venta'],['v-plan','Proceso de venta'],['c-guion','Conversación de captación'],['c-msg','Mensajes de captación'],['c-obj','Objeciones de captación'],['c-check','Datos para captar'],['c-plan','Proceso de captación']];
@@ -1687,6 +1694,7 @@ function renderNav(){
 
 function go(id){
   if(activeNav==='v-cliente'&&id!=='v-cliente'&&!clMayLeave())return;
+  if(id==='v-editar'&&!edCanLead())return;
   if(id==='v-direccion'&&current!=='Stefano')return;
   if(id==='v-busquedas'&&!bcSoloStefano())return;
   if(id==='v-control'&&!esSupervisor())return;
@@ -1781,7 +1789,7 @@ async function loadSugerencias(){await loadLeads(false,{full:true});if(LEADS_MOD
 const MESSAGE_MODELS=['Corto y formal','Comercial','Descriptivo con detalles','Perfilador'];
 function messagesPanel(){
   const ctx={vendedor:current,nombre:'[NOMBRE]',propiedad:'[PROPIEDAD]',link:'[LINK DE LA PROPIEDAD]',tipo:'[TIPO]',zona:'[ZONA]',dorms:'[DORMITORIOS]',banos:'[BAÑOS]',m2:'[SUPERFICIE]',cochera:'[COCHERA]',precio:'[VALOR]'};
-  return '<div class="eyebrow">Herramientas para conversar</div><h3>Mensajes</h3><p class="sub">Cuatro modelos para orientar la conversación. Desde cada lead se completan con los datos del cliente y la ficha de su propiedad.</p><div class="card">'+MESSAGE_MODELS.map((m,i)=>'<details class="message-model" '+(!i?'open':'')+'><summary>'+m+'</summary><pre>'+esc(defaultWhatsappMessage(ctx,m))+'</pre><button type="button" class="btn ghost" data-copy-model="'+i+'">Copiar modelo</button></details>').join('')+'</div><details class="card"><summary style="cursor:pointer;font-weight:600">Frases alternativas para copiar · 15</summary><p class="local-note">Elegí una frase según la conversación. No se agrega automáticamente al mensaje.</p><div class="messages-phrases">'+WMSG_ALT_PHRASES.map((p,i)=>'<div class="wmsg-phrase"><span>'+esc(p)+'</span><button type="button" class="wmsg-copy-phrase" data-phrase="'+i+'">Copiar</button></div>').join('')+'</div></details>';
+  return '<div class="eyebrow">Herramientas para conversar</div><h3>Mensajes</h3><p class="sub">'+(wmsgHasRecontacto()?'Cinco modelos para orientar la conversación. Recontacto retoma la búsqueda sin agregar la propiedad anterior.':'Cuatro modelos para orientar la conversación. Desde cada lead se completan con los datos del cliente y la ficha de su propiedad.')+'</p><div class="card">'+wmsgModels().map((m,i)=>'<details class="message-model" '+(!i?'open':'')+'><summary>'+m+'</summary><pre>'+esc(defaultWhatsappMessage(ctx,m))+'</pre><button type="button" class="btn ghost" data-copy-model="'+i+'">Copiar modelo</button></details>').join('')+'</div><details class="card"><summary style="cursor:pointer;font-weight:600">Frases alternativas para copiar · 15</summary><p class="local-note">Elegí una frase según la conversación. No se agrega automáticamente al mensaje.</p><div class="messages-phrases">'+WMSG_ALT_PHRASES.map((p,i)=>'<div class="wmsg-phrase"><span>'+esc(p)+'</span><button type="button" class="wmsg-copy-phrase" data-phrase="'+i+'">Copiar</button></div>').join('')+'</div></details>';
 }
 function activityPanel(){return '<div class="eyebrow">Tu trabajo registrado</div><h3>Mi actividad</h3><p class="sub">Revisá el estado de tus consultas y los registros de captación y visitas.</p><div id="activity-content"></div>';}
 function renderActivityContent(){
@@ -1790,14 +1798,6 @@ function renderActivityContent(){
   el.innerHTML='<div class="scope-note"><span>'+(LEADS_MODE==='completo'?'Historial completo de tus consultas.':'Cargando el historial completo…')+'</span></div><div class="metric-grid">'+[['Consultas asignadas',total],['En gestión',LEADS?list.filter(enGestion).length:'—'],['Con perfil',LEADS_MODE==='completo'?list.filter(l=>l.tienePerfil).length:'—'],['Visitas registradas',GC.loaded?GC.agenda.filter(a=>a.tipo==='Visita').length:'—']].map((m,i)=>'<div class="metric"><span class="value">'+m[1]+'</span><span class="label">'+m[0]+'</span><small>'+(i===3?'En el CRM':'En las consultas cargadas')+'</small></div>').join('')+'</div><div class="activity-grid"><div class="card"><h4>Captación</h4><p>'+state.contacts.filter(c=>c.contacted).length+' contactos activados · '+state.opps.length+' oportunidades registradas.</p><p class="local-note">Registros disponibles en este dispositivo.</p><button class="btn ghost" data-go="c-trabajo">Ver oportunidades</button></div><div class="card"><h4>Tu proceso de trabajo</h4>'+TASKS_V.map((t,i)=>'<div class="task '+(state.tasksV[i]?'checked':'')+'" data-task="'+i+'"><div class="box">'+tick+'</div><span class="txt">'+esc(t)+'</span></div>').join('')+'</div></div>'+(leadError?'<div class="home-error">'+esc(leadError)+' <button class="text-link" id="reloadleads">Reintentar</button></div>':'');
 }
 function leadHistory(){go('v-leads');loadLeads(true,{full:true});}
-function confirmWhatsappContactAnterior(){
-  if(!WMSG_CTX||!WMSG_CTX.id)return;
-  const l=leadFromId(WMSG_CTX.id);if(!l)return;
-  if(l.estadoAsignacion==='Pendiente de aceptación'){wmsgStatus('err','Primero aceptá la asignación desde Mis leads.');return;}
-  if(WMSG_CTX.isRecontactar)setEstado(l.id,'Seguimiento');
-  else if(esNoContactado(l))setEstado(l.id,'Contactado');
-  wmsgStatus('ok','Contacto registrado. Continuá con el perfil o la próxima visita.');
-}
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button');
   if(!b)return;
@@ -2162,12 +2162,45 @@ async function savePerfil(){
     let next=$('#gc-profile-next');if(!next){next=document.createElement('div');next.id='gc-profile-next';m.after(next);}next.innerHTML=gcActionButtons({id})+'<button class="text-link" data-client-match="'+esc(id)+'">Buscar alternativas</button>';
   }catch(e){if(who===current)m.textContent=e.message;}finally{if(who===current)button.disabled=false;gcPendingNotice();}
 }
-async function confirmWhatsappContact(){
-  const ctx=WMSG_CTX;if(!ctx?.id)return;const l=leadFromId(ctx.id);if(l?.estadoAsignacion==='Pendiente de aceptación'){wmsgStatus('err','Primero aceptá el lead.');return;}
-  const who=current,b=$('#wmsg-confirm-contact');b.disabled=true;wmsgStatus('','Registrando contacto…');
-  try{await gcSubmit({tipo:'contacto',idConsulta:ctx.id,canal:'WhatsApp',resultado:ctx.isRecontactar?'Seguimiento':'Contactado',comentario:'El asesor confirmó el contacto después de abrir WhatsApp.'});if(who!==current||WMSG_CTX!==ctx)return;wmsgStatus('ok','Contacto confirmado en el CRM. Agendá el próximo paso o completá el perfil.');await gcAfterSave();}
-  catch(e){if(who===current&&WMSG_CTX===ctx)wmsgStatus('err',e.message);}finally{if(who===current)b.disabled=false;gcPendingNotice();}
+function waResetConfirmButton(){
+  const b=$('#wmsg-confirm-contact');if(b){b.disabled=false;b.textContent='Ya envié el mensaje';}
 }
+function waMostrarEstado(id,estado){
+  if(!estado)return;const l=leadFromId(id);if(l)l.estado=estado;
+  if(GC.detail?.cliente?.id===id)GC.detail.cliente.estado=estado;
+  if(activeNav==='v-cliente'&&GC.client===id){const tag=$('#gc-client .gc-client-summary .tag');if(tag)tag.textContent=estado;}
+}
+async function waConfirmarEnvio(id,button,status,active){
+  if(!id||!button||button.disabled)return;
+  const who=current;let done=false;button.disabled=true;status('','Registrando el envío confirmado…');
+  const valid=()=>current===who&&(!active||active());
+  try{
+    const r=await gcSubmit({tipo:'contactoWhatsapp',idConsulta:id,canal:'WhatsApp',resultado:'Contactado',comentario:'El asesor confirmó que ya envió el mensaje por WhatsApp. Esta confirmación no acredita una respuesta del cliente.'});
+    if(!valid())return;
+    done=true;button.textContent='Envío registrado';waMostrarEstado(id,r.estadoCliente);
+    status('ok','Envío registrado. Estado del cliente: '+(r.estadoCliente||'sin cambios')+'.');
+    gcToast('Envío por WhatsApp registrado'+(r.estadoCliente?' · '+r.estadoCliente:'.'));
+    await gcAfterSave();return r;
+  }catch(e){
+    if(valid())status('err',/Acción no válida/.test(e.message)?'Actualizá Apps Script a v36 para registrar el envío confirmado.':e.message);
+  }finally{if(valid())button.disabled=done;gcPendingNotice();}
+}
+async function confirmWhatsappContact(){
+  const ctx=WMSG_CTX;if(!ctx?.id)return;
+  const l=leadFromId(ctx.id);if(l?.estadoAsignacion==='Pendiente de aceptación'){wmsgStatus('err','Primero aceptá la consulta.');return;}
+  return waConfirmarEnvio(ctx.id,$('#wmsg-confirm-contact'),(kind,msg)=>{if(WMSG_CTX===ctx)wmsgStatus(kind,msg);},()=>WMSG_CTX===ctx);
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.waVisit){
+    const status=(kind,msg)=>{const el=$('#wa-visit-status');if(el){el.textContent=msg;el.className='gc-status'+(kind==='err'?' error':'');}};
+    return waConfirmarEnvio(b.dataset.waVisit,b,status,()=>b.isConnected);
+  }
+  if(b.dataset.waFirst){
+    return waConfirmarEnvio(b.dataset.waFirst,b,(kind,msg)=>gcMsg(msg,kind==='err'),()=>b.isConnected);
+  }
+});
+
 function gcToast(msg){const el=$('#gc-toast');el.textContent=msg;el.hidden=false;setTimeout(()=>{el.hidden=true;},6500);}
 function gcCalendar(a){
   const escape=s=>String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'),stamp=d=>new Date(d).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z/,'Z');
@@ -2177,7 +2210,7 @@ function gcCalendar(a){
 function gcVisitMessage(a){
   const text='Hola '+a.cliente.split(' ')[0]+', soy '+current+' de Lurati Consultora Inmobiliaria.\n\n'+(a.estado==='Confirmada'?'Te confirmo nuestra visita':'Te propongo visitar')+' a '+a.propiedad+' el '+gcWhen(a)+'.\n\n'+(a.estado==='Confirmada'?'Nos encontramos en el ingreso del inmueble. Si necesitás reprogramar, escribime por acá.':'¿Te queda cómodo ese horario para confirmarla?');
   const url='https://wa.me/'+String(a.tel).replace(/\D/g,'')+'?text='+encodeURIComponent(text);
-  gcDialog('<div class="gc-title"><h3>Mensaje de visita</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p class="local-note">Revisá el texto antes de abrir WhatsApp. La apertura no registra el envío.</p><textarea id="gc-visit-message" rows="7">'+esc(text)+'</textarea><a id="gc-visit-message-link" class="btn" target="_blank" rel="noopener" href="'+esc(url)+'">Abrir chat del cliente</a><button class="btn ghost" id="gc-visit-copy">Copiar mensaje</button>');
+  gcDialog('<div class="gc-title"><h3>Mensaje de visita</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p class="local-note">Revisá el texto antes de abrir WhatsApp. La apertura no registra el envío.</p><textarea id="gc-visit-message" rows="7">'+esc(text)+'</textarea><a id="gc-visit-message-link" class="btn" target="_blank" rel="noopener" href="'+esc(url)+'">Abrir chat del cliente</a><button class="btn ghost" id="gc-visit-copy">Copiar mensaje</button><button type="button" class="btn" data-wa-visit="'+esc(a.idConsulta)+'">Ya envié el mensaje</button><div id="wa-visit-status" class="gc-status" role="status"></div>');
   const ta=$('#gc-visit-message');ta.addEventListener('input',()=>$('#gc-visit-message-link').href='https://wa.me/'+String(a.tel).replace(/\D/g,'')+'?text='+encodeURIComponent(ta.value));
 }
 document.addEventListener('submit',async e=>{
@@ -2222,11 +2255,11 @@ document.addEventListener('change',e=>{
 /* Gestión de estados de propiedades. Las propuestas no cambian disponibilidad. */
 let SP={epoch:0,rows:[],propuestas:[],estados:[],admin:false,loaded:false,q:'',estado:'',origen:'',page:1,selected:null};
 function spReset(){SP.epoch++;Object.assign(SP,{rows:[],propuestas:[],estados:[],admin:false,loaded:false,q:'',estado:'',origen:'',page:1,selected:null});}
-function spPanel(){return '<div class="eyebrow">Stock confirmado, propuestas con contexto</div><h3>Estado de propiedades</h3><p class="sub">Disponible, reservada, vendida, pausada o baja: registrá qué cambió y quién lo confirmó. Stefano y Julio aplican los cambios; los vendedores pueden proponerlos.</p><div class="rx-tabs"><button class="btn ghost" id="sp-refresh">Actualizar catálogo</button><button class="btn ghost" id="sp-open-pending">Ver propuestas</button></div><div id="sp-body"></div>';}
+function spPanel(){return (edCanProp()?'<button type="button" class="btn" id="ed-prop-new">+ Cargar propiedad / unidad</button>':'')+'<div class="eyebrow">Stock confirmado, propuestas con contexto</div><h3>Estado de propiedades</h3><p class="sub">Disponible, reservada, vendida, pausada o baja: registrá qué cambió y quién lo confirmó. Flavia, Stefano y Julio pueden cargar nuevas unidades. Stefano y Julio editan las fichas y confirman estados; los vendedores pueden proponerlos.</p><div class="rx-tabs"><button class="btn ghost" id="sp-refresh">Actualizar catálogo</button><button class="btn ghost" id="sp-open-pending">Ver propuestas</button></div><div id="sp-body"></div>';}
 async function spLoad(){const who=current,epoch=++SP.epoch,el=$('#sp-body');if(el)el.innerHTML=empty('Leyendo propiedades y propuestas…');try{const d=await crmGet('propiedadesGestion',{asesor:who});if(who!==current||epoch!==SP.epoch)return;if(!Array.isArray(d.propiedades))throw Error('Actualizá Apps Script a v29 para gestionar estados.');SP.rows=d.propiedades;SP.propuestas=d.propuestas||[];SP.estados=d.estados||[];SP.admin=!!d.puedeAprobar;SP.loaded=true;spRender();}catch(e){if(who===current&&epoch===SP.epoch&&el?.isConnected)el.innerHTML='<p class="home-error">'+esc(e.message)+'</p>';}}
 function spFiltered(){return SP.rows.filter(p=>(!SP.estado||p.estado===SP.estado)&&(!SP.origen||p.origen===SP.origen)&&(!SP.q||normTxt([p.id,p.dir,p.unidad,p.zona,p.kitepropId].join(' ')).includes(normTxt(SP.q))));}
 function spRender(){const el=$('#sp-body');if(!el)return;const rows=spFiltered(),pages=Math.max(1,Math.ceil(rows.length/20));SP.page=Math.max(1,Math.min(pages,SP.page));const pending=SP.propuestas.filter(p=>p.resolucion==='Pendiente');
- el.innerHTML='<div class="rx-kpis"><span>'+SP.rows.length+' unidades en el catálogo</span><span>'+SP.rows.filter(p=>p.disponible).length+' disponibles según el estado registrado</span><span>'+pending.length+' propuestas pendientes'+(!SP.admin?' propias':'')+'</span></div><p class="rx-profile-note">Los cambios se guardan en las hojas de propiedades del CRM. Reservadas, vendidas, alquiladas, pausadas y bajas salen del stock ofrecible. El vínculo con KiteProp se prepara por ID; esta versión todavía no sincroniza con KiteProp ni modifica sus publicaciones.</p><div class="sp-filters"><label>Buscar<input id="sp-search" value="'+esc(SP.q)+'" placeholder="Dirección, ID, unidad, zona o código KiteProp"></label><label>Estado<select id="sp-state-filter">'+spOptions([...new Set(SP.rows.map(p=>p.estado))].sort(),SP.estado,'Todos')+'</select></label><label>Origen<select id="sp-origin-filter">'+spOptions(['Propia','Constructora'],SP.origen,'Todos')+'</select></label></div><div class="gc-title"><span>'+rows.length+' resultados · '+SP.page+' / '+pages+'</span><div class="gc-inline"><button class="btn ghost" id="sp-prev" '+(SP.page===1?'disabled':'')+'>Anterior</button><button class="btn ghost" id="sp-next" '+(SP.page===pages?'disabled':'')+'>Siguiente</button></div></div><div class="sp-grid">'+rows.slice((SP.page-1)*20,SP.page*20).map(p=>{const i=SP.rows.indexOf(p);return '<article class="card sp-card"><h4>'+esc(p.dir)+'</h4><p class="rx-note">'+esc(p.origen)+' · '+esc(p.id)+' · Unidad '+esc(p.unidad||'por confirmar')+'</p><p><span class="assign-badge '+(p.disponible?'assign-ok':'assign-warn')+'">'+esc(p.estado||'Sin estado')+'</span> '+(!p.disponible?'<small>Fuera del stock ofrecible</small>':'')+'</p><p class="rx-note">KiteProp: '+esc(p.kitepropId||'ID pendiente de vincular')+'<br>'+esc(p.verificada?'Última verificación: '+p.verificada+' · '+p.verificadaPor:'Sin verificación registrada desde la Estación')+'</p>'+(p.ambigua?'<p class="home-error">ID/dirección/unidad duplicados. Corregir identificación antes de editar.</p>':'')+'<div class="gc-inline"><button class="btn" data-sp-edit="'+i+'" '+(p.ambigua?'disabled':'')+'>'+(SP.admin?'Actualizar estado':'Proponer estado')+'</button><button class="btn ghost" data-sp-history="'+i+'" '+(p.ambigua?'disabled':'')+'>Historial</button></div></article>';}).join('')+'</div><div class="card" id="sp-pending"><h4>Propuestas de estado · '+pending.length+'</h4><p class="rx-note">'+(SP.admin?'Revisá la evidencia antes de aplicar. Si el registro cambió, se solicita una nueva revisión.':'Podés ver el resultado de tus propuestas. El estado se mantiene hasta que Stefano o Julio lo aprueben.')+'</p>'+SP.propuestas.slice(0,80).map(p=>'<div class="sp-request"><b>'+esc(p.propiedad)+'</b><p>'+esc(p.anterior)+' → '+esc(p.estado)+' · '+esc(p.resolucion)+'</p><p class="rx-note">'+esc(p.solicitante)+' · '+esc(p.fuente)+' · '+esc(p.motivo)+'</p>'+(p.comentario?'<p class="rx-note">Resolución: '+esc(p.comentario)+'</p>':'')+(SP.admin&&p.resolucion==='Pendiente'?'<div class="gc-inline"><button class="btn" data-sp-approve="'+esc(p.id)+'">Revisar aprobación</button><button class="btn ghost" data-sp-reject="'+esc(p.id)+'">Rechazar</button></div>':'')+'</div>').join('')+(!SP.propuestas.length?empty('Todavía no hay propuestas registradas.'):'')+'</div>';
+ el.innerHTML='<div class="rx-kpis"><span>'+SP.rows.length+' unidades en el catálogo</span><span>'+SP.rows.filter(p=>p.disponible).length+' disponibles según el estado registrado</span><span>'+pending.length+' propuestas pendientes'+(!SP.admin?' propias':'')+'</span></div><p class="rx-profile-note">Los cambios se guardan en las hojas de propiedades del CRM. Reservadas, vendidas, alquiladas, pausadas y bajas salen del stock ofrecible. El vínculo con KiteProp se prepara por ID; esta versión todavía no sincroniza con KiteProp ni modifica sus publicaciones.</p><div class="sp-filters"><label>Buscar<input id="sp-search" value="'+esc(SP.q)+'" placeholder="Dirección, ID, unidad, zona o código KiteProp"></label><label>Estado<select id="sp-state-filter">'+spOptions([...new Set(SP.rows.map(p=>p.estado))].sort(),SP.estado,'Todos')+'</select></label><label>Origen<select id="sp-origin-filter">'+spOptions(['Propia','Constructora'],SP.origen,'Todos')+'</select></label></div><div class="gc-title"><span>'+rows.length+' resultados · '+SP.page+' / '+pages+'</span><div class="gc-inline"><button class="btn ghost" id="sp-prev" '+(SP.page===1?'disabled':'')+'>Anterior</button><button class="btn ghost" id="sp-next" '+(SP.page===pages?'disabled':'')+'>Siguiente</button></div></div><div class="sp-grid">'+rows.slice((SP.page-1)*20,SP.page*20).map(p=>{const i=SP.rows.indexOf(p);return '<article class="card sp-card"><h4>'+esc(p.dir)+'</h4><p class="rx-note">'+esc(p.origen)+' · '+esc(p.id)+' · Unidad '+esc(p.unidad||'por confirmar')+'</p><p><span class="assign-badge '+(p.disponible?'assign-ok':'assign-warn')+'">'+esc(p.estado||'Sin estado')+'</span> '+(!p.disponible?'<small>Fuera del stock ofrecible</small>':'')+'</p><p class="rx-note">Captada por: '+esc(p.captador||'Pendiente')+'<br>KiteProp: '+esc(p.kitepropId||'ID pendiente de vincular')+'<br>'+esc(p.verificada?'Última verificación: '+p.verificada+' · '+p.verificadaPor:'Sin verificación registrada desde la Estación')+'</p>'+(p.ambigua?'<p class="home-error">ID/dirección/unidad duplicados. Corregir identificación antes de editar.</p>':'')+'<div class="gc-inline">'+(edCanEditProp()?'<button type="button" class="btn ghost" data-ed-prop="'+i+'" '+(p.ambigua?'disabled':'')+'>Editar ficha / captador</button>':'')+'<button class="btn" data-sp-edit="'+i+'" '+(p.ambigua?'disabled':'')+'>'+(SP.admin?'Actualizar estado':'Proponer estado')+'</button><button class="btn ghost" data-sp-history="'+i+'" '+(p.ambigua?'disabled':'')+'>Historial</button></div></article>';}).join('')+'</div><div class="card" id="sp-pending"><h4>Propuestas de estado · '+pending.length+'</h4><p class="rx-note">'+(SP.admin?'Revisá la evidencia antes de aplicar. Si el registro cambió, se solicita una nueva revisión.':'Podés ver el resultado de tus propuestas. El estado se mantiene hasta que Stefano o Julio lo aprueben.')+'</p>'+SP.propuestas.slice(0,80).map(p=>'<div class="sp-request"><b>'+esc(p.propiedad)+'</b><p>'+esc(p.anterior)+' → '+esc(p.estado)+' · '+esc(p.resolucion)+'</p><p class="rx-note">'+esc(p.solicitante)+' · '+esc(p.fuente)+' · '+esc(p.motivo)+'</p>'+(p.comentario?'<p class="rx-note">Resolución: '+esc(p.comentario)+'</p>':'')+(SP.admin&&p.resolucion==='Pendiente'?'<div class="gc-inline"><button class="btn" data-sp-approve="'+esc(p.id)+'">Revisar aprobación</button><button class="btn ghost" data-sp-reject="'+esc(p.id)+'">Rechazar</button></div>':'')+'</div>').join('')+(!SP.propuestas.length?empty('Todavía no hay propuestas registradas.'):'')+'</div>';
 }
 function spOptions(arr,value,first){return (first?'<option value="">'+esc(first)+'</option>':'')+arr.map(v=>'<option value="'+esc(v)+'" '+(v===value?'selected':'')+'>'+esc(v)+'</option>').join('');}
 function spEdit(p){SP.selected=p;gcDialog('<div class="gc-title"><h3>'+(SP.admin?'Actualizar estado':'Proponer un estado')+'</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.dir)+'</b><br>'+esc(p.origen)+' · '+esc(p.id)+' · '+esc(p.unidad)+'</p><p>Estado actual: <b>'+esc(p.estado)+'</b></p><form id="sp-edit-form"><label>Nuevo estado<select name="estado" required>'+spOptions(SP.estados,SP.estados.includes(p.estado)?p.estado:'','Elegí un estado')+'</select></label><label>Fuente de verificación<select name="fuente">'+spOptions(['CRM Lurati','Propietario','Constructora','KiteProp verificado','Sabado Cloud'],p.fuente||'CRM Lurati')+'</select></label><label>Motivo / quién lo confirmó<textarea name="motivo" rows="3" required maxlength="2000" placeholder="Ej.: propietario confirmó reserva hoy"></textarea></label><label>Enlace de respaldo, opcional<input name="enlace" type="url" placeholder="Enlace de la ficha o documentación"></label><label>ID KiteProp, opcional<input name="kitepropId" value="'+esc(p.kitepropId)+'" placeholder="KP12345 o 12345" maxlength="30"></label><p class="rx-note">El ID vincula esta unidad para una futura integración. No ingreses claves de API. La verificación y el historial se registran con horario de Rosario.</p>'+(SP.admin?'<label class="gc-check"><input type="checkbox" name="confirmado"> Verifiqué el estado y autorizo aplicarlo al stock.</label>':'')+'<div class="gc-status rx-form-status" role="status" aria-live="polite"></div><div class="gc-inline">'+(SP.admin?'<button class="btn" type="submit" value="aplicar">Guardar estado confirmado</button>':'')+'<button class="btn '+(SP.admin?'ghost':'')+'" type="submit" value="proponer">Enviar propuesta para revisión</button></div></form>');}
@@ -2267,6 +2300,7 @@ function gcRenderClient(){
   if(clProtectedEdit())return;
   gcRenderClientBaseV27();const d=GC.detail;if(!d?.cliente||d.error||d.cliente.estadoAsignacion==='Pendiente de aceptación')return;
   const el=$('#gc-client'),summary=el?.querySelector('.gc-client-summary');if(!summary)return;
+  if(!d.cliente.estado||d.cliente.estado==='Nuevo'){const sent=document.createElement('button');sent.type='button';sent.className='btn ghost';sent.dataset.waFirst=d.cliente.id;sent.textContent='Ya envié por WhatsApp';summary.querySelector('.gc-inline').appendChild(sent);}
   const block=document.createElement('div');block.id='cl-profile';block.className='card rx-box';block.innerHTML=rxForm(d.cliente,d,'ficha');summary.after(block);
   const kept=document.createElement('div');kept.innerHTML=clPreservedHTML(d.datosConservados||[])+clPreviousHTML(d.anteriores||[],'Registros anteriores de este cliente');el.appendChild(kept);
   if(d.reactivacion){const note=document.createElement('div');note.className='card rx-profile-note';note.innerHTML='<b>Consulta reactivada</b><p>'+esc(d.reactivacion.propiedad?'Alternativa sugerida: '+d.reactivacion.propiedad:'Primero actualizar búsqueda')+'</p><p>'+esc(d.reactivacion.motivos)+'</p><button class="btn ghost" data-rx-message="'+esc(d.reactivacion.id)+'">Preparar mensaje de reactivación</button>';block.before(note);}
@@ -2330,7 +2364,7 @@ async function rxMessageBaseV28(id){
   ctx.reactivation={original:a.propiedadOriginal,base:a.base};
   $('#wmsg-property').textContent=a.propiedad;$('#wmsg-model').value='Reactivar consulta';
   if(![...$('#wmsg-model').options].some(o=>o.value==='Reactivar consulta'))$('#wmsg-model').add(new Option('Reactivar consulta','Reactivar consulta'));
-  $('#wmsg-model').value='Reactivar consulta';refreshWhatsappMessage();updateIosWhatsappLink();
+  $('#wmsg-model').value=wmsgHasRecontacto()?'Recontacto':'Reactivar consulta';refreshWhatsappMessage();updateIosWhatsappLink();
 }
 function defaultWhatsappMessageBaseV28(ctx,modelo){
   if(modelo!=='Reactivar consulta')return defaultWhatsappMessageBaseV27(ctx,modelo);
@@ -2410,7 +2444,6 @@ document.addEventListener('click',async e=>{
   if(t.dataset&&t.dataset.accept){aceptarLead(t.dataset.accept,t);}
   if(t.dataset&&t.dataset.reassign){reasignarDesdeControl(t.dataset.reassign,t);}
   if(t.id==='reloadcontrol'){CONTROL_LEADS=null;loadControlEquipo();}
-  if(t.classList&&t.classList.contains('recontactar')&&t.dataset.rid){setEstado(t.dataset.rid,"Seguimiento");setTimeout(()=>{renderSugerencias();renderNav();},80);}
   if(t.classList&&t.classList.contains('omitir')&&t.dataset.oid){OMITIDOS[t.dataset.oid]=true;renderSugerencias();renderNav();}
   if(t.classList&&t.classList.contains('gotoperfil'))clOpenProfile(t.dataset.id);
   if(t.id==='savepf'){savePerfil();}
@@ -2508,10 +2541,10 @@ function rxAssignmentReview(id){
 }
 async function rxMessageBaseV29(id){
  let a=RX.asignadas.find(x=>x.id===id)||GC.detail?.reactivacion;
- if(a?.id===id&&!a.propiedadId){const l=leadFromId(a.idConsulta)||a.cliente;if(l.estadoAsignacion==='Pendiente de aceptación')return gcToast('Primero aceptá la asignación.');const who=current,epoch=RX.epoch,anchor=document.createElement('a');anchor.dataset.waid=l.id;anchor.className='lead-wa';anchor.href=waLink(l);await openWhatsappComposer(anchor);if(who!==current||epoch!==RX.epoch||WMSG_CTX?.id!==l.id)return;Object.assign(WMSG_CTX,{propiedad:'Búsqueda por actualizar',link:'',tipo:'',precio:'',dorms:'',zona:'',banos:'',m2:'',cochera:'',exterior:'',reactivation:{original:a.propiedadOriginal,busqueda:true}});$('#wmsg-property').textContent='Búsqueda por actualizar';if(![...$('#wmsg-model').options].some(o=>o.value==='Reactivar consulta'))$('#wmsg-model').add(new Option('Reactivar consulta','Reactivar consulta'));$('#wmsg-model').value='Reactivar consulta';refreshWhatsappMessage();updateIosWhatsappLink();return;}
+ if(a?.id===id&&!a.propiedadId){const l=leadFromId(a.idConsulta)||a.cliente;if(l.estadoAsignacion==='Pendiente de aceptación')return gcToast('Primero aceptá la asignación.');const who=current,epoch=RX.epoch,anchor=document.createElement('a');anchor.dataset.waid=l.id;anchor.className='lead-wa';anchor.href=waLink(l);await openWhatsappComposer(anchor);if(who!==current||epoch!==RX.epoch||WMSG_CTX?.id!==l.id)return;Object.assign(WMSG_CTX,{propiedad:'Búsqueda por actualizar',link:'',tipo:'',precio:'',dorms:'',zona:'',banos:'',m2:'',cochera:'',exterior:'',reactivation:{original:a.propiedadOriginal,busqueda:true}});$('#wmsg-property').textContent='Búsqueda por actualizar';if(![...$('#wmsg-model').options].some(o=>o.value==='Reactivar consulta'))$('#wmsg-model').add(new Option('Reactivar consulta','Reactivar consulta'));$('#wmsg-model').value=wmsgHasRecontacto()?'Recontacto':'Reactivar consulta';refreshWhatsappMessage();updateIosWhatsappLink();return;}
  return rxMessageBaseV28(id);
 }
-function defaultWhatsappMessage(ctx,modelo){if(modelo==='Reactivar consulta'&&ctx.reactivation?.busqueda)return 'Hola '+(ctx.nombre||'').split(/\s+/)[0]+', ¿cómo estás? Soy '+(current||ctx.vendedor)+', de Lurati Consultora Inmobiliaria.\n\nTiempo atrás nos consultaste por '+(ctx.reactivation.original||'una propiedad')+'. ¿Seguís buscando o ya lo resolviste?\n\nSi seguís buscando, contame qué zona, cantidad de dormitorios y presupuesto manejás hoy para revisar opciones que te sirvan.';return defaultWhatsappMessageBaseV28(ctx,modelo);}
+function defaultWhatsappMessage(ctx,modelo){if(modelo==='Recontacto'&&wmsgHasRecontacto(current||ctx.vendedor))return wmsgRecontacto(ctx);if(modelo==='Reactivar consulta'&&ctx.reactivation?.busqueda)return 'Hola '+(ctx.nombre||'').split(/\s+/)[0]+', ¿cómo estás? Soy '+(current||ctx.vendedor)+', de Lurati Consultora Inmobiliaria.\n\nTiempo atrás nos consultaste por '+(ctx.reactivation.original||'una propiedad')+'. ¿Seguís buscando o ya lo resolviste?\n\nSi seguís buscando, contame qué zona, cantidad de dormitorios y presupuesto manejás hoy para revisar opciones que te sirvan.';return defaultWhatsappMessageBaseV28(ctx,modelo);}
 document.addEventListener('input',e=>{if(e.target.id==='rx-search')rxApplyFilters();});
 document.addEventListener('change',e=>{if(e.target.id==='rx-priority-only')rxApplyFilters();});
 
@@ -2568,7 +2601,7 @@ function clPreservedHTML(rows){return rows.length?'<details class="card gc-detai
 function clProtectedEdit(){
   const form=clDirtyForm();if(!form||form.dataset.rxId!==GC.client)return false;
   const info=form.querySelector('.rx-form-status');
-  if(info&&GC.detail?.calificacion?.revision!==form.dataset.clRevision)info.textContent='La ficha cambió mientras editabas. Tus cambios siguen en pantalla; revisalos antes de recargar. El guardado comprobará la versión.';
+  if(info&&GC.detail?.calificacion?.revision&&GC.detail.calificacion.revision!==form.dataset.clRevision)info.textContent='La ficha cambió mientras editabas. Tus cambios siguen en pantalla; revisalos antes de recargar. El guardado comprobará la versión.';
   return true;
 }
 document.addEventListener('input',e=>{const f=e.target.closest?.('.cl-profile-form');if(!f)return;f.dataset.clDirty='1';const n=f.querySelector('.cl-draft-label');if(n)n.hidden=false;});
@@ -2584,6 +2617,57 @@ window.addEventListener('beforeunload',e=>{if(clDirtyForm()){e.preventDefault();
   renderNav();renderBoard();renderPanel();
   if(!store.available){const w=$('#weeklabel');if(w)w.innerHTML='⚠️ Este navegador no puede guardar preferencias. Abrilo en una ventana normal para usar la Estación correctamente.';}
 })();
+/* v37 · Correcciones de datos y alta de unidades sin reemplazar la base. */
+let ED={lead:null,prop:null,epoch:0};
+function edCanLead(){return ['Stefano','Flavia'].includes(current);}
+function edCanProp(){return ['Stefano','Julio','Flavia'].includes(current);}
+function edCanEditProp(){return ['Stefano','Julio'].includes(current);}
+function edInput(k,label,value,type='text',extra=''){return '<label>'+esc(label)+'<input name="'+esc(k)+'" type="'+type+'" value="'+esc(value||'')+'" maxlength="'+(k==='observaciones'?4000:500)+'" '+extra+'></label>';}
+function edPanel(){return edCanLead()?'<div class="eyebrow">Flavia y Stefano</div><h3>Corregir consultas</h3><p class="sub">Buscá por ID, nombre, teléfono o inmueble. Cada cambio conserva un respaldo previo. La asignación y el estado comercial se mantienen.</p><form id="ed-search-form" class="card"><label>Buscar<input name="buscar" required minlength="2" placeholder="C-0745, nombre, teléfono o dirección"></label><button class="btn" type="submit">Buscar consulta</button><div class="rx-form-status gc-status" role="status"></div></form><div id="ed-results"></div>':'<p>La corrección de consultas está reservada a Flavia y Stefano.</p>';}
+async function edSearch(form){const who=current,epoch=++ED.epoch,b=form.querySelector('button');b.disabled=true;const m=form.querySelector('.rx-form-status');m.textContent='Buscando…';try{const d=await crmGet('editarConsultas',{buscar:form.elements.buscar.value});if(who!==current||epoch!==ED.epoch)return;if(!Array.isArray(d.consultas))throw Error('Instalá Apps Script v37 antes de editar.');$('#ed-results').innerHTML=d.consultas.map(l=>'<article class="card"><h4>'+esc(l.id)+' · '+esc(l.nombre)+'</h4><p>'+esc(l.telefono)+' · '+esc(l.propiedad)+'</p><p>Responsable: '+esc(l.vendedor)+'</p><button type="button" class="btn ghost" data-ed-lead="'+esc(l.id)+'">Corregir datos</button></article>').join('')||empty('No se encontraron consultas.');m.textContent='';}catch(e){m.textContent=e.message;}finally{b.disabled=false;}}
+async function edOpenLead(id){if(!edCanLead())return;const who=current,epoch=++ED.epoch;try{const d=await crmGet('editarConsulta',{id});if(who!==current||epoch!==ED.epoch)return;if(!d.revision)throw Error('Actualizá Apps Script a v37.');ED.lead=d;gcDialog('<div class="gc-title"><h3>Corregir '+esc(d.id)+'</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p>Vendedor: '+esc(d.vendedor)+' · Estado: '+esc(d.estado)+'</p><form id="ed-lead-form"><div class="gc-two">'+[['nombre','Nombre'],['telefono','Teléfono'],['correo','Correo'],['propiedad','Propiedad o búsqueda'],['canal','Canal'],['campana','Campaña / anuncio'],['prioridad','Prioridad']].map(([k,l])=>edInput(k,l,d.datos[k],k==='correo'?'email':'text',['nombre','telefono','propiedad','canal'].includes(k)?'required':'')).join('')+'</div><label>Observaciones de carga<textarea name="observaciones" maxlength="4000" rows="4">'+esc(d.datos.observaciones)+'</textarea></label><details class="gc-detail"><summary>Nota original conservada</summary><p>'+esc(d.notaOriginal||'Sin nota original')+'</p></details><p class="rx-note">El cambio de inmueble corrige esta consulta: no reasigna el vendedor ni cambia los registros anteriores de visitas o seguimientos. Se guardará el valor anterior.</p><div class="gc-status rx-form-status" role="status"></div><button class="btn" type="submit">Guardar corrección</button></form>');}catch(e){gcToast(e.message);}}
+const ED_PROP_LABELS={direccion:'Dirección completa',unidad:'Unidad / departamento',piso:'Piso',tipo:'Tipo de inmueble',zona:'Zona',venta:'Valor de venta · aclarar moneda',alquiler:'Alquiler · aclarar moneda',expensas:'Expensas · aclarar moneda',dorms:'Dormitorios · 0 para monoambiente',banos:'Baños',m2:'Superficie total m²',exclusivos:'Superficie exclusiva m²',orientacion:'Orientación',cochera:'Cochera',exterior:'Balcón / patio / terraza',situacion:'Situación / ocupación',permuta:'Acepta permuta',credito:'Apto crédito',link:'Ficha o enlace público',instagram:'Enlace de publicación Instagram'};
+async function edOpenProp(clave=''){if(clave?!edCanEditProp():!edCanProp())return;const who=current,epoch=++ED.epoch;try{const d=await crmGet('editarPropiedad',{clave});if(who!==current||epoch!==ED.epoch)return;if(!d.datos)throw Error('Instalá Apps Script v38 antes de cargar propiedades.');ED.prop=d;const fields=Object.entries(ED_PROP_LABELS).map(([k,l])=>k==='tipo'?'<label>Tipo de inmueble<select name=\"tipo\" required>'+spOptions([...new Set([...(d.datos.tipo?[d.datos.tipo]:[]),'Depto','Casa','PH','Lote','Terreno','Local','Galpón','Cochera','Campo','Oficina','Otro'])],d.datos.tipo,'Elegí un tipo')+'</select></label>':edInput(k,l,d.datos[k],['link','instagram'].includes(k)?'url':'text',(!d.clave&&['direccion','zona'].includes(k)?'required ':'')+(d.clave&&['direccion','unidad','piso'].includes(k)?'readonly ':''))).join('');let vendedores=[...(d.vendedores||[])];if(d.datos.captador&&!vendedores.includes(d.datos.captador))vendedores.unshift(d.datos.captador);gcDialog('<div class="gc-title"><h3>'+(d.clave?'Editar ficha de propiedad':'Cargar nueva unidad')+'</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p class="rx-note">Una ficha por unidad. El captador es la persona que consiguió el inmueble. Las reglas explícitas de asignación conservan su prioridad.</p><form id="ed-prop-form">'+(!d.clave?'<label>Origen<select name="hoja"><option value="00_Propiedades_Todos">Propia</option><option value="000_Prop_Constructoras">Constructora</option></select></label>':'<p>'+esc(d.hoja)+' · '+esc(d.id)+' · Estado: '+esc(d.estado)+'</p>')+'<div class="gc-two">'+fields+'</div>'+(!d.clave?'<label class="gc-check"><input type="checkbox" name="sinUnidad"> Es una propiedad sin subdivisión: no corresponde número de unidad.</label>':'')+'<label>Captador / Captada por<select name="captador">'+spOptions(vendedores,d.datos.captador,'Pendiente de identificar')+'</select></label><p class="rx-note">Si el captador es una empresa o un dato anterior, se conserva hasta que elijas un vendedor activo. Este formulario no reemplaza las reglas de asignación.</p>'+(!d.clave?'<p class="rx-profile-note">La nueva unidad se guarda en Pausada. Después de revisar precio, datos y disponibilidad, confirmá su estado desde el catálogo.</p>':'<p class="rx-note">Dirección, piso y unidad se conservan para mantener los vínculos existentes. Los cambios de estado se registran con su verificación por separado.</p>')+'<div class="gc-status rx-form-status" role="status"></div><button class="btn" type="submit">'+(d.clave?'Guardar ficha':'Crear unidad en Pausada')+'</button></form>');}catch(e){gcToast(e.message);}}
+function edChanges(form,base){const out={};for(const [k,v]of new FormData(form)){if(!Object.prototype.hasOwnProperty.call(base,k))continue;if(String(v).trim()!==String(base[k]||'').trim())out[k]=String(v).trim();}return out;}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.edLead)edOpenLead(b.dataset.edLead);if(b.id==='ed-prop-new')edOpenProp();if(b.dataset.edProp!==undefined){const p=SP.rows[Number(b.dataset.edProp)];if(p)edOpenProp(p.clave);}});
+document.addEventListener('submit',async e=>{const f=e.target;if(!['ed-search-form','ed-lead-form','ed-prop-form'].includes(f.id))return;e.preventDefault();if(f.id==='ed-search-form')return edSearch(f);const lead=f.id==='ed-lead-form',d=lead?ED.lead:ED.prop,who=current;if(!d)return;const cambios=edChanges(f,d.datos),m=f.querySelector('.rx-form-status');if(!Object.keys(cambios).length){m.textContent='No hay cambios para guardar.';return;}const p=lead?{tipo:'consultaEditar',idConsulta:d.id,revision:d.revision,cambios}:{tipo:'propiedadFicha',clave:d.clave,revision:d.revision,hoja:d.hoja||f.elements.hoja.value,sinUnidad:!!f.elements.sinUnidad?.checked,cambios};const result=await rxSubmitForm(f,p);if(!result||who!==current)return;$('#gc-dialog').close();ED.lead=ED.prop=null;clearTurboCache();LEADS=null;STOCK=null;SP.loaded=false;if(lead){$('#ed-results')?.replaceChildren();gcToast(result.mensaje||'Consulta corregida.');}else{await spLoad();gcToast((result.mensaje||'Ficha guardada.')+(result.advertencia?' '+result.advertencia:''));}});
+// Descartar las fichas administrativas al cerrar la sesión.
+window.addEventListener('pagehide',()=>{ED.lead=ED.prop=null;ED.epoch++;});
+function edFormDirty(){const f=document.querySelector('#ed-lead-form,#ed-prop-form');const d=f?.id==='ed-lead-form'?ED.lead:ED.prop;return !!(f&&d&&Object.keys(edChanges(f,d.datos)).length);}
+document.addEventListener('click',e=>{if(!e.target.closest('[data-gc-close]')||!edFormDirty())return;if(!confirm('Tenés cambios sin guardar. ¿Querés descartarlos?')){e.preventDefault();e.stopImmediatePropagation();}},true);
+document.getElementById('gc-dialog')?.addEventListener('cancel',e=>{if(edFormDirty()&&!confirm('Tenés cambios sin guardar. ¿Querés descartarlos?'))e.preventDefault();});
+
+// v39 · Recontacto general para completar la búsqueda actual del cliente.
+function wmsgHasRecontacto(vendedor=current){
+  const n=normTxt(vendedor).trim().replace(/\s+/g,' ');
+  return ['tomas','tomas debailleux','belen','belen lopez','cintia'].includes(n);
+}
+function wmsgModels(vendedor=current){return wmsgHasRecontacto(vendedor)?['Recontacto',...MESSAGE_MODELS]:[...MESSAGE_MODELS];}
+function wmsgConfigureModels(){
+  const select=$('#wmsg-model');if(!select)return;
+  select.innerHTML=wmsgModels().map(m=>'<option value="'+esc(m)+'">'+esc(m)+'</option>').join('');
+  select.value=wmsgHasRecontacto()?'Recontacto':'Corto y formal';
+}
+function wmsgRecontacto(ctx){
+  const nombre=String(ctx.nombre||'').trim().split(/\s+/)[0];
+  const asesor=String(current||ctx.vendedor||'').trim().split(/\s+/)[0];
+  const saludo=nombre?'Hola '+nombre+', ¿cómo estás?':'Hola, ¿cómo estás?';
+  const firma=asesor?'Soy '+asesor+', de Lurati Consultora Inmobiliaria.':'Te escribo de Lurati Consultora Inmobiliaria.';
+  return saludo+' '+firma+'\n\n'+
+    'Te escribo para saber si seguís buscando una propiedad y ayudarte con opciones que se ajusten a lo que necesitás.\n\n'+
+    'Si seguís buscando, contame qué zona preferís, cuántos dormitorios necesitás y qué presupuesto tenés en mente.';
+}
+function wmsgMessageText(texto,ctx=WMSG_CTX,modelo=$('#wmsg-model')?.value){
+  const txt=String(texto||'').trim();
+  return modelo==='Recontacto'?txt:withPropertyLink(txt,ctx?.link);
+}
+function wmsgModelHelp(modelo){
+  const el=$('#wmsg-help');if(!el)return;
+  el.textContent=modelo==='Recontacto'?
+    'Recontacto retoma la búsqueda sin agregar dirección ni ficha. Podés editarlo antes de enviarlo; el texto guardado se recupera para este cliente en este dispositivo.':
+    'Guardar texto lo deja como preferido para este vendedor + propiedad + modelo. La ficha de la propiedad se agrega automáticamente.';
+}
+
 </script>
 </body>
 </html>
