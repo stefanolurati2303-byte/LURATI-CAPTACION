@@ -83,13 +83,23 @@ input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18
   .overlay{padding:0}
   .modal{min-height:100%;margin:0;border-radius:0;padding:18px 14px 28px}
   .sellers{grid-template-columns:1fr 1fr}
-  #newLeadBtn{right:12px;bottom:12px;padding:12px 16px}
+  #newLeadBtn{right:12px;padding:12px 16px}
+}
+/* v44 · Mantener libre la navegación inferior, incluido el área segura del iPhone. */
+[hidden]{display:none!important}
+body.lead-modal-open #newLeadBtn{display:none}
+.overlay{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@supports(height:100dvh){.overlay{height:100dvh}.modal{min-height:0}}
+@media(max-width:680px){
+ #newLeadBtn{bottom:calc(var(--lead-nav-height,72px) + 12px + env(safe-area-inset-bottom,0px))}
+ .modal{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
 }
 </style>
 </head>
 <body>
 <iframe id="station" src="./estacion-base.html" title="Estación del Asesor"></iframe>
 <button id="newLeadBtn" type="button" hidden>+ Cargar lead</button>
+
 
 <div id="overlay" class="overlay">
   <div class="modal">
@@ -102,10 +112,12 @@ input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18
       <button id="close" class="close" type="button">×</button>
     </div>
 
+
     <div class="section">
       <div class="label">1. Vendedor</div>
       <div id="sellers" class="sellers"><small>Cargando vendedores…</small></div>
     </div>
+
 
     <div class="section">
       <div class="label">2. Últimos inmuebles usados</div>
@@ -115,20 +127,24 @@ input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18
       <datalist id="propertyList"></datalist>
     </div>
 
+
     <div class="section">
       <div class="label">Nombre</div>
       <input id="name" placeholder="Nombre del cliente" autocomplete="name">
     </div>
+
 
     <div class="section">
       <div class="label">Teléfono</div>
       <input id="phone" type="tel" inputmode="tel" placeholder="341..." autocomplete="tel">
     </div>
 
+
     <div class="section">
       <div class="label">Observaciones</div>
       <textarea id="obs" placeholder="Ej. Quiere visitar esta semana, paga contado, consulta por inversión, viene de Instagram, etc."></textarea>
     </div>
+
 
     <button id="save" class="action" type="button">REGISTRAR Y DERIVAR</button>
     <div id="status" class="status"></div>
@@ -138,6 +154,7 @@ input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(18
     </div>
   </div>
 </div>
+
 
 <script>
 const frame=document.getElementById('station');
@@ -157,13 +174,19 @@ let selectedSeller='';
 let apiUrl='';
 let configLoaded=false;
 let pendingData=null;
-let queueProcessing=false;
+let queueProcessing=false,queueEpoch=0,queueTimer=0,submitting=false,draftActor='';
+const queueControllers=new Set();
+const DRAFT_KEY='lurati_lead_draft_v44_';
+let configAt=0,configJob=null;
 const QUEUE_KEY='lurati_v16_lead_queue';
+let queueReadFault=false;
 let leadQueue=loadLeadQueue();
 
+
 const FALLBACK_ACTIVE_SELLERS = [
-  "Stefano","Julio","Pablo","Flavia","Ariel","Roberto","Virginia","Pedro","Maxi"
+  "Stefano","Julio","Pablo","Flavia","Ariel","Roberto","Virginia","Pedro","Maximiliano","Daiana","Tomás Debailleux","Belén Lopez","Cintia"
 ];
+
 
 function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function digits(s){return String(s||'').replace(/\D/g,'');}
@@ -184,6 +207,7 @@ function stationApi(){
   return apiUrl;
 }
 
+
 // v33 · La carga rápida usa la sesión ya validada de la Estación.
 function stationSession(){try{return frame.contentWindow.LuratiAuth?.session()||null;}catch(_){return null;}}
 const PIN33_FRAME_FETCH=window.fetch.bind(window);
@@ -194,10 +218,49 @@ window.fetch=async function(input,options){
   const s=stationSession();if(!s)throw new Error('Ingresá con tu PIN personal en la Estación.');
   const opts={...(options||{}),referrerPolicy:'no-referrer'};
   if(String(opts.method||'GET').toUpperCase()==='POST'){const d=JSON.parse(opts.body);d.token=s.token;opts.body=JSON.stringify(d);}else url.searchParams.set('token',s.token);
-  return PIN33_FRAME_FETCH(url.toString(),opts);
+  const response=await PIN33_FRAME_FETCH(url.toString(),opts);
+  if(String(opts.method||'GET').toUpperCase()==='GET'){
+   try{const data=await response.clone().json();if(data.code==='AUTH_REQUIRED')frame.contentWindow.LuratiAuth?.invalidate?.(s.token,data.error);}catch(_){}
+  }
+  return response;
 };
 let pin33LastActor='';
-setInterval(()=>{const s=stationSession(),actor=s?.nombre||'',btn=document.getElementById('newLeadBtn');if(btn)btn.hidden=!s;if(actor===pin33LastActor)return;pin33LastActor=actor;if(!s)closeModal();renderLeadQueue();if(s){loadConfig();processLeadQueue();}},700);
+function syncLeadSession(){
+ const s=stationSession(),actor=s?.nombre||'',btn=document.getElementById('newLeadBtn');
+ if(btn)btn.hidden=!s;
+ if(actor===pin33LastActor)return;
+ if(draftActor)saveLeadDraft();
+ pauseLeadQueue();
+ pin33LastActor=actor;draftActor=actor;
+ property.value=nameInput.value=phone.value=obsInput.value='';selectedSeller='';
+ if(!s)closeModal();else{restoreLeadDraft();loadConfig();processLeadQueue();}
+ renderLeadQueue();positionLeadButton();
+}
+setInterval(syncLeadSession,700);
+function currentAdvisor44(){return stationSession()?.nombre||'';}
+function positionLeadButton(){
+ try{
+  const nav=frame.contentDocument.querySelector('.mobile-bar');
+  const height=nav&&frame.contentWindow.getComputedStyle(nav).display!=='none'?nav.getBoundingClientRect().height:0;
+  if(height)document.documentElement.style.setProperty('--lead-nav-height',Math.ceil(height)+'px');
+ }catch(_){}
+}
+function draftData(){return {vendedor:selectedSeller,propiedad:property.value,nombre:nameInput.value,telefono:phone.value,observaciones:obsInput.value};}
+function saveLeadDraft(){
+ if(!draftActor)return true;
+ try{localStorage.setItem(DRAFT_KEY+draftActor,JSON.stringify(draftData()));return true;}
+ catch(_){return false;}
+}
+function restoreLeadDraft(){
+ if(!draftActor)return;
+ try{
+  const d=JSON.parse(localStorage.getItem(DRAFT_KEY+draftActor)||'null');if(!d)return;
+  selectedSeller=String(d.vendedor||'');property.value=String(d.propiedad||'');
+  nameInput.value=String(d.nombre||'');phone.value=String(d.telefono||'');obsInput.value=String(d.observaciones||'');
+ }catch(_){}
+}
+for(const el of [property,nameInput,phone,obsInput])el.addEventListener('input',saveLeadDraft);
+
 
 function currentAdvisor(){
   try{
@@ -211,7 +274,7 @@ function rememberProp(v){
   v=titleAddress(v); if(!v)return;
   let a=recentProps().filter(x=>x!==v);
   a=[v,...a].slice(0,3);
-  localStorage.setItem('lurati_v15_recent_props',JSON.stringify(a));
+  try{localStorage.setItem('lurati_v15_recent_props',JSON.stringify(a));}catch(_){}
   renderChips();
 }
 function renderChips(){
@@ -219,7 +282,7 @@ function renderChips(){
   document.getElementById('chips').innerHTML=a.length
     ? a.map(x=>`<button class="chip" type="button" data-v="${esc(x)}">${esc(x)}</button>`).join('')
     : '<small style="color:#98a2b3">Todavía no hay inmuebles recientes.</small>';
-  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{property.value=b.dataset.v;nameInput.focus();});
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{property.value=b.dataset.v;saveLeadDraft();nameInput.focus();});
 }
 function setStatus(type,html){
   status.className='status show '+type;
@@ -230,74 +293,90 @@ function requestId(){
   catch(e){return 'L-'+Date.now()+'-'+Math.random().toString(36).slice(2,10);}
 }
 function loadLeadQueue(){
-  try{
-    const a=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]');
-    if(!Array.isArray(a))return [];
-    return a.slice(-20).map(x=>{
-      if(x.status==='sending'||x.status==='checking')x.status='error';
-      if(!x.createdBy){x.status='error';x.error='Carga anterior al PIN: Stefano debe revisar antes de reintentar.';}
-      return x;
-    });
-  }catch(e){return [];}
+ try{
+  const a=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]');
+  if(!Array.isArray(a))throw new Error('Formato de cola inválido.');
+  return a.filter(x=>x&&x.requestId).map(x=>{
+   if(['sending','checking'].includes(x.status)){x.status='waiting';x.sentAt=x.sentAt||x.createdAt||Date.now();}
+   if(x.status==='error'&&x.createdBy&&!x.definitive){x.status='waiting';x.sentAt=x.sentAt||x.createdAt||Date.now();}
+   if(!x.createdBy){x.status='error';x.error='Carga anterior al PIN: Stefano debe revisar antes de reintentar.';}
+   x.nextAt=0;return x;
+  });
+ }catch(_){queueReadFault=true;return [];}
 }
 function persistLeadQueue(){
-  leadQueue=leadQueue.slice(-20);
-  try{localStorage.setItem(QUEUE_KEY,JSON.stringify(leadQueue));}catch(e){}
+ if(queueReadFault)return false;
+ // Nunca recortar cargas pendientes, aunque haya más de veinte.
+ const recent=new Set(leadQueue.filter(x=>['saved','cancelled'].includes(x.status)).slice(-30).map(x=>x.requestId));
+ const keep=leadQueue.filter(x=>!['saved','cancelled'].includes(x.status)||recent.has(x.requestId));
+ try{localStorage.setItem(QUEUE_KEY,JSON.stringify(keep));leadQueue=keep;return true;}
+ catch(_){return false;}
 }
 function queueLabel(item){
-  if(item.status==='saved')return 'Guardado'+(item.crmId?' como '+item.crmId:'');
-  if(item.status==='sending')return 'Enviando al CRM…';
-  if(item.status==='checking')return 'Verificando guardado…';
-  if(item.status==='error')return item.error||'No se pudo confirmar';
-  return 'En espera';
+ if(item.status==='saved')return 'Guardado'+(item.crmId?' como '+item.crmId:'');
+ if(item.status==='cancelled')return 'No se cargó: consulta duplicada.';
+ if(item.status==='duplicate')return 'Ya existe una consulta similar. Elegí cómo continuar.';
+ if(item.status==='checking'||item.status==='sending')return 'Confirmando en el CRM…';
+ if(item.status==='error')return item.error||'Revisar esta carga.';
+ if(navigator.onLine===false)return 'Conservado en este dispositivo. Se retomará con conexión.';
+ if(document.hidden)return 'Carga pendiente. Se retomará al volver.';
+ return item.error||'Conservado en este dispositivo. Pendiente de confirmación.';
 }
 function renderLeadQueue(){
-  const visible=leadQueue.filter(x=>x.createdBy===currentAdvisor()||!x.createdBy&&currentAdvisor()==='Stefano').slice(-6).reverse();
-  queuePanel.classList.toggle('show',visible.length>0);
-  const pending=leadQueue.filter(x=>['waiting','sending','checking'].includes(x.status)).length;
-  const errors=leadQueue.filter(x=>x.status==='error').length;
-  queueSummary.textContent=`En proceso: ${pending} · Con error: ${errors}`;
-  queueList.innerHTML=visible.map(item=>`
-    <div class="queueItem ${esc(item.status)}">
-      <span class="queueDot"></span>
-      <div class="queueInfo"><b>${esc(item.nombre)} · ${esc(item.propiedad)}</b><small>${esc(queueLabel(item))}</small></div>
-      ${item.status==='error'?`<button class="retryBtn" type="button" data-retry="${esc(item.requestId)}">Reintentar</button>`:''}
-    </div>`).join('');
-  queueList.querySelectorAll('[data-retry]').forEach(b=>{
-    b.onclick=()=>{
-      const item=leadQueue.find(x=>x.requestId===b.dataset.retry);
-      if(!item)return;
-      if(!item.createdBy&&currentAdvisor()==='Stefano')item.createdBy='Stefano';
-      item.status='waiting';item.error='';persistLeadQueue();renderLeadQueue();processLeadQueue();
-    };
-  });
-  const active=leadQueue.filter(x=>x.createdBy===currentAdvisor()&&['waiting','sending','checking'].includes(x.status)).length;
-  document.getElementById('newLeadBtn').textContent=active?`+ Cargar lead (${active})`:'+ Cargar lead';
+ const actor=currentAdvisor44(),own=leadQueue.filter(x=>x.createdBy===actor||!x.createdBy&&actor==='Stefano');
+ const visible=own.filter(x=>!['saved','cancelled'].includes(x.status)).concat(own.filter(x=>['saved','cancelled'].includes(x.status)).slice(-6)).reverse();
+ queuePanel.classList.toggle('show',visible.length>0);
+ const pending=own.filter(x=>['waiting','sending','checking'].includes(x.status)).length;
+ queueSummary.textContent='Pendientes: '+pending+' · A revisar: '+own.filter(x=>['error','duplicate'].includes(x.status)).length;
+ queueList.innerHTML=visible.map(item=>`
+  <div class="queueItem ${esc(item.status==='duplicate'?'error':item.status)}">
+   <span class="queueDot"></span><div class="queueInfo"><b>${esc(item.nombre)} · ${esc(item.propiedad)}</b><small>${esc(queueLabel(item))}</small></div>
+   ${['error','waiting'].includes(item.status)?`<button class="retryBtn" type="button" data-retry="${esc(item.requestId)}">Reintentar</button>`:''}
+   ${item.status==='duplicate'?`<div><button class="retryBtn" data-allow="${esc(item.requestId)}">Cargar igual</button><button class="retryBtn" data-cancel="${esc(item.requestId)}">No duplicar</button></div>`:''}
+  </div>`).join('');
+ queueList.querySelectorAll('[data-retry],[data-allow],[data-cancel]').forEach(b=>b.onclick=()=>{
+  const id=b.dataset.retry||b.dataset.allow||b.dataset.cancel,item=leadQueue.find(x=>x.requestId===id);
+  if(!item||!actor||item.createdBy&&item.createdBy!==actor)return;
+  if(!item.createdBy){if(actor!=='Stefano')return;item.createdBy=actor;}
+  if(b.dataset.cancel)item.status='cancelled';
+  else{if(b.dataset.allow)item.duplicateChecked=true;item.status='waiting';item.nextAt=0;item.error='';item.definitive=false;}
+  if(!persistLeadQueue())setStatus('err','No se pudo conservar el cambio en este dispositivo.');
+  renderLeadQueue();processLeadQueue();
+ });
+ document.getElementById('newLeadBtn').textContent=pending?'+ Cargar lead ('+pending+')':'+ Cargar lead';
 }
+
+
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 async function fetchJsonTimeout(url,ms){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),ms);
-  try{
-    const r=await fetch(url,{signal:controller.signal,cache:'no-store'});
-    return await r.json();
-  }finally{clearTimeout(timer);}
+ const controller=new AbortController();queueControllers.add(controller);
+ const timer=setTimeout(()=>controller.abort(),ms);
+ try{
+  const r=await fetch(url,{signal:controller.signal,cache:'no-store'});
+  if(!r.ok)throw new Error('El CRM no respondió correctamente.');
+  const data=await r.json();
+  if(data?.code==='AUTH_REQUIRED'){const e=new Error(data.error||'Ingresá con tu PIN.');e.code='AUTH_REQUIRED';throw e;}
+  return data;
+ }finally{clearTimeout(timer);queueControllers.delete(controller);}
 }
+
+
 function openModal(){
   if(!stationSession())return;
-  overlay.classList.add('open');
+  overlay.classList.add('open');document.body.classList.add('lead-modal-open');
   status.className='status';
   renderChips();
   renderLeadQueue();
   loadConfig();
-  setTimeout(()=>property.focus(),80);
+  if(innerWidth>680)setTimeout(()=>property.focus(),80);
 }
 function closeModal(){
-  overlay.classList.remove('open');
+  saveLeadDraft();overlay.classList.remove('open');document.body.classList.remove('lead-modal-open');
 }
 document.getElementById('newLeadBtn').onclick=openModal;
 document.getElementById('close').onclick=closeModal;
 overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+
 
 function cachedSellers(){
   try{
@@ -306,6 +385,7 @@ function cachedSellers(){
     return x.items;
   }catch(e){return [];}
 }
+
 
 function saveSellersCache(items){
   try{
@@ -316,9 +396,11 @@ function saveSellersCache(items){
   }catch(e){}
 }
 
+
 function sellersFromStation(){
   const cache=cachedSellers();
   if(cache.length) return cache;
+
 
   return FALLBACK_ACTIVE_SELLERS.map((nombre,i)=>({
     nombre,
@@ -328,6 +410,7 @@ function sellersFromStation(){
   }));
 }
 
+
 function cachedProps(){
   try{
     const x=JSON.parse(localStorage.getItem('lurati_v15_props_cache')||'null');
@@ -335,6 +418,7 @@ function cachedProps(){
     return x.items;
   }catch(e){return [];}
 }
+
 
 function savePropsCache(items){
   try{
@@ -345,11 +429,13 @@ function savePropsCache(items){
   }catch(e){}
 }
 
+
 function renderPropertyOptions(props){
   propertyList.innerHTML=(props||[])
     .map(p=>`<option value="${esc(titleAddress(p.dir||p.nombre||''))}"></option>`)
     .join('');
 }
+
 
 async function refreshSellersBackground(){
   const api=stationApi();
@@ -364,6 +450,7 @@ async function refreshSellersBackground(){
   }catch(e){}
 }
 
+
 async function refreshPropsBackground(){
   const api=stationApi();
   if(!api)return;
@@ -377,34 +464,27 @@ async function refreshPropsBackground(){
   }catch(e){}
 }
 
+
 function loadConfig(){
-  // 1) Vendedores instantáneos: salen del mismo index de la Estación.
-  const localSellers=sellersFromStation();
-  if(localSellers.length){
-    renderSellers(localSellers);
-  }else if(!configLoaded){
-    sellersBox.innerHTML='<small>Cargando vendedores…</small>';
-  }
-
-  // 2) Propiedades cacheadas: aparecen sin esperar a Google.
-  const cp=cachedProps();
-  if(cp.length) renderPropertyOptions(cp);
-
-  // 3) Refresco silencioso desde el CRM. No bloquea el formulario.
-  refreshSellersBackground();
-  refreshPropsBackground();
-
-  configLoaded=true;
+ if(!configLoaded){
+  renderSellers(sellersFromStation());const cp=cachedProps();if(cp.length)renderPropertyOptions(cp);configLoaded=true;
+ }
+ if(!stationSession()||configJob||Date.now()-configAt<120000)return configJob;
+ configAt=Date.now();
+ configJob=Promise.allSettled([refreshSellersBackground(),refreshPropsBackground()]).finally(()=>{configJob=null;});
+ return configJob;
 }
+
+
 function renderSellers(sellers){
   sellersBox.innerHTML=sellers.map(v=>`
-    <button type="button" class="seller" data-v="${esc(v.nombre)}">
+    <button type="button" class="seller ${v.nombre===selectedSeller?'on':''}" data-v="${esc(v.nombre)}">
       <strong>${esc(v.nombre)}</strong>
       <small>${v.email?'Aviso Gmail activo':'Gmail sin configurar'}</small>
     </button>`).join('');
   sellersBox.querySelectorAll('.seller').forEach(b=>{
     b.onclick=()=>{
-      selectedSeller=b.dataset.v;
+      selectedSeller=b.dataset.v;saveLeadDraft();
       sellersBox.querySelectorAll('.seller').forEach(x=>x.classList.toggle('on',x===b));
     };
   });
@@ -415,7 +495,7 @@ async function checkDuplicate(data){
   try{
     const j=await fetchJsonTimeout(
       api+'?q=duplicado&tel='+encodeURIComponent(data.telefono)+'&prop='+encodeURIComponent(data.propiedad),
-      7000
+      4500
     );
     return j&&j.duplicado?j.duplicado:null;
   }catch(e){return null;}
@@ -425,147 +505,134 @@ function duplicateMessage(d){
   const when=d.dias==null?'':(d.dias===0?'Consultó hoy.':`Consultó hace ${d.dias} día${d.dias===1?'':'s'}.`);
   return `Ya figura ${esc(d.id||'')} por este inmueble, asignado a <b>${esc(d.vendedor||'sin vendedor')}</b>. ${esc(when)}`;
 }
-async function postLead(item){
-  const api=stationApi();
-  if(!api)throw new Error('No se encontró la conexión con el CRM.');
-  if(item.createdBy!==stationSession()?.nombre)throw new Error('Volvé a ingresar con el perfil que creó esta carga.');
-  await fetch(api,{
-    method:'POST',mode:'no-cors',keepalive:true,
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({
-      accion:'nuevoLead',
-      requestId:item.requestId,
-      vendedor:item.vendedor,
-      propiedad:item.propiedad,
-      nombre:item.nombre,
-      telefono:item.telefono,
-      observaciones:item.observaciones||'',
-      cargadoPor:currentAdvisor(),
-      canal:'WhatsApp'
-    })
-  });
+function queueReady(actor,epoch){
+ return epoch===queueEpoch&&!document.hidden&&navigator.onLine!==false&&stationSession()?.nombre===actor;
 }
-async function confirmLead(item){
-  const api=stationApi();
-  if(!api)throw new Error('No se encontró la conexión con el CRM.');
-  for(let i=0;i<15;i++){
-    await wait(i===0?700:1400);
-    try{
-      const r=await fetchJsonTimeout(
-        api+'?q=estadoCarga&requestId='+encodeURIComponent(item.requestId)+'&_='+Date.now(),
-        7000
-      );
-      if(r&&r.estado==='guardado')return r;
-      if(r&&r.estado==='error')throw new Error(r.error||'El CRM rechazó la carga.');
-    }catch(e){
-      if(e && /rechazó|Falta|No existe/i.test(String(e.message||e)))throw e;
-    }
-  }
-  throw new Error('No se pudo confirmar todavía. Podés reintentar sin duplicar.');
+function pauseLeadQueue(){
+ queueEpoch++;queueProcessing=false;clearTimeout(queueTimer);
+ queueControllers.forEach(c=>c.abort());
+ for(const item of leadQueue)if(['sending','checking'].includes(item.status)){item.status='waiting';item.nextAt=0;}
+ persistLeadQueue();renderLeadQueue();
+}
+function scheduleLeadQueue(){
+ clearTimeout(queueTimer);
+ if(document.hidden||navigator.onLine===false||!stationSession())return;
+ const times=leadQueue.filter(x=>x.createdBy===currentAdvisor44()&&x.status==='waiting').map(x=>x.nextAt||0);
+ if(times.length)queueTimer=setTimeout(processLeadQueue,Math.max(250,Math.min(30000,Math.min(...times)-Date.now())));
+}
+async function readLeadReceipt(item){
+ const api=stationApi();if(!api)throw new Error('Esperando conexión con el CRM.');
+ return fetchJsonTimeout(api+'?q=estadoCarga&requestId='+encodeURIComponent(item.requestId)+'&_='+Date.now(),6500);
+}
+function applyLeadReceipt(item,result){
+ if(result?.estado==='error'){
+  const error=new Error(result.error||'El CRM rechazó esta carga.');error.definitive=true;throw error;
+ }
+ if(result?.estado!=='guardado')return false;
+ item.status='saved';item.error='';item.crmId=result.id||'';item.savedAt=Date.now();item.vendedorFinal=result.vendedor||item.vendedor;
+ persistLeadQueue();renderLeadQueue();
+ if(currentAdvisor44()===item.vendedorFinal){try{frame.contentWindow.eval("LEADS=null; loadLeads();");}catch(_){}}
+ return true;
+}
+function postLead(item){
+ const api=stationApi();if(!api)throw new Error('Esperando conexión con el CRM.');
+ if(item.createdBy!==stationSession()?.nombre)throw new Error('Ingresá con el perfil que creó esta carga.');
+ // La respuesta opaca del POST no prueba que se guardó. La confirmación es estadoCarga.
+ return fetch(api,{
+  method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},
+  body:JSON.stringify({accion:'nuevoLead',requestId:item.requestId,vendedor:item.vendedor,propiedad:item.propiedad,
+   nombre:item.nombre,telefono:item.telefono,observaciones:item.observaciones||'',cargadoPor:item.createdBy,canal:'WhatsApp'})
+ });
 }
 async function processLeadQueue(){
-  if(queueProcessing)return;
-  queueProcessing=true;
-  try{
-    while(true){
-      const item=leadQueue.find(x=>x.status==='waiting'&&x.createdBy===currentAdvisor()&&stationSession());
-      if(!item)break;
-      item.status='sending';item.error='';item.attempts=(item.attempts||0)+1;
-      persistLeadQueue();renderLeadQueue();
-      try{
-        await postLead(item);
-        item.status='checking';persistLeadQueue();renderLeadQueue();
-        const result=await confirmLead(item);
-        item.status='saved';item.crmId=result.id||'';item.savedAt=Date.now();item.vendedorFinal=result.vendedor||item.vendedor;
-        persistLeadQueue();renderLeadQueue();
-        if(currentAdvisor()===item.vendedorFinal){
-          try{frame.contentWindow.eval("LEADS=null; loadLeads();");}catch(e){}
-        }
-      }catch(e){
-        item.status='error';item.error=String(e&&e.message?e.message:e||'Error de conexión');
-        persistLeadQueue();renderLeadQueue();
-      }
+ if(queueProcessing||document.hidden||navigator.onLine===false||!stationSession())return;
+ const actor=currentAdvisor44(),epoch=queueEpoch;
+ queueProcessing=true;clearTimeout(queueTimer);
+ try{
+  while(queueReady(actor,epoch)){
+   const item=leadQueue.find(x=>x.createdBy===actor&&x.status==='waiting'&&(x.nextAt||0)<=Date.now());
+   if(!item)break;
+   item.status='checking';item.error='';persistLeadQueue();renderLeadQueue();
+   try{
+    // Las cargas interrumpidas se verifican antes de volver a enviarse, con el mismo ID.
+    if(item.sentAt){
+     const receipt=await readLeadReceipt(item);if(!queueReady(actor,epoch))return;
+     if(applyLeadReceipt(item,receipt))continue;
     }
-  }finally{
-    queueProcessing=false;
+    if(!item.sentAt&&!item.duplicateChecked){
+     const duplicate=await checkDuplicate(item);if(!queueReady(actor,epoch))return;
+     if(duplicate){item.status='duplicate';item.duplicate=duplicate;persistLeadQueue();renderLeadQueue();continue;}
+     item.duplicateChecked=true;
+    }
+    if(!queueReady(actor,epoch))return;
+    item.sentAt=Date.now();item.attempts=(item.attempts||0)+1;
+    if(!persistLeadQueue())throw new Error('No se puede conservar esta carga en el dispositivo.');
+    // No esperar la ejecución completa de Apps Script ni el envío del correo.
+    postLead(item).catch(()=>{});
+    for(let i=0;i<5;i++){
+     await wait(i?1300:450);if(!queueReady(actor,epoch))return;
+     const receipt=await readLeadReceipt(item);if(!queueReady(actor,epoch))return;
+     if(applyLeadReceipt(item,receipt))break;
+    }
+    if(item.status!=='saved')throw new Error('Pendiente de confirmación. Se verificará de nuevo automáticamente.');
+   }catch(e){
+    if(!queueReady(actor,epoch))return;
+    item.status=e.definitive||e.code==='AUTH_REQUIRED'?'error':'waiting';
+    item.definitive=!!e.definitive;item.error=String(e.message||e);
+    item.nextAt=Date.now()+Math.min(60000,5000*Math.max(1,item.attempts||1));
+    persistLeadQueue();renderLeadQueue();
+   }
   }
+ }finally{if(epoch===queueEpoch){queueProcessing=false;scheduleLeadQueue();}}
 }
 function enqueueLead(data){
-  const item={
-    requestId:requestId(),
-    createdBy:currentAdvisor(),
-    vendedor:data.vendedor,
-    propiedad:data.propiedad,
-    nombre:data.nombre,
-    telefono:data.telefono,
-    observaciones:data.observaciones||'',
-    status:'waiting',
-    createdAt:Date.now(),
-    attempts:0,
-    error:''
-  };
-  leadQueue.push(item);
-  persistLeadQueue();
-  rememberProp(data.propiedad);
-  save.disabled=false;
-  nameInput.value='';phone.value='';obsInput.value='';
-  const obsLine=data.observaciones?`<br><b>Obs:</b> ${esc(data.observaciones)}`:'';
-  setStatus('warn',
-    `<b>Consulta agregada a la cola.</b><br>${esc(data.nombre)} · ${esc(data.propiedad)}${obsLine}<br>`+
-    `Podés cargar otro lead mientras confirmamos el guardado.`+
-    `<div class="footerActions"><button id="sameProp" type="button">Otro del mismo inmueble</button>`+
-    `<button id="newProp" type="button">Nuevo inmueble</button></div>`
-  );
-  document.getElementById('sameProp').onclick=()=>{
-    status.className='status';nameInput.focus();
-  };
-  document.getElementById('newProp').onclick=()=>{
-    property.value='';status.className='status';property.focus();
-  };
-  renderLeadQueue();
-  processLeadQueue();
+ const actor=currentAdvisor44();
+ if(!actor)return setStatus('err','Ingresá con tu PIN antes de cargar una consulta.');
+ const item={requestId:requestId(),createdBy:actor,...data,status:'waiting',createdAt:Date.now(),attempts:0,error:'',nextAt:0};
+ leadQueue.push(item);
+ if(!persistLeadQueue()){
+  leadQueue=leadQueue.filter(x=>x!==item);
+  setStatus('err','No se pudo conservar la consulta en este dispositivo. Tus datos siguen en el formulario. Revisá el espacio o el permiso de almacenamiento antes de reintentar.');
+  return false;
+ }
+ rememberProp(data.propiedad);
+ nameInput.value='';phone.value='';obsInput.value='';saveLeadDraft();
+ setStatus('warn','<b>Consulta conservada en este dispositivo.</b><br>'+esc(data.nombre)+' · '+esc(data.propiedad)+'<br>La confirmación del CRM aparece en Cargas recientes. Podés cargar otra consulta.');
+ renderLeadQueue();processLeadQueue();return true;
 }
-async function submit(force){
-  const data={
-    vendedor:selectedSeller,
-    propiedad:titleAddress(property.value),
-    nombre:String(nameInput.value||'').trim(),
-    telefono:String(phone.value||'').trim(),
-    observaciones:String(obsInput.value||'').trim()
-  };
+function submit(){
+ if(submitting)return;submitting=true;save.disabled=true;
+ try{
+  const data={vendedor:selectedSeller,propiedad:titleAddress(property.value),nombre:String(nameInput.value||'').trim(),
+   telefono:String(phone.value||'').trim(),observaciones:String(obsInput.value||'').trim()};
   if(!stationSession())return setStatus('err','Ingresá con tu PIN antes de cargar una consulta.');
   if(!data.vendedor)return setStatus('err','Elegí el vendedor.');
   if(!data.propiedad)return setStatus('err','Elegí o escribí el inmueble.');
   if(!data.nombre)return setStatus('err','Falta el nombre.');
   if(digits(data.telefono).length<7)return setStatus('err','Revisá el teléfono.');
-
-  save.disabled=true;
-  setStatus('warn','Verificando que no esté duplicado…');
-
-  if(!force){
-    const dup=await checkDuplicate(data);
-    if(dup){
-      pendingData=data;
-      save.disabled=false;
-      setStatus('warn',
-        duplicateMessage(dup)+
-        `<div class="dupBtns"><button id="noDup" class="miniBtn" type="button">No duplicar</button>`+
-        `<button id="yesDup" class="miniBtn continue" type="button">Cargar igual</button></div>`
-      );
-      document.getElementById('noDup').onclick=()=>{status.className='status';};
-      document.getElementById('yesDup').onclick=()=>enqueueLead(pendingData);
-      return;
-    }
-  }
-  enqueueLead(data);
+  saveLeadDraft();enqueueLead(data);
+ }finally{submitting=false;save.disabled=false;}
 }
+
+
 save.onclick=()=>submit(false);
 renderLeadQueue();
 setTimeout(processLeadQueue,250);
+function resumeLeadWork(){
+ if(document.hidden)return;
+ syncLeadSession();positionLeadButton();processLeadQueue();
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){saveLeadDraft();pauseLeadQueue();}else resumeLeadWork();});
+window.addEventListener('pagehide',()=>{saveLeadDraft();pauseLeadQueue();});
+window.addEventListener('pageshow',resumeLeadWork);
+window.addEventListener('online',resumeLeadWork);
+window.addEventListener('offline',pauseLeadQueue);
+window.addEventListener('resize',positionLeadButton);
+
 
 // v34: el contacto se registra sólo al confirmarlo desde la Estación.
 frame.addEventListener('load',()=>{
-  setTimeout(loadConfig,120); // precarga antes de que Flavia toque el botón
+  setTimeout(()=>{syncLeadSession();positionLeadButton();loadConfig();},120); // precarga antes de que Flavia toque el botón
   if(new URLSearchParams(location.search).get('modo')==='redes'){
     setTimeout(openModal,280);
   }
@@ -573,4 +640,3 @@ frame.addEventListener('load',()=>{
 </script>
 </body>
 </html>
-
