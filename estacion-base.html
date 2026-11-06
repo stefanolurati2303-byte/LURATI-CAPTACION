@@ -251,6 +251,29 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
 
 
 .pin41-remember{display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;line-height:1.4;margin:14px 0 7px;text-align:left}.lockbox .pin41-remember input{width:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#0c514b}.pin41-note{font-size:12px;color:#52685f;line-height:1.5;margin-bottom:14px}#wmsg-template{width:100%;font:inherit;line-height:1.5;min-height:160px;padding:10px;margin:8px 0;border:1px solid var(--line);border-radius:10px}#wmsg-template-source{width:100%;font:inherit;padding:9px;margin:8px 0 14px;border:1px solid var(--line);border-radius:8px}#wmsg-template-box label{font-size:13px;display:block}#wmsg-template-save{padding:10px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+/* v45 · Captación privada: se integra en el panel, también en el celular. */
+.dv45-toolbar,.dv45-tabs,.dv45-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dv45-toolbar{margin:18px 0}.dv45-toolbar input{flex:1;min-width:180px}.dv45-toolbar select{max-width:230px}
+.dv45-tabs button{border:1px solid var(--line);padding:9px 12px;border-radius:10px;background:white;color:var(--green);font:inherit;cursor:pointer}
+.dv45-tabs button.active{background:var(--green);color:white;border-color:var(--green)}
+.dv45-layout{display:grid;grid-template-columns:minmax(260px,.9fr) minmax(320px,1.15fr);gap:20px;align-items:start}
+.dv45-record{display:block;width:100%;text-align:left;background:white;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:9px;color:var(--ink);font:inherit;cursor:pointer}
+.dv45-record:hover,.dv45-record.active{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+.dv45-record strong{display:block;font-size:15px;margin-bottom:5px}.dv45-record small{display:block;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
+.dv45-price{font-weight:650;margin:7px 0}.dv45-tag{display:inline-block;background:var(--green-bg);color:var(--green);font-size:11px;padding:4px 7px;border-radius:6px;margin:5px 4px 0 0}
+.dv45-tag.warn{background:#fff4df;color:#835700}.dv45-warning{background:#fff5e6;border-left:3px solid #bd8735;padding:12px;border-radius:7px;font-size:13px;line-height:1.5;margin:12px 0}
+.dv45-detail{padding:19px;min-width:0}.dv45-detail h3{font-size:22px}.dv45-detail textarea{min-height:110px;width:100%;font:inherit;line-height:1.55;padding:12px;resize:vertical}
+.dv45-detail label{display:block;font-size:12px;font-weight:600;margin:12px 0}.dv45-detail label input,.dv45-detail label select{display:block;width:100%;margin-top:5px}
+.dv45-detail a{color:var(--green);overflow-wrap:anywhere}.dv45-detail .btn{white-space:normal;min-height:44px}
+.dv45-pairs{display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;font-size:13px;margin:14px 0}.dv45-pairs dt{color:var(--muted)}.dv45-pairs dd{margin:3px 0;overflow-wrap:anywhere}
+.dv45-state{font-size:12px;line-height:1.5;white-space:pre-wrap;margin:10px 0;color:var(--muted)}.dv45-state.error{color:var(--bordo)}
+.dv45-history{font-size:12px;padding:10px 0;border-bottom:1px solid var(--line);white-space:pre-wrap;overflow-wrap:anywhere}
+.dv45-queue{margin:10px 0}.dv45-queue div{padding:9px;border:1px solid var(--line);border-radius:8px;margin:5px 0;font-size:12px}
+.dv45-pagination{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:15px 0;font-size:12px}.dv45-back{display:none!important}
+.dv45-help{font-size:12px;color:var(--muted);line-height:1.6;white-space:pre-wrap}
+@media(max-width:1050px){.dv45-layout{grid-template-columns:1fr}.dv45-detail{scroll-margin-top:18px}.dv45-detail.is-selected{grid-row:1}.dv45-back{display:inline-flex!important;margin-bottom:16px}}
+@media(max-width:680px){.dv45-toolbar{gap:9px}.dv45-toolbar input,.dv45-toolbar select{width:100%;max-width:none;font-size:16px}.dv45-tabs button{flex:1 1 42%;font-size:12px}.dv45-pairs{grid-template-columns:1fr}.dv45-actions .btn{flex:1 1 45%;font-size:12px;padding:10px}.dv45-detail input,.dv45-detail select,.dv45-detail textarea{font-size:16px}.dv45-detail{padding:15px}.dv45-tabs{margin-top:15px}}
+
 </style>
 <style>
 .bc-summary{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 20px}.bc-summary span{background:#eef3ef;border:1px solid #d8e2dc;border-radius:10px;padding:12px 15px;font-size:13px}.bc-summary b{color:var(--green);font-size:18px;margin-right:5px}.bc-categories{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}.bc-categories button{border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 13px;border-radius:24px;font:inherit;font-size:13px;cursor:pointer;min-height:42px}.bc-categories button.chosen{background:var(--green);color:#fff;border-color:var(--green)}.bc-categories small{margin-left:7px;opacity:.7}.bc-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}.bc-controls label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:650}.bc-controls input,.bc-controls select{width:100%;min-width:0;height:44px;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--text)}.bc-note{font-size:12px!important;line-height:1.65;color:var(--muted);margin-top:15px}.bc-results-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;font-size:13px}.bc-results-head span{color:var(--muted)}.bc-table-wrap{overflow-x:auto;background:white;border:1px solid var(--line);border-radius:12px}.bc-table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}.bc-table th{background:#f1f4f0;color:var(--green);font-size:11px;padding:14px;text-transform:uppercase;letter-spacing:.04em}.bc-table td{border-top:1px solid var(--line);padding:16px 14px;vertical-align:top;min-width:130px;overflow-wrap:anywhere}.bc-table small{display:block;color:var(--muted);font-size:11px;line-height:1.6;margin-top:5px;max-width:260px}.bc-table td .btn{font-size:12px;white-space:nowrap;padding:9px 12px}.bc-table .bc-pending{color:#995d21}.bc-pager{display:flex;align-items:center;justify-content:center;gap:18px;margin:20px 0;font-size:12px}.bc-detail dl{margin:10px 0 24px}.bc-detail dt{font-size:11px;color:var(--muted);margin-top:15px}.bc-detail dd{margin:5px 0;font-size:14px;overflow-wrap:anywhere;white-space:pre-wrap}@media(max-width:650px){.bc-controls{grid-template-columns:1fr}.bc-summary span{flex:1;min-width:140px}.bc-categories{gap:6px}.bc-categories button{padding:9px 11px;font-size:12px}.bc-table{min-width:0}.bc-table thead{display:none}.bc-table tr{display:block;padding:12px;border-bottom:1px solid var(--line)}.bc-table td{display:block;padding:7px 3px;border:0;min-width:0}.bc-table td:first-child{font-size:16px}.bc-table td:first-child small{display:inline;margin-left:9px}.bc-table td:nth-child(3):before{content:'Presupuesto: ';font-weight:650}.bc-table td:nth-child(4):before{content:'Responsable: ';font-weight:650}.bc-table small{max-width:none}.bc-table td .btn{width:100%;min-height:42px}.bc-pager{gap:12px}}
@@ -442,6 +465,7 @@ function pin33Msg(message){const e=document.getElementById('lockerr');if(e)e.tex
 
 
 function pin33Lock(message){
+  dv45Reset();
   if(typeof ED!=='undefined'){ED.lead=ED.prop=null;ED.epoch++;}
   PIN44.epoch++;PIN44.candidate=null;PIN44.restoring=false;clearTimeout(PIN44.timer);
   Object.assign(PIN33,{token:'',nombre:'',expires:0,recordar:false,validated:false,busy:false});pin44ClearSaved();const accessButton=document.getElementById('lockbtn');if(accessButton)accessButton.disabled=false;
@@ -991,6 +1015,7 @@ function renderPanel(){
   else if(id==="c-trabajo"){h=trabajoPanel();}
   else if(id==="c-guion"){h=guionPanel(FRASES_C,PREG_C);}
   else if(id==="c-msg"){h=msgPanel(MSGS_C);}
+  else if(id==="c-duenos"){h=dv45Panel();}
   else if(id==="c-obj"){h=objPanel(OBJS_C);}
   else if(id==="c-check"){h=checkPanel("Antes de cargar al CRM","Checklist de captación",CHECK_C);}
   // -------- VENTA --------
@@ -1018,6 +1043,7 @@ function renderPanel(){
   else if(id==="p-estados"){h=spPanel();}
   P.innerHTML=`<section class="panel active">${h}</section>`;
   // post-render hooks
+  if(id==="c-duenos"&&dv45Can())dv45Load();
   if(id==="c-msg")bindReportFooter(id);
   if(id==="c-plan")appendReport();
   if(id==="v-plan")appendReport();
@@ -1716,6 +1742,7 @@ function clGrupoNav(id){
   return id;
 }
 function renderNav(){
+  const primary=[...COMMERCIAL_NAV];if(dv45Can())primary.push(['c-duenos','Dueños vende','capture']);
   const extras=[['v-tareas','Pendientes de clientes','tasks'],['v-perfil','Perfiles por completar','profile'],['v-recuperar','Mis reactivaciones','leads'],['v-sugerencias','Buscar alternativas','suggest'],['v-mensajes','Modelos de mensajes','messages'],['p-estados','Estado de propiedades','control'],['c-trabajo','Captación','capture'],['v-actividad','Mi actividad','activity']];
   if(['Stefano','Flavia'].includes(current))extras.push(['v-editar','Corregir consultas','leads']);
   if(bcSoloStefano())extras.push(['v-busquedas','Búsquedas de clientes','leads']);
@@ -1723,8 +1750,8 @@ function renderNav(){
   const guides=[['v-guion','Conversación con compradores'],['v-obj','Objeciones de venta'],['v-plan','Proceso de venta'],['c-guion','Conversación de captación'],['c-msg','Mensajes de captación'],['c-obj','Objeciones de captación'],['c-check','Datos para captar'],['c-plan','Proceso de captación']];
   const button=(n,main)=>{const on=main?clGrupoNav(activeNav)===n[0]:activeNav===n[0];const count=n[0]==='v-leads'&&LEADS?LEADS.filter(l=>pendienteContacto(l)).length:n[0]==='v-perfil'&&RP.owner===current?rpDueRows().length:0;return '<button type="button" data-go="'+n[0]+'" class="'+(on?'active':'')+'" '+(activeNav===n[0]?'aria-current="page"':'')+'><span class="nav-icon">'+icon(n[2]||'arrow')+'</span><span class="nav-caption">'+n[1]+'</span>'+(count?'<span class="nav-count">'+count+'</span>':'')+'</button>';};
   const section=(title,items)=>'<details class="nav-guide" '+(items.some(n=>n[0]===activeNav)?'open':'')+'><summary>'+title+'</summary>'+items.map(n=>button(n,false)).join('')+'</details>';
-  $('#nav').innerHTML='<div class="side-label">Tu jornada</div><div class="cl-primary-nav">'+COMMERCIAL_NAV.map(n=>button(n,true)).join('')+'</div>'+section('Herramientas',extras)+(equipo.length?section('Dirección y equipo',equipo):'')+section('Guías de trabajo',guides);
-  const selected=[...COMMERCIAL_NAV,...extras,...equipo,...guides].find(n=>n[0]===activeNav);
+  $('#nav').innerHTML='<div class="side-label">Tu jornada</div><div class="cl-primary-nav">'+primary.map(n=>button(n,true)).join('')+'</div>'+section('Herramientas',extras)+(equipo.length?section('Dirección y equipo',equipo):'')+section('Guías de trabajo',guides);
+  const selected=[...primary,...extras,...equipo,...guides].find(n=>n[0]===activeNav);
   $('#section-name').textContent=activeNav==='v-cliente'?'Ficha del cliente':selected?selected[1]:activeNav==='v-visitas'?'Agenda · Visitas':'Tu jornada';
   $('#profile-avatar').textContent=initials(current||'Lurati');
   document.querySelectorAll('.mobile-bar [data-go]').forEach(b=>b.classList.toggle('active',b.dataset.go===clGrupoNav(activeNav)));
@@ -1732,6 +1759,7 @@ function renderNav(){
 
 
 function go(id){
+  if(id==='c-duenos'&&!dv45Can())return;
   if(activeNav==='v-cliente'&&id!=='v-cliente'&&!clMayLeave())return;
   if(id==='v-editar'&&!edCanLead())return;
   if(id==='v-direccion'&&current!=='Stefano')return;
@@ -2546,6 +2574,7 @@ function startApp(name){
   rxReset();
   gcReset(name);
   loadFor(name);
+  dv45Start();
   bcReset();
   rpReset();
   dirReset();
@@ -2791,6 +2820,198 @@ window.addEventListener('lurati-auth-changed',()=>wa42Start());
 window.addEventListener('online',()=>{wa42Start();wa42Retry();});
 
 
+/* v45 · Dueños vende. El servidor valida el permiso; aquí no se incluyen los contactos. */
+const DV45={actor:'',epoch:0,listEpoch:0,detailEpoch:0,view:'pendientes',page:1,search:'',city:'',status:'',rows:[],detail:null,queue:[],busy:false,timer:0,waLink:null,controllers:new Set()};
+const DV45_MODELS=['Primer contacto','Seguimiento','Proponer tasación','Pedir datos'];
+function dv45Norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();}
+function dv45Can(){const s=pin33Snapshot();return !!s&&s.nombre===current&&['stefano','belen lopez'].includes(dv45Norm(s.nombre));}
+function dv45Key(kind){return 'lurati_duenos_v45_'+kind+'_'+DV45.actor;}
+function dv45ReadLocal(kind,fallback){try{return JSON.parse(localStorage.getItem(dv45Key(kind))||'null')||fallback;}catch(_){return fallback;}}
+function dv45WriteLocal(kind,value){try{localStorage.setItem(dv45Key(kind),JSON.stringify(value));return true;}catch(_){return false;}}
+function dv45Reset(){
+ DV45.epoch++;DV45.listEpoch++;DV45.detailEpoch++;DV45.actor='';DV45.rows=[];DV45.detail=null;DV45.queue=[];DV45.busy=false;DV45.waLink=null;
+ clearTimeout(DV45.timer);DV45.controllers.forEach(c=>c.abort());DV45.controllers.clear();
+}
+function dv45Start(){
+ dv45Reset();if(!dv45Can())return;
+ DV45.actor=current;DV45.view='pendientes';DV45.page=1;DV45.search=DV45.city=DV45.status='';
+ DV45.queue=dv45ReadLocal('cola',[]).filter(x=>x?.actor===current&&x.request?.accion==='duenoVendeGestion'&&/^DV45_[a-zA-Z0-9_-]{10,100}$/.test(x.request.requestId));
+ dv45Pump();
+}
+function dv45Url(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)?u.href:'';}catch(_){return '';}}
+function dv45Message(p,model){
+ let name=String(p.contact||'').trim();if(!name||/dueñ|propietari|contacto|inmobiliari|sin nombre|declarad|\d|https?:/i.test(name)||name.length>45)name='';
+ if(name)name=name.split(/\s+/)[0];
+ const who=String(current||'').split(/\s+/)[0],hello='Hola'+(name?' '+name:'')+', ¿cómo estás? Soy '+who+', de Lurati Consultora Inmobiliaria.';
+ const where=[p.address,p.city].filter(Boolean).join(', ');
+ if(model==='Seguimiento')return hello+'\n\nRetomo nuestro contacto por la venta de tu propiedad. Quería saber cómo venís y si podemos ayudarte a definir el próximo paso. ¿Seguís buscando vender o ya avanzaste?';
+ if(model==='Proponer tasación')return hello+'\n\nPodemos coordinar una visita a tu propiedad, revisar su valor y conversar sobre una estrategia de venta. ¿Qué día te resultaría cómodo recibirnos?';
+ if(model==='Pedir datos')return hello+'\n\nPara orientarte con la venta, contame qué valor tenés en mente, si el inmueble está ocupado y en qué plazo te gustaría vender. Con eso podemos proponerte un próximo paso concreto.';
+ return hello+'\n\nVi tu publicación'+(where?' de '+where:'')+'. Podemos ayudarte a evaluar el precio y organizar la venta. ¿Sigue disponible y te sirve que conversemos unos minutos para ver cómo acompañarte?';
+}
+function dv45Money(p){const value=Number(p.price);return p.price!==''&&p.price!=null&&Number.isFinite(value)?(p.currency||'')+' '+value.toLocaleString('es-AR'):'Precio a consultar';}
+function dv45Panel(){
+ if(!dv45Can())return '<p>Este espacio está habilitado sólo para Stefano y Belén.</p>';
+ return '<div class="eyebrow">Captación · Stefano y Belén</div><h3>Dueños vende</h3><p class="sub">Elegí un propietario, prepará un mensaje y dejá el próximo paso. Ambos perfiles ven la misma gestión.</p><p class="dv45-help" id="dv45-source">Cargando el relevamiento…</p>'+
+  '<div class="dv45-tabs">'+[['pendientes','Para contactar'],['seguimientos','Seguimientos'],['todos','Todos'],['revisar','Revisar avisos']].map(([id,t])=>'<button type="button" data-dv45-view="'+id+'" class="'+(DV45.view===id?'active':'')+'">'+t+'</button>').join('')+'</div>'+
+  '<form id="dv45-search" class="dv45-toolbar"><input name="buscar" aria-label="Buscar dueño o propiedad" placeholder="Dirección, propietario, teléfono…" value="'+esc(DV45.search)+'"><select name="localidad" aria-label="Localidad"><option value="">Todas las localidades</option></select><select name="estado" aria-label="Estado de captación"><option value="">Todos los estados</option></select><button class="btn" type="submit">Buscar</button><button class="btn ghost" type="button" id="dv45-refresh">Actualizar</button></form>'+
+  '<div id="dv45-queue" class="dv45-queue"></div><div id="dv45-status" class="dv45-state" role="status"></div><div class="dv45-layout"><div><div id="dv45-list"></div><div id="dv45-pages" class="dv45-pagination"></div></div><div id="dv45-detail" class="card dv45-detail"><p class="dv45-help">Elegí una ficha para ver sus datos, mensajes y seguimiento.</p></div></div>';
+}
+function dv45Notice(text,error=false){const el=$('#dv45-status');if(el){el.textContent=text||'';el.classList.toggle('error',error);}}
+async function dv45Get(q,params={}){
+ if(!dv45Can())throw Object.assign(new Error('Este perfil no tiene acceso a Dueños vende.'),{code:'AUTH_FORBIDDEN'});
+ const u=new URL(SHEET_URL);u.searchParams.set('q',q);u.searchParams.set('_',Date.now());Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+ const c=new AbortController(),timer=setTimeout(()=>c.abort(),12000);DV45.controllers.add(c);
+ try{
+  const r=await fetch(u.toString(),{cache:'no-store',signal:c.signal});let d;
+  try{d=await r.json();}catch(_){throw new Error('Falta instalar y publicar el servidor de Dueños vende (v45).');}
+  if(!r.ok||d.ok===false)throw Object.assign(new Error(d.error||'No se pudo acceder a Dueños vende.'),{code:d.code});
+  if(d.modulo!==45)throw new Error('Falta instalar y publicar el servidor de Dueños vende (v45).');
+  return d;
+ }finally{clearTimeout(timer);DV45.controllers.delete(c);}
+}
+async function dv45Load(){
+ if(!dv45Can()||activeNav!=='c-duenos')return;
+ const epoch=DV45.epoch,list=++DV45.listEpoch;dv45Notice('Cargando fichas…');dv45QueueNotice();
+ try{
+  const d=await dv45Get('duenosVende',{vista:DV45.view,buscar:DV45.search,localidad:DV45.city,estado:DV45.status,pagina:DV45.page});
+  if(epoch!==DV45.epoch||list!==DV45.listEpoch||!dv45Can()||activeNav!=='c-duenos')return;
+  DV45.rows=d.registros;DV45.page=d.pagina;
+  $('#dv45-source').textContent='Relevamiento: '+d.corte+'. '+d.conteos.todos+' fichas conservadas · '+d.conteos.pendientes+' listas para contactar · '+d.conteos.vencidos+' seguimientos para hoy o vencidos. La vigencia comercial se confirma con el propietario.';
+  for(const [name,values,selected]of [['localidad',d.localidades,DV45.city],['estado',d.estados,DV45.status]]){
+   const select=$('#dv45-search').elements[name];select.innerHTML='<option value="">'+(name==='localidad'?'Todas las localidades':'Todos los estados')+'</option>'+values.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');select.value=selected;
+  }
+  $('#dv45-list').innerHTML=d.registros.map(p=>'<button type="button" class="dv45-record '+(DV45.detail?.id===p.id?'active':'')+'" data-dv45-id="'+esc(p.id)+'"><strong>'+esc(p.address||p.id)+'</strong><small>'+esc(p.type||'Inmueble')+' · '+esc(p.city||'')+'</small><div class="dv45-price">'+esc(dv45Money(p))+'</div><span class="dv45-tag">'+esc(p.estado)+'</span>'+(p.bloqueo?'<span class="dv45-tag warn">Revisar contacto</span>':'')+'<small>'+esc(p.contact||'Nombre sin publicar')+(p.proximaFecha?' · Próximo paso: '+esc(p.proximaFecha):'')+'</small></button>').join('')||empty('No hay fichas con estos filtros. Podés revisar Todos o cambiar la búsqueda.');
+  $('#dv45-pages').innerHTML='<button class="btn ghost" data-dv45-page="'+(d.pagina-1)+'" '+(d.pagina<=1?'disabled':'')+'>Anterior</button><span>'+d.total+' resultados · '+d.pagina+' / '+d.paginas+'</span><button class="btn ghost" data-dv45-page="'+(d.pagina+1)+'" '+(d.pagina>=d.paginas?'disabled':'')+'>Siguiente</button>';
+  dv45Notice('');
+ }catch(e){if(epoch===DV45.epoch&&list===DV45.listEpoch&&activeNav==='c-duenos')dv45Notice(e.name==='AbortError'?'La conexión demoró. Reintentá con Actualizar; las gestiones pendientes se conservan.':e.message,true);}
+}
+function dv45DraftKey(id){return 'ficha_'+id;}
+function dv45CaptureDraft(){
+ const form=$('#dv45-form');if(!form||!DV45.detail||!dv45Can())return;
+ const values={};for(const key of ['estado','notas','proximaFecha','proximaAccion'])values[key]=form.elements[key].value;
+ if(!dv45WriteLocal(dv45DraftKey(DV45.detail.id),values))dv45Notice('No se pudo conservar el borrador en este dispositivo. Mantené esta pestaña abierta hasta guardar en el CRM.',true);
+}
+function dv45Pending(id){return DV45.queue.some(x=>!x.failed&&x.request.id===id);}
+function dv45FormLock(){const f=$('#dv45-form');if(!DV45.detail)return;const pending=dv45Pending(DV45.detail.id);if(f)for(const el of f.elements)el.disabled=pending;const wa=$('#dv45-wa'),sent=$('#dv45-sent');if(wa)wa.disabled=pending||!!DV45.detail.bloqueo;if(sent)sent.disabled=pending||!DV45.detail.puedePreparar;}
+function dv45LinkNotice(){const p=DV45.detail,link=DV45.waLink,el=$('#dv45-detail-status');if(el&&p&&!p.bloqueo&&link?.id===p.id&&Date.now()-link.at<60000)el.innerHTML='Si WhatsApp no se abrió, <a href="'+esc(link.url)+'" target="_blank" rel="noopener noreferrer">tocá acá para abrir el mensaje</a>.';}
+async function dv45Open(id,{capture=true}={}){
+ if(!dv45Can())return;
+ const epoch=DV45.epoch,detail=++DV45.detailEpoch;if(capture)dv45CaptureDraft();$('#dv45-detail').classList.add('is-selected');$('#dv45-detail').innerHTML='<p>Cargando ficha…</p>';
+ try{
+  const d=await dv45Get('duenoVendeFicha',{id});if(epoch!==DV45.epoch||detail!==DV45.detailEpoch||activeNav!=='c-duenos'||!dv45Can())return;
+  DV45.detail=d.ficha;dv45RenderDetail(d);
+  if(innerWidth<1051)$('#dv45-detail').scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(e){if(epoch===DV45.epoch&&detail===DV45.detailEpoch&&activeNav==='c-duenos')$('#dv45-detail').innerHTML='<p class="dv45-state error">'+esc(e.message)+'</p><button class="btn ghost" data-dv45-id="'+esc(id)+'">Reintentar</button>';}
+}
+function dv45RenderDetail(d){
+ if(!dv45Can()||!$('#dv45-detail'))return;
+ const p=d.ficha,g=p.gestion,draft=dv45ReadLocal(dv45DraftKey(p.id),{}),u=dv45Url(p.url);
+ const fields=[['Propietario publicado',p.contact||'Sin nombre publicado'],['Teléfono publicado',p.phone||'Sin teléfono completo'],['Tipo',p.type||'Sin dato'],['Precio',dv45Money(p)],['Zona',p.zone||p.city],['Último control',p.reviewedAt||p.lastattempt||'Sin dato'],['Estado del aviso',p.state||p.reviewState],['Condición del aviso',p.restriction||'Sin condición recuperada'],['Último contacto confirmado',g.ultimoContacto||'Sin envío confirmado']];
+ $('#dv45-detail').innerHTML='<button type="button" class="btn ghost dv45-back" id="dv45-back">← Volver al listado</button><div class="eyebrow">'+esc(p.id)+' · '+esc(p.city)+'</div><h3>'+esc(p.address)+'</h3><dl class="dv45-pairs">'+fields.map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+(p.notes?'<p class="dv45-help">'+esc(p.notes)+'</p>':'')+
+  '<div class="dv45-actions">'+(u?'<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">Ver publicación</a>':'')+'<a class="btn ghost" href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent([p.address,p.city].filter(Boolean).join(', '))+'" target="_blank" rel="noopener noreferrer">Ver zona</a></div>'+
+  (p.bloqueo?'<div class="dv45-warning">'+esc(p.bloqueo)+'</div>':'')+
+  '<label>Modelo de mensaje<select id="dv45-model">'+DV45_MODELS.map(m=>'<option>'+m+'</option>').join('')+'</select></label><textarea id="dv45-message" aria-label="Mensaje de captación" maxlength="4000"></textarea>'+
+  '<div class="dv45-actions"><button type="button" class="btn ghost" id="dv45-copy" '+(!p.puedePreparar?'disabled':'')+'>Copiar mensaje</button><button type="button" class="btn" id="dv45-wa" '+(p.bloqueo?'disabled':'')+'>Abrir WhatsApp</button><button type="button" class="btn ghost" id="dv45-sent" '+(!p.puedePreparar?'disabled':'')+'>Confirmar envío</button></div><p class="dv45-help">WhatsApp abre un borrador. Confirmá el envío después de enviarlo por WhatsApp o el portal para registrar el contacto; el sistema no envía mensajes por su cuenta.</p>'+
+  '<details><summary>Preguntas para avanzar con la captación</summary><p class="dv45-help">• ¿Qué te motiva a vender y en qué plazo te gustaría hacerlo?\n• ¿Qué valor tenés en mente y qué respuesta viene teniendo la publicación?\n• ¿Está ocupado y qué horarios tenemos para visitarlo?\n• ¿Qué documentación tenés disponible?\n• ¿Hay alguna inmobiliaria trabajando la venta o un acuerdo vigente?\nPróximo paso: coordinar una visita y acordar cómo seguir.</p></details>'+
+  '<form id="dv45-form"><h4 style="margin-top:20px">Gestión compartida</h4><p class="dv45-help" id="dv45-shared">'+esc((g.ultimoPerfil?'Última gestión: '+g.ultimoPerfil+' · '+g.actualizado:'Todavía sin gestión registrada.'))+'</p><label>Estado<select name="estado">'+d.estados.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label><label>Notas<textarea name="notas" maxlength="4000" placeholder="Qué conversaron, necesidad y próximos pasos"></textarea></label><label>Próxima fecha<input type="date" name="proximaFecha"></label><label>Próxima acción<input name="proximaAccion" maxlength="300" placeholder="Ej. llamar para coordinar la tasación"></label><button class="btn" type="submit">Guardar gestión</button></form><div id="dv45-detail-status" class="dv45-state" role="status"></div>'+
+  '<details style="margin-top:18px"><summary>Historial de esta ficha</summary>'+((d.historial||[]).map(x=>'<div class="dv45-history">'+esc(x.fecha)+' · '+esc(x.perfil)+'\n'+esc(x.tipo==='whatsappAbrir'?'WhatsApp abierto; envío sin confirmar':x.tipo==='confirmarEnvio'?'Envío confirmado':x.estado)+(x.notas?'\n'+esc(x.notas):'')+'</div>').join('')||'<p class="dv45-help">Sin movimientos todavía.</p>')+'</details>';
+ const f=$('#dv45-form');for(const key of ['estado','notas','proximaFecha','proximaAccion'])f.elements[key].value=draft[key]??g[key]??'';
+ if(Object.keys(draft).length)$('#dv45-detail-status').textContent='Se recuperó tu borrador de este dispositivo. Revisalo antes de guardar.';
+ dv45SetMessage();dv45FormLock();dv45LinkNotice();
+}
+function dv45SetMessage(){if(!DV45.detail||!dv45Can()||!$('#dv45-message'))return;const model=$('#dv45-model').value,key='mensaje_'+DV45.detail.id+'_'+model;$('#dv45-message').value=dv45ReadLocal(key,null)??dv45Message(DV45.detail,model);}
+function dv45QueueNotice(){
+ const el=$('#dv45-queue');if(!el||!dv45Can())return;
+ el.innerHTML=DV45.queue.map(x=>'<div>'+esc(x.request.id)+' · '+esc(x.failed?'Revisar: '+x.error:'Pendiente de confirmar en el CRM. Se retomará al volver a tener conexión.')+(x.failed?'<button type="button" class="text-link" data-dv45-recover="'+esc(x.request.requestId)+'">Revisar ficha</button>':'')+'</div>').join('');dv45FormLock();
+}
+function dv45Enqueue(tipo,datos={}){
+ if(!dv45Can()||!DV45.detail)return false;
+ if(dv45Pending(DV45.detail.id)){dv45Notice('Ya hay un cambio pendiente para esta ficha. Esperá su confirmación o tocá Actualizar.',true);return false;}
+ const req={accion:'duenoVendeGestion',requestId:'DV45_'+(crypto.randomUUID?.()||Date.now()+'_'+Math.random().toString(36).slice(2)),id:DV45.detail.id,tipo,version:DV45.detail.gestion.version,datos};
+ const item={actor:current,request:req,sent:false,failed:false,error:''};DV45.queue.push(item);
+ if(!dv45WriteLocal('cola',DV45.queue)){DV45.queue.pop();dv45Notice('No se pudo conservar el cambio en este dispositivo. Tus datos siguen en pantalla; revisá el almacenamiento y reintentá.',true);return false;}
+ dv45QueueNotice();dv45Notice('Cambio conservado en este dispositivo. Falta la confirmación del CRM.');dv45Pump();return true;
+}
+async function dv45Pump(){
+ if(!dv45Can()||DV45.busy||document.hidden||navigator.onLine===false)return;
+ const actor=DV45.actor,epoch=DV45.epoch;DV45.busy=true;clearTimeout(DV45.timer);
+ const valid=()=>dv45Can()&&DV45.actor===actor&&epoch===DV45.epoch&&!document.hidden&&navigator.onLine!==false;
+ try{
+  for(const item of DV45.queue.filter(x=>!x.failed)){
+   if(!valid())return;let receipt=null;
+   try{
+    if(item.sent){receipt=await dv45Get('duenosVendeEstado',{requestId:item.request.requestId});if(!valid())return;}
+    if(!receipt||receipt.estado==='pendiente'){
+     item.sent=true;dv45WriteLocal('cola',DV45.queue);
+     fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item.request)}).catch(()=>{});
+    }
+    for(let i=0;i<6;i++){
+     if(!valid())return;
+     if(!receipt||receipt.estado==='pendiente'){await new Promise(r=>setTimeout(r,i?1000:400));if(!valid())return;receipt=await dv45Get('duenosVendeEstado',{requestId:item.request.requestId});}
+     if(!valid())return;
+     if(receipt.estado==='error')throw Object.assign(new Error(receipt.error||'Revisá esta gestión.'),{definitive:true});
+     if(receipt.estado==='guardado'){
+      if(receipt.resultado?.id!==item.request.id)throw Object.assign(new Error('El comprobante no coincide con esta ficha. Se conservó el cambio para revisión.'),{definitive:true});
+      if(DV45.detail?.id===item.request.id){
+       if(item.request.tipo==='gestionar')dv45WriteLocal(dv45DraftKey(item.request.id),{});
+       else{dv45CaptureDraft();const draft=dv45ReadLocal(dv45DraftKey(item.request.id),{});if(draft.estado===DV45.detail.gestion.estado){draft.estado=receipt.resultado.gestion.estado;dv45WriteLocal(dv45DraftKey(item.request.id),draft);}}
+      }else if(item.request.tipo==='gestionar')dv45WriteLocal(dv45DraftKey(item.request.id),{});
+      DV45.queue=DV45.queue.filter(x=>x!==item);dv45WriteLocal('cola',DV45.queue);
+      if(DV45.detail?.id===item.request.id){DV45.detail.gestion=receipt.resultado.gestion;if(activeNav==='c-duenos')dv45Open(item.request.id,{capture:false});}
+      dv45QueueNotice();dv45Notice('Gestión guardada en el CRM.');if(activeNav==='c-duenos')dv45Load();break;
+     }
+     receipt=null;
+    }
+    if(DV45.queue.includes(item))break;
+   }catch(e){
+    if(!valid())return;
+    if(e.definitive){item.failed=true;item.error=e.message;dv45WriteLocal('cola',DV45.queue);dv45QueueNotice();dv45Notice(e.message,true);}else{dv45Notice('Falta confirmar el cambio. Se conserva para reintentar con el mismo identificador.',true);break;}
+   }
+  }
+ }finally{if(epoch===DV45.epoch){DV45.busy=false;dv45FormLock();if(DV45.queue.some(x=>!x.failed)&&valid())DV45.timer=setTimeout(dv45Pump,8000);}}
+}
+document.addEventListener('input',e=>{
+ if(e.target.closest('#dv45-form'))dv45CaptureDraft();
+ if(e.target.id==='dv45-message'&&DV45.detail)dv45WriteLocal('mensaje_'+DV45.detail.id+'_'+$('#dv45-model').value,e.target.value);
+});
+document.addEventListener('change',e=>{if(e.target.id==='dv45-model')dv45SetMessage();if(e.target.closest('#dv45-form'))dv45CaptureDraft();});
+document.addEventListener('submit',e=>{
+ if(e.target.id==='dv45-search'){e.preventDefault();const f=e.target;DV45.search=f.elements.buscar.value;DV45.city=f.elements.localidad.value;DV45.status=f.elements.estado.value;DV45.page=1;dv45Load();}
+ if(e.target.id==='dv45-form'){e.preventDefault();dv45CaptureDraft();dv45Enqueue('gestionar',Object.fromEntries(new FormData(e.target)));}
+});
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.dv45View){DV45.view=b.dataset.dv45View;DV45.page=1;document.querySelectorAll('[data-dv45-view]').forEach(x=>x.classList.toggle('active',x===b));dv45Load();}
+ if(b.dataset.dv45Id)dv45Open(b.dataset.dv45Id);
+ if(b.dataset.dv45Page){DV45.page=Number(b.dataset.dv45Page);dv45Load();}
+ if(b.id==='dv45-back'){dv45CaptureDraft();$('#dv45-detail').classList.remove('is-selected');$('#dv45-list').scrollIntoView({behavior:'smooth',block:'start'});}
+ if(b.id==='dv45-refresh'){dv45Load();dv45Pump();}
+ if(b.dataset.dv45Recover){const item=DV45.queue.find(x=>x.request.requestId===b.dataset.dv45Recover);if(item){dv45Open(item.request.id);dv45Notice(item.error+' Tu borrador sigue disponible.',true);}}
+ if(!['dv45-copy','dv45-wa','dv45-sent'].includes(b.id))return;
+ if(!dv45Can()||!DV45.detail||(b.id==='dv45-wa'?!!DV45.detail.bloqueo:!DV45.detail.puedePreparar))return;
+ const text=$('#dv45-message').value.trim();if(!text)return dv45Notice('Completá el mensaje antes de continuar.',true);
+ if(b.id==='dv45-copy'){try{await navigator.clipboard.writeText(text);dv45Notice('Mensaje copiado.');}catch(_){$('#dv45-message').focus();$('#dv45-message').select();dv45Notice('Seleccioná y copiá el mensaje desde el cuadro.');}}
+ if(b.id==='dv45-wa'){
+  if(!/^[0-9]{10,15}$/.test(DV45.detail.whatsapp||''))return;
+  const id=DV45.detail.id,epoch=DV45.epoch,version=DV45.detail.gestion.version;
+  b.disabled=true;
+  try{
+   const fresh=await dv45Get('duenoVendeFicha',{id});if(epoch!==DV45.epoch||!dv45Can()||DV45.detail?.id!==id||activeNav!=='c-duenos')return;
+   if(fresh.ficha.bloqueo||fresh.ficha.gestion.version!==version){dv45CaptureDraft();DV45.detail=fresh.ficha;dv45RenderDetail(fresh);dv45Notice(fresh.ficha.bloqueo||'La gestión cambió. Revisá los datos actualizados antes de contactar.',true);return;}
+   const url='https://wa.me/'+fresh.ficha.whatsapp+'?text='+encodeURIComponent(text);
+   if(dv45Enqueue('whatsappAbrir',{modelo:$('#dv45-model').value})){
+    DV45.waLink={id,url,at:Date.now()};window.open(url,'_blank','noopener,noreferrer');dv45LinkNotice();
+   }
+  }catch(error){dv45Notice(error.message,true);}finally{dv45FormLock();}
+ }
+ if(b.id==='dv45-sent')dv45Enqueue('confirmarEnvio',{});
+});
+function dv45Resume(){if(!document.hidden&&dv45Can()){dv45Pump();if(activeNav==='c-duenos')dv45Load();}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){dv45CaptureDraft();DV45.controllers.forEach(c=>c.abort());}else dv45Resume();});
+window.addEventListener('pagehide',dv45CaptureDraft);window.addEventListener('pageshow',dv45Resume);window.addEventListener('online',dv45Resume);
+
+
 pin33Init();
 
 
@@ -2948,3 +3169,4 @@ function wmsgMessageText(texto,ctx=WMSG_CTX,modelo=$('#wmsg-model')?.value){
 </script>
 </body>
 </html>
+
