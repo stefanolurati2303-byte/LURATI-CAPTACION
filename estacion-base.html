@@ -1186,8 +1186,20 @@ function crmAccessError(){const e=new Error("El CRM está pidiendo iniciar sesi�
 let LEADS=null;
 let LEADS_MODE="";
 const LEADS_TURBO_CACHE_MS=30000;
-const ESTADOS=["Nuevo","Contactado","No respondió","Interesado","Visita coordinada","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio","Dormido","Perdido"];
-const EST_COLOR={"Nuevo":"#378add","Contactado":"#128f8b","No respondió":"#888780","Interesado":"#1d9e75","Visita coordinada":"#7f77dd","Visitó":"#534ab7","Seguimiento":"#ef9f27","Oferta":"#ba7517","Reserva":"#639922","Derivado a Julio":"#0c447c","Dormido":"#888780","Perdido":"#a32d2d"};
+const ESTADOS=["Nuevo","Contactado","No respondió","Interesado","Visita coordinada","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio","Dormido","Desconexión","Perdido"];
+const EST_COLOR={"Nuevo":"#378add","Contactado":"#128f8b","No respondió":"#888780","Interesado":"#1d9e75","Visita coordinada":"#7f77dd","Visitó":"#534ab7","Seguimiento":"#ef9f27","Oferta":"#ba7517","Reserva":"#639922","Derivado a Julio":"#0c447c","Dormido":"#888780","Desconexión":"#888780","Perdido":"#a32d2d"};
+// v46 · El archivo se aplica también a lecturas conservadas en este dispositivo.
+function ds46EsDesconexion(estado){return String(estado||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()==='desconexion';}
+function ds46Visibles(leads){return (Array.isArray(leads)?leads:[]).filter(l=>!ds46EsDesconexion(l.estado));}
+function ds46Retirar(id){
+  if(LEADS)LEADS=LEADS.filter(l=>l.id!==id);
+  GC.agenda=GC.agenda.filter(a=>a.idConsulta!==id);GC.anteriores=GC.anteriores.filter(a=>a.idConsulta!==id);
+  RX.asignadas=RX.asignadas.filter(a=>a.idConsulta!==id);
+  BC.rows=BC.rows.filter(l=>l.id!==id);RP.rows=RP.rows.filter(l=>l.id!==id);
+  if(CONTROL_LEADS)CONTROL_LEADS=CONTROL_LEADS.filter(l=>l.id!==id);
+  if(GC.selected===id)GC.selected='';
+  if(GC.client===id){GC.detailEpoch++;GC.client='';GC.detail=null;}
+}
 function estColor(v){v=String(v||"").trim();return EST_COLOR[v]||"#888780";}
 const EST_NO_CONTACTADO=["Nuevo","No respondió",""];
 const EST_EN_GESTION=["Contactado","Interesado","Visita coordinada","Visitó","Seguimiento","Oferta","Reserva","Derivado a Julio"];
@@ -1214,7 +1226,7 @@ async function crmGet(q,params){
   if(!r.ok||d.ok===false)throw new Error(d.error||("Error del CRM ("+r.status+")."));
   return d;
 }
-function turboCacheKey(){return "lurati_leads_turbo_v40_"+(current||"").trim().toLowerCase();}
+function turboCacheKey(){return "lurati_leads_turbo_v46_"+(current||"").trim().toLowerCase();}
 function getTurboCache(){
   const access=pin33Snapshot();if(!access||access.nombre!==current)return null;
   try{
@@ -1223,7 +1235,7 @@ function getTurboCache(){
     const obj=JSON.parse(raw);
     if(!obj||!obj.ts||!Array.isArray(obj.leads))return null;
     if(Date.now()-obj.ts>LEADS_TURBO_CACHE_MS)return null;
-    return obj.leads;
+    return ds46Visibles(obj.leads);
   }catch(e){return null;}
 }
 function setTurboCache(leads){
@@ -1306,7 +1318,7 @@ async function loadControlEquipo(){
   body.innerHTML=empty("Cargando control del equipo…");
   try{
     const d=await crmGet("controlLeads",{supervisor:current});
-    CONTROL_LEADS=d.leads||[];CONTROL_VENDEDORES=d.vendedores||[];renderControlEquipo();renderNav();
+    CONTROL_LEADS=ds46Visibles(d.leads);CONTROL_VENDEDORES=d.vendedores||[];renderControlEquipo();renderNav();
   }catch(e){body.innerHTML=empty(e.message||"No se pudo cargar el control del equipo.");}
 }
 function minutosControl(l){const a=Number(l.asignadoTs||0),z=Number(l.primerContactoTs||0);return a?Math.max(0,Math.floor(((z||Date.now())-a)/60000)):null;}
@@ -1414,10 +1426,10 @@ function setEstadoAnterior(id,val){
 
 /* ============ SUGERENCIAS ============ */
 let OMITIDOS={};   // ids omitidos en esta sesión
-function esPrioridad(l){return !!(l.perfil&&(l.perfil.busca||l.perfil.zona)&&l.perfil.presup);}
+function esPrioridad(l){return !ds46EsDesconexion(l.estado)&&!!(l.perfil&&(l.perfil.busca||l.perfil.zona)&&l.perfil.presup);}
 function esRecontactar(l){
   const est=(l.estado||"").trim();
-  if(est==="Perdido"||est==="Dormido")return false;
+  if(est==="Perdido"||est==="Dormido"||ds46EsDesconexion(est))return false;
   const contactadoViejo = est==="Contactado" && l.dias>=3;
   const sinPerfil = !esNoContactado(l) && !l.tienePerfil;
   return contactadoViejo || sinPerfil;
@@ -1835,7 +1847,7 @@ async function loadLeads(force,options){
       }
       if(epoch!==leadEpoch||name!==current)return;
       if(!data||!Array.isArray(data.leads))throw new Error('No recibimos una lista válida de consultas.');
-      LEADS=data.leads;LEADS_MODE=desired;leadLoadedAt=Date.now();leadError='';if(!full)setTurboCache(LEADS);
+      LEADS=ds46Visibles(data.leads);LEADS_MODE=desired;leadLoadedAt=Date.now();leadError='';if(!full)setTurboCache(LEADS);
       refreshLeadViews();
     }catch(e){
       if(epoch!==leadEpoch||name!==current)return;
@@ -1950,7 +1962,7 @@ async function bcLoad(force){
   const who=current,epoch=++BC.epoch;BC.loading=true;BC.error='';bcRender();
   try{const d=await crmGet('busquedasClientes',{asesor:who});if(who!==current||epoch!==BC.epoch)return;
     if(!Array.isArray(d.clientes)||!['equipo','propios'].includes(d.alcance))throw new Error('Instalá el código de Apps Script actualizado para habilitar este listado.');
-    BC.rows=d.clientes.map(bcPrepare);BC.loaded=true;BC.alcance=d.alcance;BC.fecha=d.fechaLectura||'';
+    BC.rows=ds46Visibles(d.clientes).map(bcPrepare);BC.loaded=true;BC.alcance=d.alcance;BC.fecha=d.fechaLectura||'';
   }catch(e){if(who!==current||epoch!==BC.epoch)return;BC.error=e.message;}
   finally{if(who===current&&epoch===BC.epoch){BC.loading=false;bcRender();}}
 }
@@ -2129,6 +2141,9 @@ async function gcPoll(request,who,epoch){
     GC.pending=null;try{localStorage.removeItem(gcRequestKey(who));}catch(_){}
     if(d.estado==='error'||!d.resultado||d.resultado.ok===false)throw new Error((d.resultado&&d.resultado.error)||'No se pudo completar el guardado.');
     const l=leadFromId(request.idConsulta);if(l&&d.resultado.estadoCliente)l.estado=d.resultado.estadoCliente;
+    if(ds46EsDesconexion(d.resultado.estadoCliente)){
+      ds46Retirar(request.idConsulta);if(activeNav==='v-cliente'&&!GC.client)go('v-leads');
+    }
     clearTurboCache();gcMsg('Guardado y confirmado en el CRM.');return d.resultado;
   }
   throw new Error('Todavía no pudimos confirmar el guardado. Consultá su estado antes de repetir la acción.');
@@ -2151,7 +2166,7 @@ function gcPendingNotice(){
 }
 async function gcLoadClient(id){
   const epoch=++GC.detailEpoch,who=current;GC.client=id;GC.detail=null;gcRenderClient();
-  try{const d=await crmGet('clienteComercial',{id:id,asesor:who});if(who!==current||epoch!==GC.detailEpoch)return;if(!d.cliente)throw new Error('No se pudo leer la ficha del cliente.');GC.detail=d;GC.selected=id;
+  try{const d=await crmGet('clienteComercial',{id:id,asesor:who});if(who!==current||epoch!==GC.detailEpoch)return;if(!d.cliente)throw new Error('No se pudo leer la ficha del cliente.');if(ds46EsDesconexion(d.cliente.estado)){ds46Retirar(id);if(activeNav==='v-cliente')go('v-leads');gcToast('La consulta está en Desconexión. Sus datos e historial se conservan.');return;}GC.detail=d;GC.selected=id;
     if(LEADS){const i=LEADS.findIndex(l=>l.id===id);if(i>=0)LEADS[i]={...LEADS[i],...d.cliente};else LEADS.push(d.cliente);}
     gcRenderClient();
   }catch(e){if(who!==current||epoch!==GC.detailEpoch)return;GC.detail={error:e.message};gcRenderClient();}
@@ -2220,7 +2235,7 @@ async function gcFormSave(form,payload,onSuccess){
   catch(e){if(who!==current)return;if(status){status.textContent=e.message;status.classList.add('error');}gcMsg(e.message,true);}
   finally{if(b)b.disabled=false;gcPendingNotice();}
 }
-async function setEstado(id,val){const who=current;try{await gcSubmit({tipo:'estado',idConsulta:id,valor:val});if(who===current)await gcAfterSave();}catch(e){if(who===current){renderLeadsCRM();gcToast(e.message);}}gcPendingNotice();}
+async function setEstado(id,val){const who=current;try{await gcSubmit({tipo:'estado',idConsulta:id,valor:val,comentario:ds46EsDesconexion(val)?'Búsqueda inactiva. Consulta archivada en Desconexión; el motivo específico puede registrarse en el historial.':''});if(who===current){await gcAfterSave();if(ds46EsDesconexion(val))gcToast('Consulta archivada en Desconexión. Los datos y el historial se conservan.');}}catch(e){if(who===current){renderLeadsCRM();gcToast(e.message);}}gcPendingNotice();}
 async function savePerfil(){
   const id=$('#pf-lead').value,m=$('#pfmsg'),who=current;if(!id){m.textContent='Elegí un cliente primero.';return;}
   const perfil={busca:$('#pf-busca').value.trim(),tipo:$('#pf-tipo').value,dorms:$('#pf-dorms').value,banos:$('#pf-banos').value,m2:$('#pf-m2').value.trim(),estado:$('#pf-estado').value,antig:$('#pf-antig').value,presup:$('#pf-presup').value.trim(),pago:$('#pf-pago').value,obs:$('#pf-obs').value.trim()};
@@ -2412,7 +2427,7 @@ function rxRenderAdminBaseV28(){
 function rxAsignadasPanel(){return '<div class="eyebrow">Una nueva propuesta para una consulta anterior</div><h3>Mis reactivaciones</h3><p class="sub">La consulta ya está asignada. Revisá el historial y confirmá si sigue buscando antes de proponer opciones.</p><button type="button" class="btn ghost" id="rx-assigned-refresh">Actualizar</button><div id="rx-assigned-list" style="margin-top:20px"></div>';}
 async function rxLoadAsignadas(){
   const who=current,epoch=RX.epoch,el=$('#rx-assigned-list');if(el)el.innerHTML=empty('Cargando consultas para retomar…');
-  try{const d=await crmGet('reactivacionesAsignadas',{asesor:who});if(who!==current||epoch!==RX.epoch)return;RX.asignadas=d.reactivaciones||[];if(!LEADS)LEADS=[];RX.asignadas.forEach(a=>{const i=LEADS.findIndex(l=>l.id===a.idConsulta);if(i<0)LEADS.push(a.cliente);else LEADS[i]={...LEADS[i],...a.cliente};});rxRenderAsignadas();}
+  try{const d=await crmGet('reactivacionesAsignadas',{asesor:who});if(who!==current||epoch!==RX.epoch)return;RX.asignadas=(d.reactivaciones||[]).filter(a=>!ds46EsDesconexion(a.cliente?.estado));if(!LEADS)LEADS=[];RX.asignadas.forEach(a=>{const i=LEADS.findIndex(l=>l.id===a.idConsulta);if(i<0)LEADS.push(a.cliente);else LEADS[i]={...LEADS[i],...a.cliente};});rxRenderAsignadas();}
   catch(e){if(who===current&&epoch===RX.epoch&&el?.isConnected)el.innerHTML='<div class="home-error">'+esc(e.message)+'</div>';}
 }
 function rxRenderAsignadas(){
@@ -2422,7 +2437,7 @@ function rxRenderAsignadas(){
 
 async function rxMessageBaseV28(id){
   const who=current,epoch=RX.epoch;let a=RX.asignadas.find(x=>x.id===id)||GC.detail?.reactivacion;
-  if(!a||a.id!==id){const d=await crmGet('reactivacionesAsignadas',{asesor:who});if(who!==current||epoch!==RX.epoch)return;RX.asignadas=d.reactivaciones||[];a=RX.asignadas.find(x=>x.id===id);}
+  if(!a||a.id!==id){const d=await crmGet('reactivacionesAsignadas',{asesor:who});if(who!==current||epoch!==RX.epoch)return;RX.asignadas=(d.reactivaciones||[]).filter(a=>!ds46EsDesconexion(a.cliente?.estado));a=RX.asignadas.find(x=>x.id===id);}
   if(!a)return;
   const l=leadFromId(a.idConsulta)||a.cliente;
   const anchor=document.createElement('a');anchor.dataset.waid=l.id;anchor.className='lead-wa';anchor.href=waLink(l);await openWhatsappComposer(anchor);if(who!==current||epoch!==RX.epoch||WMSG_CTX?.id!==l.id)return;
@@ -3169,4 +3184,5 @@ function wmsgMessageText(texto,ctx=WMSG_CTX,modelo=$('#wmsg-model')?.value){
 </script>
 </body>
 </html>
+
 
