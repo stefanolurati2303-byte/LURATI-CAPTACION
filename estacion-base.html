@@ -311,6 +311,17 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
 @media(max-width:680px){.td49-heading,.td49-banner{align-items:stretch;flex-direction:column;gap:12px}.td49-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.td49-metric{padding:14px;min-height:112px}.td49-metric.selected{padding:13px}.td49-metric strong{font-size:28px}.td49-row{align-items:stretch;flex-direction:column;gap:12px}.td49-row .btn{align-self:flex-start}.td49-scope .btn{flex:1}.td49-pages{flex-wrap:wrap}.td49-pages .btn{min-height:44px}}
 
 </style>
+<style>
+.m50-progress{margin:0 0 24px}.m50-title{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:8px 0 16px}.m50-title h2{font-size:21px;color:var(--green);margin:0 0 7px}.m50-title p{font-size:13px;color:var(--muted);margin:0}.m50-title>span{font-size:11px;border:1px solid #d3e3dd;padding:7px 10px;border-radius:99px;white-space:nowrap;color:var(--green)}
+.m50-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.m50-card{border:1px solid #dce8e2;border-radius:20px;background:#fff;padding:20px;text-align:center;min-width:0}.m50-card:nth-child(2){--m50-color:#128f8b}.m50-card:nth-child(3){--m50-color:#759342}.m50-ring{width:130px;height:130px;position:relative;margin:0 auto 12px}.m50-ring>svg{width:100%;height:100%;transform:rotate(-90deg)}.m50-track,.m50-fill{fill:none;stroke-width:7;stroke-linecap:round}.m50-track{stroke:#edf3ef}.m50-fill{stroke:var(--m50-color,#0e6c58);stroke-dasharray:100;stroke-dashoffset:var(--m50-offset,100);animation:m50-grow .9s cubic-bezier(.2,.7,.3,1) both}.m50-ring-label{position:absolute;inset:22px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;color:var(--m50-color,var(--green))}.m50-ring-label>svg{width:19px;height:19px}.m50-ring-label strong{font-size:29px;letter-spacing:-1px}.m50-ring-label small{font-size:15px;margin-left:2px;letter-spacing:0}.m50-card h3{font-size:15px;margin:0 0 7px;color:var(--green)}.m50-card p{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 12px}.m50-positive{display:block;font-size:11px;line-height:1.5;padding:8px 10px;background:#f2f7f3;border-radius:10px;color:#47614f}.m50-method{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.6}.m50-method summary{cursor:pointer}.m50-method p{max-width:850px}
+.h50-columns{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:start}.h50-columns .card{min-width:0;padding:20px}.h50-columns h2{font-size:18px}.h50-columns .card-heading p{font-size:11px}.h50-contact{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 0;border-top:1px solid #e5ece8}.h50-contact .avatar{width:32px;height:32px;font-size:11px}.h50-contact b,.h50-appointment b{font-size:13px}.h50-contact p,.h50-appointment p{font-size:12px;color:var(--muted);line-height:1.5;margin:4px 0;overflow-wrap:anywhere}.h50-contact small,.h50-appointment small{font-size:10px;color:var(--muted)}.h50-contact>.btn{min-height:40px;font-size:11px;padding:8px 12px}.h50-footer{padding-top:12px;border-top:1px solid #e5ece8;font-size:10px;line-height:1.5;color:var(--muted)}.h50-empty{font-size:12px;line-height:1.7;color:var(--muted);padding:15px 0}.h50-appointment{display:flex;align-items:center;justify-content:space-between;gap:14px;border-top:1px solid #e5ece8;padding:12px 0}.h50-appointment .text-link{flex-shrink:0;font-size:11px}.h50-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:15px}.h50-bottom .local-note{font-size:11px}.h50-loading{min-height:150px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.gc-pending{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 24px}.gc-pending[hidden]{display:none}.gc50-copy{display:flex;flex-direction:column;gap:5px;min-width:0}.gc50-copy strong{font-size:13px}.gc50-copy span{font-size:12px;line-height:1.6}.gc50-actions{display:flex;gap:12px;flex-shrink:0;align-items:center;flex-wrap:wrap}.gc50-actions .btn{font-size:11px;min-height:40px}.gc50-actions .text-link{font-size:11px;min-height:40px}.gc50-error{font-weight:600}.gc50-detail{font-size:13px;line-height:1.7}.gc50-detail dt{font-weight:700;margin:14px 0 4px}.gc50-detail dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+@keyframes m50-grow{from{stroke-dashoffset:100}to{stroke-dashoffset:var(--m50-offset,100)}}
+@media(max-width:900px){.m50-grid{gap:10px}.m50-card{padding:15px 10px}.m50-ring{width:110px;height:110px}.m50-ring-label{inset:18px}.m50-ring-label strong{font-size:25px}.gc-pending{align-items:stretch;flex-direction:column;gap:8px}.gc50-actions{flex-wrap:wrap;gap:8px}.h50-columns{grid-template-columns:1fr}}
+@media(max-width:480px){.m50-grid{grid-template-columns:1fr}.m50-card{display:grid;grid-template-columns:102px minmax(0,1fr);text-align:left;column-gap:14px;padding:15px}.m50-ring{width:102px;height:102px;grid-row:1/4;align-self:center;margin:0}.m50-card h3{align-self:end;margin-top:8px}.m50-card p{margin-bottom:8px}.m50-positive{font-size:10px;align-self:start}.m50-title{align-items:flex-start}.m50-title>span{display:none}.m50-title h2{font-size:20px}.h50-columns .card{padding:16px}.h50-contact{grid-template-columns:28px minmax(0,1fr) auto;gap:8px}.h50-contact .avatar{width:28px;height:28px}.h50-bottom{align-items:stretch;flex-direction:column}.gc-pending{padding:13px 16px}.gc50-actions .btn{flex:1}}
+@media(prefers-reduced-motion:reduce){.m50-fill{animation:none}}
+
+</style>
 </head>
 <body>
 <div class="lockscreen" id="lockscreen">
@@ -488,7 +499,7 @@ function pin33Msg(message){const e=document.getElementById('lockerr');if(e)e.tex
 
 
 function pin33Lock(message){
-  dv45Reset();
+  dv45Reset();h50Reset('');gc50Reset('');
   if(typeof ED!=='undefined'){ED.lead=ED.prop=null;ED.epoch++;}
   PIN44.epoch++;PIN44.candidate=null;PIN44.restoring=false;clearTimeout(PIN44.timer);
   Object.assign(PIN33,{token:'',nombre:'',expires:0,recordar:false,validated:false,busy:false});pin44ClearSaved();const accessButton=document.getElementById('lockbtn');if(accessButton)accessButton.disabled=false;
@@ -1072,7 +1083,7 @@ function renderPanel(){
   if(id==="v-plan")appendReport();
   if(id==="p-stock")loadStock();
   if(id==="p-estados")spLoad();
-  if(id==="v-inicio"){renderHomeContent();loadLeads();}
+  if(id==="v-inicio"){renderHomeContent();h50Load();}
   if(id==="v-actividad"){renderActivityContent();loadLeads(false,{full:true});}
   if(id==="v-leads")loadLeads();
   if(id==="v-sugerencias")loadSugerencias();
@@ -1081,12 +1092,12 @@ function renderPanel(){
   if(id==="v-perfil")td49Render();
   if(id==="v-tareas")loadPendientes();
   if(id==="v-control")loadControlEquipo();
-  if(["v-inicio","v-agenda","v-visitas","v-tareas"].includes(id)){gcLoadAgenda();}
+  if(["v-agenda","v-visitas","v-tareas"].includes(id)){gcLoadAgenda();}
   if(id==="v-cliente"&&GC.client)gcLoadClient(GC.client);
   if(id==="v-reactivar"&&current==="Stefano")rxLoadAdmin();
   if(id==="v-recuperar")rxLoadAsignadas();
   refreshLists();
-  rpRender();if(['v-inicio','v-perfil'].includes(id))td49Load(false);
+  rpRender();if(id==='v-perfil')td49Load(false);
 }
 
 
@@ -1236,7 +1247,7 @@ async function crmGet(q,params){
   Object.keys(params||{}).forEach(k=>u.searchParams.set(k,params[k]));
   u.searchParams.set("_",Date.now());
   let r;
-  try{r=await fetch(u.toString(),{cache:"no-store",redirect:"follow"});}
+  try{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),q==='tableroDiario'?25000:20000);try{r=await fetch(u.toString(),{cache:"no-store",redirect:"follow",signal:controller.signal});}finally{clearTimeout(timer);}}
   catch(e){throw new Error("No se pudo acceder al CRM. Revisá que la Estación esté habilitada para el equipo.");}
   const raw=await r.text();
   let d;
@@ -1820,27 +1831,6 @@ function homeContact(l){
  const action=l.tel?'<a class="lead-wa" data-waid="'+esc(l.id)+'" href="'+waLink(l)+'" target="_blank" rel="noopener">Contactar</a>':'<span style="font-size:10px;color:var(--muted)">Sin teléfono</span>';
  return '<div class="home-contact leadrow"><div class="avatar">'+esc(initials(l.nombre||'Cliente'))+'</div><div class="person linfo"><b>'+esc(l.nombre||'Sin nombre')+'</b><span>'+esc(l.propiedad||'Propiedad a definir')+'</span>'+(l.observaciones?'<span class="home-obs">'+esc(l.observaciones)+'</span>':'')+'<span class="assign-badge assign-ok">'+esc(l.estado||'Nuevo')+'</span></div><div>'+action+'</div></div>';
 }
-function renderHomeContentBase(){
-  const el=$('#home-content');if(!el)return;
-  const loaded=Array.isArray(LEADS), leads=LEADS||[];
-  const uncontacted=leads.filter(l=>pendienteContacto(l));
-  const managed=leads.filter(enGestion), visits=nextVisits();
-  const queue=sortLeads(uncontacted);
-  const hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',hour12:false}).format(new Date()));
-  const greeting=hour<6?'Buenas noches':hour<12?'Buen día':hour<20?'Buenas tardes':'Buenas noches';
-  const metrics=[['Por contactar',uncontacted.length,'Consultas cargadas','leads','v-leads'],['Consultas asignadas',leads.length,'En esta lectura','leads','v-leads'],['En gestión',managed.length,'Consultas cargadas','activity','v-leads'],['Próximas visitas',visits.length,'En el CRM','visits','v-visitas']];
-  el.innerHTML='<div class="home-heading"><div><div class="work-date">'+esc(todayLabel())+'</div><h1>'+greeting+', '+esc(current||'asesor')+'.</h1><p>Tu próximo contacto puede ser la próxima visita.</p></div><button class="btn ghost" id="home-refresh" '+(leadRequest?'disabled':'')+'>'+(leadRequest?'Actualizando…':'Actualizar')+'</button></div>'+
-    (leadError?'<div class="home-error">No pudimos actualizar las consultas. '+esc(leadError)+(loaded?' Se conserva la última lectura disponible.':'')+' <button class="text-link" id="home-retry">Reintentar</button></div>':'')+
-    '<div class="metric-grid">'+metrics.map((m,i)=>'<button type="button" class="metric '+(i===1&&m[1]?'warn':'')+'" data-go="'+m[4]+'"><span class="metric-icon">'+icon(m[3])+'</span><span class="value">'+((i<3&&!loaded)?'—':m[1])+'</span><span class="label">'+m[0]+'</span><small>'+m[2]+'</small></button>').join('')+'</div>'+
-    '<div class="scope-note"><span>'+(LEADS_MODE==='completo'?'Historial completo de consultas asignadas.':'Resumen de consultas recientes. El historial puede contener más pendientes.')+'</span><button id="home-history">Ver historial completo</button></div>'+
-    '<div class="home-columns"><div><div class="card"><div class="card-heading"><div><h2>Próximos contactos</h2><p>La consulta ya está asignada: contactá al cliente y dejá un próximo paso.</p></div><button class="text-link" data-go="v-leads">Ver clientes →</button></div>'+
-    (!loaded?'<div class="empty">'+(current?'Cargando tus consultas…':'Ingresá para ver tus consultas asignadas.')+'</div>':queue.length?queue.slice(0,6).map(homeContact).join(''):'<div class="empty">No hay contactos pendientes en esta lectura.<br>Revisá el historial para consultar el resto de tus clientes.</div>')+
-    '<div class="card-tail">'+(queue.length>6?'Mostrando 6 de '+queue.length+' pendientes cargados.':'Respondé en menos de 10 minutos y dejá un próximo paso.')+'</div></div>'+
-    '<div class="home-bottom"><button class="mini-action" data-go="v-sugerencias">'+icon('suggest')+'<span><b>Buscá una alternativa</b><small>Propiedades según el perfil de tu cliente</small></span></button><button class="mini-action" data-go="c-trabajo">'+icon('capture')+'<span><b>Detectá una oportunidad</b><small>Registrá un contacto para captar</small></span></button></div></div>'+
-    '<div class="home-side"><div class="card"><div class="card-heading"><div><h2>Agenda de visitas</h2><p>Registradas en el CRM</p></div><button class="text-link" data-go="v-visitas">Agendar →</button></div>'+(visits.length?visits.slice(0,3).map(v=>'<div class="visit-mini"><div class="visit-day">'+esc(v.diaISO?v.diaISO.slice(8)+'/'+v.diaISO.slice(5,7):'Visita')+'</div><div><strong>'+esc(v.cli)+'</strong><p>'+esc(v.prop||'Inmueble a confirmar')+'</p><p>'+esc(v.fecha||'Fecha a confirmar')+'</p></div></div>').join(''):'<div class="empty">Todavía no hay próximas visitas registradas acá.<br>Coordiná la primera desde tus leads.</div>')+'</div>'+
-    '<div class="card routine"><div class="mini-label">Tu rutina comercial</div><h2>Cada consulta,<br>con un próximo paso.</h2><ol><li>Respondé y entendé qué busca.</li><li>Completá el perfil del cliente.</li><li>Ofrecé opciones y coordiná la visita.</li></ol><button class="text-link" data-go="v-tareas">Revisar seguimientos →</button></div></div></div>'+
-    '<div class="scope-note"><span class="load-status '+(leadError?'error':'')+'">'+(leadRequest?'Actualizando consultas…':leadLoadedAt?'Última lectura: '+new Intl.DateTimeFormat('es-AR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Argentina/Buenos_Aires'}).format(new Date(leadLoadedAt)):'Esperando consultas')+'</span><span>Lurati Consultora Inmobiliaria · Rosario</span></div>';
-}
 function refreshLeadViews(){
   renderLeadsCRM();renderPendientes();renderSugerencias();fillPerfilSelect();
   const scope=$('#lead-scope');if(scope)scope.textContent=LEADS_MODE==='completo'?'Historial completo de tus consultas asignadas. Podés buscar por nombre, código o propiedad.':'Consultas nuevas de los últimos 30 días (hasta 80) y las últimas 5 trabajadas. Para buscar clientes anteriores, abrí el historial completo.';
@@ -1903,7 +1893,7 @@ document.addEventListener('click',async e=>{
   if(!b)return;
   if(b.id==='mobile-more'){const open=document.body.classList.toggle('menu-open');b.setAttribute('aria-expanded',String(open));}
   if(b.id==='drawer-close'){document.body.classList.remove('menu-open');$('#mobile-more').setAttribute('aria-expanded','false');}
-  if(b.id==='home-refresh'||b.id==='home-retry'){await loadLeads(true);}
+  if(b.id==='home-refresh'||b.id==='home-retry'){await h50Load(true);}
   if(b.id==='home-history'||b.id==='lead-history')leadHistory();
   if(b.id==='wmsg-confirm-contact')confirmWhatsappContact();
   if(b.dataset.copyModel!==undefined){const models=$('#panels').querySelectorAll('.message-model pre');try{await navigator.clipboard.writeText(models[Number(b.dataset.copyModel)].textContent);b.textContent='Copiado';}catch(_){b.textContent='Seleccioná el texto para copiar';}}
@@ -2035,6 +2025,106 @@ document.addEventListener('change',e=>{const key={'bc-budget':'budget','bc-selle
 document.addEventListener('input',e=>{if(e.target.id==='bc-search'){BCF.search=e.target.value;BCF.page=1;bcResults();}});
 
 
+/* v50 · Inicio liviano, progreso con datos reales y recuperación de guardados. */
+let H50={owner:'',epoch:0,data:null,loading:false,error:'',readAt:0};
+let GC50={owner:'',epoch:0,checking:false,status:null,error:'',issue:null,tries:0,timer:0};
+function h50Reset(owner=current){H50={owner,epoch:H50.epoch+1,data:null,loading:false,error:'',readAt:0};}
+function gc50ArchiveKey(who){return 'lurati_gestiones_revisar_v50_'+who;}
+function gc50Reset(owner=current){clearTimeout(GC50.timer);GC50={owner,epoch:GC50.epoch+1,checking:false,status:null,error:'',issue:null,tries:0,timer:0};try{GC50.issue=(JSON.parse(localStorage.getItem(gc50ArchiveKey(owner))||'[]').filter(x=>!x.revisada).slice(-1)[0])||null;}catch(_){};}
+function m50Percent(value){return typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.min(100,Math.round(value))):null;}
+function m50HTML(m){
+ if(!m)return '';
+ const items=[['agilidad','Contacto en 10 min','clock'],['contacto','Consultas con contacto','messages'],['perfiles','Búsquedas listas','profile']];
+ return '<section class="m50-progress" aria-label="Tu avance comercial de los últimos treinta días"><div class="m50-title"><div><h2>Tu avance comercial</h2><p>Últimos 30 días · Cada contacto y cada búsqueda completa suman.</p></div><span>Datos del CRM</span></div><div class="m50-grid">'+items.map(([key,label,ico])=>{const d=m[key],v=m50Percent(d?.valor),note=key==='agilidad'?(d.total?d.cumplidos+' de '+d.total+' primeros contactos medidos.':'Esperando contactos con horario registrado.'):key==='contacto'?d.cumplidos+' de '+d.total+' consultas con contacto registrado.':d.cumplidos+' de '+d.total+' consultas contactadas con búsqueda completa.';return '<article class="m50-card"><div class="m50-ring" role="progressbar" aria-label="'+label+'" '+(v===null?'aria-valuetext="Sin datos suficientes"':'aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+v+'"')+'><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="m50-track" cx="60" cy="60" r="50"/><circle class="m50-fill" pathLength="100" cx="60" cy="60" r="50" style="--m50-offset:'+(v===null?100:100-v)+'"/></svg><div class="m50-ring-label">'+icon(ico)+'<strong>'+(v===null?'—':v+'<small>%</small>')+'</strong></div></div><h3>'+label+'</h3><p>'+note+'</p><span class="m50-positive">'+(v===null?'El próximo registro empieza a mostrar tu avance.':key==='perfiles'?(d.cumplidos?'Ya tenés '+d.cumplidos+' búsquedas listas para ofrecer alternativas.':'Completá una búsqueda para preparar mejores opciones.'):key==='contacto'?(m.porAtender?'Tenés '+m.porAtender+' oportunidades para continuar.':'Tu cartera reciente tiene contacto registrado.'):'Cada contacto a tiempo abre una oportunidad.')+'</span></article>';}).join('')+'</div><details class="m50-method"><summary>Cómo se calcula mi avance</summary><p>'+esc(m.criterio||'')+' Las búsquedas listas tienen zona, tipo de inmueble, dormitorios cuando corresponde, presupuesto máximo y forma de pago. Las consultas antiguas reactivadas quedan fuera de este período.</p></details></section>';
+}
+function h50When(a){return a.dia.split('-').reverse().join('/')+' · '+a.hora;}
+function h50Appointments(rows,emptyText){return rows.length?rows.map(a=>'<article class="h50-appointment"><div><b>'+esc(a.cliente)+'</b><p>'+esc(a.tipo)+' · '+esc(h50When(a))+'</p><p>'+esc(a.propiedad||a.estado)+'</p><small>'+esc(a.estado)+'</small></div><button type="button" class="text-link" data-client="'+esc(a.idConsulta)+'">Abrir ficha</button></article>').join(''):'<p class="h50-empty">'+emptyText+'</p>';}
+function h50Render(){
+ const el=$('#home-content');if(!el)return;
+ const d=H50.owner===current?H50.data:null,loading=H50.loading;
+ el.innerHTML='<div class="home-heading"><div><div class="work-date">'+esc(todayLabel())+'</div><h1>Tu jornada, '+esc(current||'asesor')+'.</h1><p>Lo nuevo primero. El resto de tu cartera sigue en Clientes y en el tablero.</p></div><button type="button" class="btn ghost" id="home-refresh" '+(loading?'disabled':'')+'>'+(loading?'Actualizando…':'Actualizar')+'</button></div>'+
+  (H50.error?'<div class="home-error" role="status">'+esc(H50.error)+(d?' Se conserva la última lectura.':'')+' <button class="text-link" id="home-retry">Reintentar</button></div>':'')+
+  (d?m50HTML(d.metricas):'<div class="card h50-loading" role="status">Preparando tu jornada…</div>')+
+  '<div class="h50-columns"><section class="card h50-new"><div class="card-heading"><div><h2>Consultas nuevas</h2><p>Últimos 30 días · hasta 3 consultas</p></div><button class="text-link" data-go="v-leads">Ver clientes →</button></div>'+
+  (!d?'<p class="h50-empty">Cargando consultas nuevas…</p>':d.contactos.length?d.contactos.slice(0,3).map(l=>'<article class="h50-contact"><div class="avatar">'+esc(initials(l.nombre))+'</div><div><b>'+esc(l.nombre)+'</b><p>'+esc(l.propiedad||'Inmueble por definir')+'</p><small>Nuevo · '+esc(l.fecha.split('-').reverse().join('/'))+'</small></div><button type="button" class="btn ghost" data-client="'+esc(l.id)+'">Atender</button></article>').join(''):'<p class="h50-empty">No hay consultas nuevas de los últimos 30 días por atender.</p>')+
+  '<div class="h50-footer">'+(d&&d.nuevosRecientes>3?'Mostrando 3 de '+d.nuevosRecientes+' consultas nuevas.':'Las consultas anteriores y “No respondió” siguen disponibles en Clientes.')+'</div></section>'+
+  '<section class="card"><div class="card-heading"><div><h2>Próximas visitas</h2><p>Agenda compartida</p></div><button class="text-link" data-go="v-agenda">Ver agenda →</button></div>'+(d?h50Appointments(d.visitas,'Todavía no hay visitas futuras registradas. Podés coordinarlas desde la ficha del cliente.'):'<p class="h50-empty">Cargando próximas visitas…</p>')+'</section></div>'+
+  (d&&d.proximos.length?'<section class="card"><div class="card-heading"><h2>Próximos compromisos</h2><button class="text-link" data-go="v-agenda">Ver agenda →</button></div>'+h50Appointments(d.proximos,'')+'</section>':'')+
+  '<div class="h50-bottom"><button type="button" class="btn" data-go="v-perfil">Abrir tablero comercial</button><span class="local-note">'+(d?'Última lectura: '+new Intl.DateTimeFormat('es-AR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Argentina/Buenos_Aires'}).format(new Date(d.fechaLectura)):'Tus datos se muestran al confirmar la lectura del CRM.')+'</span></div>';
+}
+async function h50Load(force=false){
+ if(!current)return;if(H50.owner!==current)h50Reset();if(H50.loading)return;
+ if(!force&&H50.data&&Date.now()-H50.readAt<60000){h50Render();return;}
+ const who=current,epoch=++H50.epoch;H50.loading=true;H50.error='';h50Render();
+ try{const d=await crmGet('inicioComercial',{});if(who!==current||epoch!==H50.epoch)return;if(d.version!=='50.0'||!Array.isArray(d.contactos)||!d.metricas)throw Error('Actualizá Apps Script con la versión de inicio ágil.');H50.data=d;H50.readAt=Date.now();}
+ catch(e){if(who===current&&epoch===H50.epoch)H50.error=e.message||'No se pudo actualizar tu jornada.';}
+ finally{if(who===current&&epoch===H50.epoch){H50.loading=false;h50Render();if(GC.pending)gc50Check();}}
+}
+function gc50PendingDescription(request){const names={perfil:'Búsqueda de cliente',estado:'Cambio de estado',nota:'Nota del cliente',contacto:'Registro de contacto',contactoWhatsapp:'Confirmación de WhatsApp',agendaGuardar:'Agenda de visita o seguimiento',agendaResolver:'Resultado de visita o seguimiento',recordatorioPerfil:'Recordatorio de búsqueda',calificar:'Calificación del cliente'};return (names[request.tipo]||'Gestión de cliente')+' · '+String(request.idConsulta||'Consulta por revisar');}
+function gc50RememberFailure(request,status){
+ const key=gc50ArchiveKey(current),rows=JSON.parse(localStorage.getItem(key)||'[]'),item={request:request,resultado:status.resultado||{ok:false,error:'El CRM informó un error.'},fecha:new Date().toISOString(),revisada:false};
+ const i=rows.findIndex(x=>x.request?.requestId===request.requestId);if(i<0)rows.push(item);else rows[i]=item;localStorage.setItem(key,JSON.stringify(rows));GC50.issue=item;return item;
+}
+function gc50Apply(request,status,who,epoch){
+ if(who!==current||epoch!==GC.epoch||GC.pending?.requestId!==request.requestId)return null;
+ if(!['guardado','error'].includes(status.estado))return null;
+ if(status.estado==='guardado'&&(!status.resultado||status.resultado.ok!==true||status.resultado.requestId!==request.requestId))throw Error('El comprobante todavía no confirma esta acción. Conservamos el guardado pendiente.');
+ if(status.estado==='error')gc50RememberFailure(request,status);
+ localStorage.removeItem(gcRequestKey(who));GC.pending=null;GC50.status=null;GC50.error='';clearTimeout(GC50.timer);gcPendingNotice();
+ if(status.estado==='error'){const e=Error(status.resultado?.error||'La acción necesita revisión.');e.guardadoRevisar=true;throw e;}
+ const result=status.resultado,l=leadFromId(request.idConsulta);if(l&&result.estadoCliente)l.estado=result.estadoCliente;
+ if(ds46EsDesconexion(result.estadoCliente)){ds46Retirar(request.idConsulta);if(activeNav==='v-cliente'&&!GC.client)go('v-leads');}
+ clearTurboCache();td49Invalidate();H50.readAt=0;gcMsg('Guardado confirmado en el CRM.');return result;
+}
+async function gc50Check(force=false){
+ if(!GC.pending||!current||GC50.checking||GC.busy||document.hidden||navigator.onLine===false)return;
+ if(GC50.owner!==current)gc50Reset();
+ const request=GC.pending,who=current,epoch=GC.epoch,checkEpoch=GC50.epoch;GC50.checking=true;GC50.error='';gcPendingNotice();
+ try{const status=await crmGet('estadoGestion',{requestId:request.requestId});if(who!==current||epoch!==GC.epoch||checkEpoch!==GC50.epoch)return;
+  GC50.status=status;const result=gc50Apply(request,status,who,epoch);if(result){gcToast('La acción pendiente ya estaba guardada. Confirmación recuperada.');if(activeNav==='v-inicio')h50Load(true);}
+  else if(status.existe===true&&GC50.tries++<2){clearTimeout(GC50.timer);GC50.timer=setTimeout(()=>gc50Check(),GC50.tries===1?2500:6000);}
+ }catch(e){if(who===current&&epoch===GC.epoch&&checkEpoch===GC50.epoch)GC50.error=e.message;}
+ finally{if(who===current&&epoch===GC.epoch&&checkEpoch===GC50.epoch){GC50.checking=false;gcPendingNotice();}}
+}
+function gcPendingNotice(){
+ let box=$('#gc-pending');if(!box){box=document.createElement('div');box.id='gc-pending';box.className='gc-pending';$('.wrap').prepend(box);}
+ box.hidden=!current||!GC.pending&&!GC50.issue;
+ if(box.hidden){box.innerHTML='';return;}
+ const request=GC.pending||GC50.issue.request,pending=!!GC.pending,checking=GC50.checking||GC.busy;
+ box.innerHTML='<div class="gc50-copy"><strong>'+esc(gc50PendingDescription(request))+'</strong><span>'+(pending?(checking?'Comprobando si la acción ya está guardada…':GC50.status?.existe?'El CRM recibió la acción. Conservamos la copia hasta confirmar el resultado.':'La acción está conservada en este dispositivo; falta confirmar su guardado.'):'El CRM informó un error. Conservamos los datos para revisar la ficha.')+'</span>'+(GC50.error?'<span class="gc50-error" role="status">'+esc(GC50.error)+'</span>':'')+'</div><div class="gc50-actions"><button type="button" class="text-link" id="gc50-details">Ver detalle</button>'+(pending?'<button type="button" class="btn ghost" id="gc50-check" '+(checking?'disabled':'')+'>Verificar guardado</button>'+(GC50.status?.puedeReintentar===true?'<button type="button" class="btn" id="gc50-retry" '+(checking?'disabled':'')+'>Reintentar esta acción</button>':''):'<button type="button" class="text-link" id="gc50-ack">Ocultar aviso</button>')+'</div>';
+}
+async function gcPoll(request,who,epoch){
+ const deadline=Date.now()+65000;let attempt=0;
+ while(Date.now()<deadline){await waitCrm(attempt++?Math.min(4000,800+attempt*350):500);if(current!==who||GC.name!==who||epoch!==GC.epoch)throw Error('Cambió el asesor. La acción queda conservada en su sesión.');
+  if(document.hidden||navigator.onLine===false)throw Error('La acción está conservada. Al volver a la Estación verificaremos el guardado.');
+  let d;try{d=await crmGet('estadoGestion',{requestId:request.requestId});}catch(e){if(e.guardadoRevisar)throw e;continue;}
+  const result=gc50Apply(request,d,who,epoch);if(result)return result;
+ }throw Error('Todavía no se confirmó el guardado. La acción sigue conservada para verificarla.');
+}
+async function gc50Resume(){
+ if(!GC.pending||GC.busy||GC50.checking)return;const who=current,epoch=GC.epoch,request=GC.pending;GC.busy=true;gcPendingNotice();
+ try{const status=await crmGet('estadoGestion',{requestId:request.requestId});if(who!==current||epoch!==GC.epoch)return;
+  const saved=gc50Apply(request,status,who,epoch);if(saved){await gcAfterSave();return;}
+  if(status.puedeReintentar!==true)throw Error('La acción figura recibida o en proceso. Verificá su resultado antes de repetirla.');
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(request)}).catch(()=>{});
+  await gcPoll(request,who,epoch);await gcAfterSave();
+ }catch(e){if(who===current&&epoch===GC.epoch){GC50.error=e.message;gcMsg(e.message,true);}}
+ finally{if(who===current&&epoch===GC.epoch){GC.busy=false;gcPendingNotice();}}
+}
+function gc50Details(){const request=GC.pending||GC50.issue?.request;if(!request)return;const info=GC50.issue?.resultado?.error||GC50.error||'Se conserva la misma acción para evitar duplicados.';
+ const fields=[['Acción',gc50PendingDescription(request)],['Estado',GC.pending?'Pendiente de confirmar':'Revisar guardado'],['Resultado',info],['Nota o detalle',request.comentario||request.detalle||''],['Próxima acción',request.proxima?.detalle||''],['Fecha',request.dia||request.proxima?.dia||'']];if(request.perfil)fields.push(['Búsqueda conservada',Object.entries(request.perfil).map(([k,v])=>k+': '+v).join(' · ')]);
+ gcDialog('<div class="gc-title"><h3>Revisar acción conservada</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><dl class="gc50-detail">'+fields.filter(x=>x[1]).map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>'+(request.idConsulta?'<button type="button" class="btn" data-client="'+esc(request.idConsulta)+'">Abrir ficha del cliente</button>':''));
+}
+document.addEventListener('click',e=>{const b=e.target.closest('#gc50-check,#gc50-retry,#gc50-details,#gc50-ack');if(!b)return;
+ if(b.id==='gc50-check')gc50Check(true);if(b.id==='gc50-retry')gc50Resume();if(b.id==='gc50-details')gc50Details();
+ if(b.id==='gc50-ack'&&GC50.issue){try{const key=gc50ArchiveKey(current),rows=JSON.parse(localStorage.getItem(key)||'[]');rows.forEach(x=>{if(x.request?.requestId===GC50.issue.request.requestId)x.revisada=true;});localStorage.setItem(key,JSON.stringify(rows));GC50.issue=null;GC50.error='';gcPendingNotice();}catch(_){GC50.error='No pudimos conservar la revisión del aviso en este dispositivo.';gcPendingNotice();}}
+});
+window.addEventListener('online',()=>{gc50Check();if(current&&activeNav==='v-inicio')h50Load();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&current){gc50Check();if(activeNav==='v-inicio')h50Load();}});
+
+function renderHomeContent(){h50Render();}
+async function gcResume(){return gc50Check(true);}
+
 /* v49 · El tablero reúne prioridades; no cambia estados ni registra contactos. */
 let TD49={owner:'',epoch:0,data:null,loading:false,error:'',readAt:0,scope:'propios',category:'nuevos',page:1};
 function td49Reset(){TD49={owner:current,epoch:TD49.epoch+1,data:null,loading:false,error:'',readAt:0,scope:'propios',category:'nuevos',page:1};}
@@ -2047,7 +2137,7 @@ async function td49Load(force=false){
   const who=current,epoch=++TD49.epoch;TD49.loading=true;TD49.error='';td49Render();
   try{const d=await crmGet('tableroDiario',{alcance:TD49.scope,categoria:TD49.category,pagina:TD49.page});
     if(who!==current||epoch!==TD49.epoch)return;
-    if(d.version!=='49.0'||!Array.isArray(d.categorias)||!Array.isArray(d.casos))throw Error('Actualizá Apps Script con la versión del tablero para habilitar esta vista.');
+    if(d.version!=='50.0'||!Array.isArray(d.categorias)||!Array.isArray(d.casos))throw Error('Actualizá Apps Script con la versión del tablero para habilitar esta vista.');
     TD49.data=d;TD49.readAt=Date.now();TD49.category=d.categoria;TD49.page=d.pagina;
     if(Array.isArray(d.avisosPerfil)){RP.owner=who;RP.rows=d.avisosPerfil;RP.loaded=true;RP.readAt=Date.now();}
   }catch(e){if(who===current&&epoch===TD49.epoch)TD49.error=e.message||'No pudimos leer el tablero.';}
@@ -2061,7 +2151,7 @@ function td49Render(){
   if(!d){el.innerHTML='<div class="card">'+(TD49.error?'<p class="home-error" role="alert">'+esc(TD49.error)+'</p><button class="btn ghost" type="button" id="td49-retry">Reintentar</button>':'Revisando tu cartera completa…')+'</div>';return;}
   const selected=d.categorias.find(c=>c.key===d.categoria),quality=d.calidad||{},time=new Intl.DateTimeFormat('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(d.fechaLectura));
   const roles=d.supervisor?'<div class="td49-scope" role="group" aria-label="Alcance del tablero">'+[['propios','Mis clientes'],['equipo','Todo el equipo']].map(([v,label])=>'<button type="button" class="btn ghost" data-td49-scope="'+v+'" aria-pressed="'+(TD49.scope===v)+'" '+(TD49.loading?'disabled':'')+'>'+label+'</button>').join('')+'</div>':'';
-  el.innerHTML=roles+(TD49.error?'<div class="home-error" role="alert">'+esc(TD49.error)+' Se conserva la última lectura confirmada; sus cifras pueden haber cambiado.</div>':'')+
+  el.innerHTML=roles+m50HTML(d.metricas)+(TD49.error?'<div class="home-error" role="alert">'+esc(TD49.error)+' Se conserva la última lectura confirmada; sus cifras pueden haber cambiado.</div>':'')+
     '<p class="td49-summary"><b>'+d.totalClientesConPendientes+'</b> consultas con pendientes · '+d.totalCartera+' consultas activas revisadas · '+(d.alcance==='equipo'?'Equipo completo':'Tu cartera completa')+'</p>'+
     '<div class="td49-grid" role="group" aria-label="Prioridades comerciales">'+d.categorias.map(c=>'<button type="button" class="td49-metric '+(c.key===d.categoria?'selected':'')+'" data-td49-category="'+c.key+'" aria-pressed="'+(c.key===d.categoria)+'" '+(TD49.loading?'disabled':'')+'><strong>'+c.total+'</strong><span>'+esc(c.titulo)+'</span></button>').join('')+'</div>'+
     '<section class="card td49-results" aria-busy="'+TD49.loading+'"><h4>'+esc(selected?.titulo||'Prioridades')+' · '+(selected?.total||0)+'</h4><p class="local-note">'+esc(selected?.detalle||'')+'</p>'+
@@ -2076,7 +2166,7 @@ function td49Summary(){
   let banner=$('#rp-banner');
   if(!banner){banner=document.createElement('aside');banner.id='rp-banner';panels.prepend(banner);}
   banner.className='td49-banner';banner.setAttribute('aria-label','Resumen del tablero comercial');
-  const d=TD49.owner===current?TD49.data:null;banner.hidden=!current||activeNav!=='v-inicio'||!d;
+  const d=TD49.owner===current?TD49.data:null;banner.hidden=true;
   if(!banner.hidden)banner.innerHTML='<div><strong>Tablero comercial · '+d.totalClientesConPendientes+' consultas con pendientes</strong><p>'+d.categorias.filter(c=>c.total).slice(0,3).map(c=>c.total+' '+esc(c.titulo.toLowerCase())).join(' · ')+(TD49.error?' · No se pudo actualizar la última lectura.':'')+'</p></div><button type="button" class="btn ghost" data-go="v-perfil">Abrir tablero</button>';
 }
 document.addEventListener('click',e=>{
@@ -2150,7 +2240,7 @@ document.addEventListener('click',e=>{
   if(t.id==='rp-all'){go('v-perfil');$('#rp-tasks')?.scrollIntoView({block:'start',behavior:'smooth'});}
   if(t.id==='rp-refresh')rpLoad(true);
 });
-window.addEventListener('focus',()=>{if(current&&['v-inicio','v-perfil'].includes(activeNav))td49Load(false);});
+window.addEventListener('focus',()=>{if(!current)return;if(activeNav==='v-perfil')td49Load(false);if(activeNav==='v-inicio')h50Load();gc50Check();});
 
 
 /* Trabajo comercial: cliente → actividad → agenda → resultado → próximo paso. */
@@ -2185,45 +2275,17 @@ async function gcSubmit(payload){
   if(GC.busy)throw new Error('Esperá la confirmación del guardado actual.');
   if(GC.pending)throw new Error('Hay una acción sin confirmar. Tocá «Consultar guardado pendiente» antes de continuar.');
   const who=current,epoch=GC.epoch,request={accion:'gestionCliente',...payload,asesor:who,requestId:gcUid()};
-  GC.busy=true;GC.pending=request;try{localStorage.setItem(gcRequestKey(who),JSON.stringify(request));}catch(_){}
+  try{localStorage.setItem(gcRequestKey(who),JSON.stringify(request));}catch(_){throw Error('No se pudo conservar esta acción en el dispositivo. No se envió; mantené abierta la ficha y revisá el almacenamiento.');}GC.busy=true;GC.pending=request;GC50.error='';GC50.status=null;gcPendingNotice();
   gcMsg('Guardando en el CRM…');
   try{
     // La respuesta opaca del POST no confirma el guardado. Se consulta su comprobante.
-    fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(request)}).catch(()=>{});
+    fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(request)}).catch(()=>{});
     return await gcPoll(request,who,epoch);
-  }finally{if(current===who)GC.busy=false;}
-}
-async function gcPoll(request,who,epoch){
-  for(let i=0;i<32;i++){
-    await waitCrm(i?900:350);
-    if(current!==who||GC.name!==who)throw new Error('Cambió el asesor. El guardado queda disponible al volver a su sesión.');
-    let d;try{d=await crmGet('estadoGestion',{requestId:request.requestId,asesor:who});}catch(e){if(i===31)break;continue;}
-    if(!['guardado','error'].includes(d.estado))continue;
-    GC.pending=null;try{localStorage.removeItem(gcRequestKey(who));}catch(_){}
-    if(d.estado==='error'||!d.resultado||d.resultado.ok===false)throw new Error((d.resultado&&d.resultado.error)||'No se pudo completar el guardado.');
-    const l=leadFromId(request.idConsulta);if(l&&d.resultado.estadoCliente)l.estado=d.resultado.estadoCliente;
-    if(ds46EsDesconexion(d.resultado.estadoCliente)){
-      ds46Retirar(request.idConsulta);if(activeNav==='v-cliente'&&!GC.client)go('v-leads');
-    }
-    clearTurboCache();gcMsg('Guardado y confirmado en el CRM.');return d.resultado;
-  }
-  throw new Error('Todavía no pudimos confirmar el guardado. Consultá su estado antes de repetir la acción.');
-}
-async function gcResume(){
-  if(!GC.pending||GC.busy)return;
-  GC.busy=true;const who=current;gcMsg('Consultando el guardado pendiente…');
-  try{const pending=GC.pending,status=await crmGet('estadoGestion',{requestId:pending.requestId,asesor:who});
-    if(status.estado==='pendiente')fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(pending)}).catch(()=>{});
-    await gcPoll(pending,who,GC.epoch);gcMsg('Guardado confirmado.');await gcAfterSave();}catch(e){gcMsg(e.message,true);}finally{if(who===current)GC.busy=false;gcPendingNotice();}
+  }finally{if(current===who){GC.busy=false;gcPendingNotice();}}
 }
 async function gcAfterSaveBaseV29(){
-  const who=current;await gcLoadAgenda(true);if(who!==current)return;
+  const who=current;if(GC.loaded||['v-agenda','v-visitas','v-tareas'].includes(activeNav))await gcLoadAgenda(true);if(who!==current)return;
   refreshLeadViews();if(activeNav==='v-cliente'&&GC.client)await gcLoadClient(GC.client);
-}
-function gcPendingNotice(){
-  let box=$('#gc-pending');
-  if(!box){box=document.createElement('div');box.id='gc-pending';box.className='gc-pending';$('.wrap').prepend(box);}
-  box.hidden=!GC.pending;box.innerHTML=GC.pending?'Hay una acción cuyo guardado falta confirmar. <button type="button" class="text-link" id="gc-resume">Consultar guardado pendiente</button>':'';
 }
 async function gcLoadClient(id){
   const epoch=++GC.detailEpoch,who=current;GC.client=id;GC.detail=null;gcRenderClient();
@@ -2265,16 +2327,6 @@ function gcRenderAgenda(){
   const legacy=$('#gc-legacy');if(legacy)legacy.innerHTML=state.visitas.length?'<details class="card gc-detail"><summary>Visitas anteriores de este dispositivo · '+state.visitas.length+'</summary><p class="local-note">Se conservan los registros anteriores. Revisá el cliente antes de incorporarlos a la agenda compartida.</p>'+state.visitas.map((v,i)=>'<div class="gc-legacy-row"><span>'+esc(v.cli)+' · '+esc(v.prop)+' · '+esc(v.fecha)+' · '+esc(v.estado)+'</span><button class="btn ghost" data-import-visit="'+i+'">Revisar e incorporar</button></div>').join('')+'</details>':'';
 }
 function nextVisits(){return GC.agenda.filter(a=>a.tipo==='Visita'&&gcOpen(a)).map(a=>({...a,cli:a.cliente,prop:a.propiedad,diaISO:a.dia,fecha:gcWhen(a)})).sort((a,b)=>gcDue(a)-gcDue(b));}
-function renderHomeContent(){renderHomeContentBase();const el=$('#home-content');if(!el)return;
-  const visits=el.querySelectorAll('.metric small');if(visits[3])visits[3].textContent=GC.loaded?'Compartidas en el CRM':'Cargando agenda';
-  const value=el.querySelectorAll('.metric .value');if(value[3]&&!GC.loaded)value[3].textContent='—';
-  el.querySelectorAll('.home-contact').forEach(row=>{const action=row.querySelector('[data-waid]');if(!action)return;const id=action.dataset.waid;const info=row.querySelector('.linfo');if(info){const b=document.createElement('button');b.type='button';b.className='text-link';b.dataset.client=id;b.textContent='Ficha y próximo paso';info.appendChild(b);}});
-  const agendaTitle=el.querySelector('.home-side .card-heading p');if(agendaTitle)agendaTitle.textContent=GC.loaded?'Compartidas en el CRM':'Cargando agenda compartida…';
-  const emptyVisit=el.querySelector('.home-side .empty');if(emptyVisit)emptyVisit.textContent=GC.loaded?'Todavía no hay visitas agendadas en el CRM. Podés coordinar una desde la ficha del cliente.':'Cargando visitas del CRM…';
-  const follow=GC.agenda.filter(a=>gcOpen(a)&&a.tipo!=='Visita').sort((a,b)=>gcDue(a)-gcDue(b));
-  const slot=document.createElement('div');slot.className='card';slot.innerHTML='<div class="card-heading"><div><h2>Tu próximo paso</h2><p>Seguimientos y reuniones pendientes</p></div><button class="text-link" data-go="v-agenda">Ver agenda →</button></div>'+(GC.error?'<div class="home-error">'+esc(GC.error)+' <button class="text-link" id="gc-refresh-agenda">Reintentar</button></div>':!GC.loaded?empty('Cargando compromisos…'):follow.length?follow.slice(0,3).map(gcAgendaCard).join(''):empty('Agendá el próximo contacto desde la ficha del cliente.'));
-  el.querySelector('.home-columns>div')?.appendChild(slot);
-}
 function renderPendientesBaseV27(){renderPendientesBase();const list=$('#pendlist');if(!list)return;const tasks=GC.agenda.filter(a=>gcOpen(a)&&a.tipo!=='Visita').sort((a,b)=>gcDue(a)-gcDue(b));const box=document.createElement('div');box.className='card';box.innerHTML='<h4>Seguimientos agendados</h4>'+(GC.error?'<p class="home-error">'+esc(GC.error)+'</p>':!GC.loaded?empty('Cargando agenda…'):tasks.length?tasks.map(gcAgendaCard).join(''):empty('No hay seguimientos agendados.'));list.prepend(box);}
 function gcDialog(html){const dialog=$('#gc-dialog');$('#gc-dialog-body').innerHTML=html;dialog.showModal();}
 function gcCloseDialog(){if(GC.busy)return;$('#gc-dialog').close();GC.edit=null;GC.resolve=null;GC.legacy=null;}
@@ -2411,7 +2463,7 @@ function spEdit(p){SP.selected=p;gcDialog('<div class="gc-title"><h3>'+(SP.admin
 function spResolve(id,reject){const p=SP.propuestas.find(x=>x.id===id);if(!p)return;gcDialog('<div class="gc-title"><h3>'+(reject?'Rechazar propuesta':'Confirmar propuesta')+'</h3><button type="button" class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.propiedad)+'</b> · '+esc(p.unidad)+'</p><p>'+esc(p.anterior)+' → <b>'+esc(p.estado)+'</b></p><p>'+esc(p.solicitante)+' · '+esc(p.fuente)+'</p><p>'+esc(p.motivo)+'</p><p class="rx-note">ID KiteProp propuesto: '+esc(p.kitepropId||'Sin vínculo nuevo')+'</p>'+(p.enlace?'<p class="rx-note">Respaldo: '+esc(p.enlace)+'</p>':'')+'<form id="sp-resolve-form" data-id="'+esc(id)+'" data-resolucion="'+(reject?'rechazar':'aprobar')+'"><label>Comentario de resolución<textarea name="comentario" rows="2" '+(reject?'required':'')+' maxlength="2000"></textarea></label>'+(!reject?'<label class="gc-check"><input name="confirmado" type="checkbox" required> Verifiqué la información y autorizo actualizar el estado.</label>':'')+'<div class="gc-status rx-form-status" role="status"></div><button class="btn" type="submit">'+(reject?'Confirmar rechazo':'Aprobar y actualizar stock')+'</button></form>');}
 async function spHistory(p){const who=current,epoch=SP.epoch;gcDialog('<h3>Historial de '+esc(p.dir)+'</h3><p>Cargando…</p><button class="btn ghost" data-gc-close>Cerrar</button>');try{const d=await crmGet('historialPropiedad',{asesor:who,clave:p.clave});if(who!==current||epoch!==SP.epoch||!$('#gc-dialog').open)return;$('#gc-dialog-body').innerHTML='<div class="gc-title"><h3>Historial de estado</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p><b>'+esc(p.dir)+'</b> · '+esc(p.unidad)+'</p>'+d.historial.map(h=>'<div class="sp-request"><b>'+esc(h.anterior)+' → '+esc(h.estado)+'</b><p>'+esc(h.fecha)+' · '+esc(h.responsable)+' · '+esc(h.fuente)+'</p><p>'+esc(h.motivo)+'</p><small>'+esc(h.resultado)+' '+esc(h.detalle)+'</small></div>').join('')+(!d.historial.length?'<p class="rx-note">Todavía no hay cambios de estado registrados desde esta función.</p>':'');}catch(e){if(who===current&&epoch===SP.epoch&&$('#gc-dialog').open)$('#gc-dialog-body').innerHTML='<p class="home-error">'+esc(e.message)+'</p><button class="btn ghost" data-gc-close>Cerrar</button>';}}
 function spInvalidate(){STOCK=null;RX.admin=null;}
-async function gcAfterSave(){const who=current;await gcAfterSaveBaseV29();if(who!==current)return;spInvalidate();BC.loaded=false;td49Invalidate();if(['v-inicio','v-perfil'].includes(activeNav))await td49Load(true);if(activeNav==='p-estados')await spLoad();}
+async function gcAfterSave(){const who=current;await gcAfterSaveBaseV29();if(who!==current)return;spInvalidate();BC.loaded=false;td49Invalidate();H50.readAt=0;if(activeNav==='v-perfil')await td49Load(true);if(activeNav==='v-inicio')await h50Load(true);if(activeNav==='p-estados')await spLoad();}
 async function rxMessage(id){const a=RX.asignadas.find(x=>x.id===id)||GC.detail?.reactivacion,who=current;if(a?.id===id&&a.propiedadId){try{const d=await crmGet('estadoAlternativa',{asesor:who,id:a.propiedadId,direccion:a.propiedad});if(who!==current)return;if(!d.disponible)return gcToast('La alternativa figura '+d.estado+'. Revisá el stock antes de ofrecerla.');}catch(e){return gcToast('No pudimos verificar la alternativa. Actualizá el stock antes de ofrecerla.');}}return rxMessageBaseV29(id);}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='sp-refresh')spLoad();if(b.id==='sp-open-pending')$('#sp-pending')?.scrollIntoView({behavior:'smooth'});if(b.id==='sp-next'||b.id==='sp-prev'){SP.page+=b.id==='sp-next'?1:-1;spRender();}if(b.dataset.spEdit!==undefined)spEdit(SP.rows[Number(b.dataset.spEdit)]);if(b.dataset.spHistory!==undefined)spHistory(SP.rows[Number(b.dataset.spHistory)]);if(b.dataset.spApprove)spResolve(b.dataset.spApprove,false);if(b.dataset.spReject)spResolve(b.dataset.spReject,true);});
 document.addEventListener('input',e=>{if(e.target.id==='sp-search'){const pos=e.target.selectionStart;SP.q=e.target.value;SP.page=1;spRender();$('#sp-search').focus();$('#sp-search').setSelectionRange(pos,pos);}});
@@ -2654,6 +2706,7 @@ function startApp(name){
   bcReset();
   rpReset();
   td49Reset();
+  h50Reset();gc50Reset();
   dirReset();
   try{const raw=localStorage.getItem(gcRequestKey(name));if(raw)GC.pending=JSON.parse(raw);}catch(_){}
   gcPendingNotice();
@@ -2780,7 +2833,6 @@ async function pin44Restore(){
   if(who.ok===false||!who.nombre||!(Number(who.expires)>Date.now()))throw new Error('No se pudo validar la sesión guardada.');
   PIN44.candidate=null;PIN44.retries=0;
   pin33Unlock({token:saved.token,nombre:who.nombre,expires:Number(who.expires),recordar:who.recordar===true});
-  pin41LoadRoster().catch(()=>{});
  }catch(e){
   if(epoch!==PIN44.epoch)return;
   pin33Msg('Tu acceso sigue guardado. Esperando conexión para abrirlo; no hace falta volver a escribir el PIN.');
@@ -2797,7 +2849,7 @@ async function pin33Init(){
  button.addEventListener('click',pin33Login);input.addEventListener('keydown',e=>{if(e.key==='Enter')pin33Login();});
  pin44Storage('localStorage','removeItem','lurati_acceso');
  PIN44.candidate=pin44Candidate();
- if(PIN44.candidate){pin44Restore();pin41LoadRoster().catch(()=>{});return;}
+ if(PIN44.candidate){pin44Restore();return;}
  pin44ClearSaved();
  try{await pin41LoadRoster();document.getElementById('lockwho').focus();}catch(e){pin33Msg(e.message);}
 }
