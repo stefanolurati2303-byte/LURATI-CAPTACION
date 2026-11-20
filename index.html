@@ -184,7 +184,7 @@ let leadQueue=loadLeadQueue();
 
 
 const FALLBACK_ACTIVE_SELLERS = [
-  "Stefano","Julio","Pablo","Flavia","Ariel","Roberto","Virginia","Pedro","Maximiliano","Daiana","Tomás Debailleux","Belén Lopez","Cintia"
+  "Stefano","Julio","Pablo","Flavia","Ariel","Roberto","Pedro","Maximiliano","Daiana","Tomás Debailleux","Belén Lopez","Cintia"
 ];
 
 
@@ -300,6 +300,7 @@ function loadLeadQueue(){
    if(['sending','checking'].includes(x.status)){x.status='waiting';x.sentAt=x.sentAt||x.createdAt||Date.now();}
    if(x.status==='error'&&x.createdBy&&!x.definitive){x.status='waiting';x.sentAt=x.sentAt||x.createdAt||Date.now();}
    if(!x.createdBy){x.status='error';x.error='Carga anterior al PIN: Stefano debe revisar antes de reintentar.';}
+   if(/signal.*aborted|operation.*aborted|AbortError/i.test(String(x.error||'')))x.error='La confirmación se interrumpió. Se verificará de nuevo sin duplicar la consulta.';
    x.nextAt=0;return x;
   });
  }catch(_){queueReadFault=true;return [];}
@@ -320,7 +321,7 @@ function queueLabel(item){
  if(item.status==='error')return item.error||'Revisar esta carga.';
  if(navigator.onLine===false)return 'Conservado en este dispositivo. Se retomará con conexión.';
  if(document.hidden)return 'Carga pendiente. Se retomará al volver.';
- return item.error||'Conservado en este dispositivo. Pendiente de confirmación.';
+ return item.error||(item.sentAt?'Enviada. Pendiente de confirmación del CRM.':'Conservada en este dispositivo. Pendiente de envío.');
 }
 function renderLeadQueue(){
  const actor=currentAdvisor44(),own=leadQueue.filter(x=>x.createdBy===actor||!x.createdBy&&actor==='Stefano');
@@ -350,7 +351,7 @@ function renderLeadQueue(){
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 async function fetchJsonTimeout(url,ms){
  const controller=new AbortController();queueControllers.add(controller);
- const timer=setTimeout(()=>controller.abort(),ms);
+ const timer=setTimeout(()=>controller.abort(new DOMException('La confirmación está demorando.','AbortError')),ms);
  try{
   const r=await fetch(url,{signal:controller.signal,cache:'no-store'});
   if(!r.ok)throw new Error('El CRM no respondió correctamente.');
@@ -490,15 +491,10 @@ function renderSellers(sellers){
   });
 }
 async function checkDuplicate(data){
-  const api=stationApi();
-  if(!api)return null;
-  try{
-    const j=await fetchJsonTimeout(
-      api+'?q=duplicado&tel='+encodeURIComponent(data.telefono)+'&prop='+encodeURIComponent(data.propiedad),
-      4500
-    );
-    return j&&j.duplicado?j.duplicado:null;
-  }catch(e){return null;}
+  const api=stationApi();if(!api)throw new Error('Esperando conexión con el CRM.');
+  const j=await fetchJsonTimeout(api+'?q=duplicado&tel='+encodeURIComponent(data.telefono)+'&prop='+encodeURIComponent(data.propiedad),25000);
+  if(j?.ok!==true)throw new Error(j?.error||'No se pudo comprobar si la consulta ya existe. Se reintentará sin duplicarla.');
+  return j.duplicado||null;
 }
 function duplicateMessage(d){
   if(!d)return '';
@@ -520,10 +516,6 @@ function scheduleLeadQueue(){
  const times=leadQueue.filter(x=>x.createdBy===currentAdvisor44()&&x.status==='waiting').map(x=>x.nextAt||0);
  if(times.length)queueTimer=setTimeout(processLeadQueue,Math.max(250,Math.min(30000,Math.min(...times)-Date.now())));
 }
-async function readLeadReceipt(item){
- const api=stationApi();if(!api)throw new Error('Esperando conexión con el CRM.');
- return fetchJsonTimeout(api+'?q=estadoCarga&requestId='+encodeURIComponent(item.requestId)+'&_='+Date.now(),6500);
-}
 function applyLeadReceipt(item,result){
  if(result?.estado==='error'){
   const error=new Error(result.error||'El CRM rechazó esta carga.');error.definitive=true;throw error;
@@ -544,47 +536,66 @@ function postLead(item){
    nombre:item.nombre,telefono:item.telefono,observaciones:item.observaciones||'',cargadoPor:item.createdBy,canal:'WhatsApp'})
  });
 }
+// v47 · Verificar en lote y enviar hasta tres consultas sin bloquear la siguiente.
+const LC47_MAX_INFLIGHT=3,LC47_REPOST_MS=60000,LC47_TIMEOUT_MS=25000;
+async function readLeadReceipts(items){
+ const api=stationApi();if(!api)throw new Error('Esperando conexión con el CRM.');
+ let data;
+ try{data=await fetchJsonTimeout(api+'?q=estadoCargas&requestIds='+encodeURIComponent(JSON.stringify(items.map(x=>x.requestId)))+'&_='+Date.now(),LC47_TIMEOUT_MS);}
+ catch(e){if(e instanceof SyntaxError){e=new Error('Falta publicar la actualización de Apps Script v47. Las consultas se conservan en este dispositivo.');e.code='ACTUALIZAR_CRM';}throw e;}
+ if(data?.ok===false){const e=new Error(data.error||'No se pudo verificar la carga en el CRM.');e.code=data.code;throw e;}
+ if(data?.modulo!=='cargas47'||!Array.isArray(data.resultados)){const e=new Error('Falta publicar la actualización de Apps Script v47. Las consultas se conservan en este dispositivo.');e.code='ACTUALIZAR_CRM';throw e;}
+ return new Map(data.resultados.map(x=>[x.requestId,x]));
+}
+function leadQueueError47(item,e){
+ item.status=e.definitive||e.code==='AUTH_REQUIRED'?'error':'waiting';
+ item.definitive=!!e.definitive;
+ item.error=e.name==='AbortError'?'La confirmación está demorando. Se verificará otra vez sin duplicar la consulta.':String(e.message||e);
+ item.nextAt=Date.now()+Math.min(60000,5000*Math.max(1,item.attempts||1));
+}
 async function processLeadQueue(){
  if(queueProcessing||document.hidden||navigator.onLine===false||!stationSession())return;
  const actor=currentAdvisor44(),epoch=queueEpoch;
  queueProcessing=true;clearTimeout(queueTimer);
  try{
-  while(queueReady(actor,epoch)){
-   const item=leadQueue.find(x=>x.createdBy===actor&&x.status==='waiting'&&(x.nextAt||0)<=Date.now());
-   if(!item)break;
-   item.status='checking';item.error='';persistLeadQueue();renderLeadQueue();
+  // También revisar los no enviados: el navegador pudo cerrarse después de guardar en el CRM.
+  const due=leadQueue.filter(x=>x.createdBy===actor&&x.status==='waiting'&&(x.nextAt||0)<=Date.now()).slice(0,20);
+  if(!due.length)return;
+  let receipts;
+  try{receipts=await readLeadReceipts(due);}catch(e){if(!queueReady(actor,epoch))return;due.forEach(item=>leadQueueError47(item,e));persistLeadQueue();renderLeadQueue();return;}
+  if(!queueReady(actor,epoch))return;
+  const toSend=[];
+  for(const item of due){
+   const receipt=receipts.get(item.requestId);
+   // Una respuesta incompleta nunca habilita un envío a ciegas.
+   if(!receipt){leadQueueError47(item,new Error('Falta confirmar esta carga. Se verificará de nuevo.'));continue;}
+   try{if(applyLeadReceipt(item,receipt))continue;}catch(e){leadQueueError47(item,e);continue;}
+   item.error='';item.status='waiting';
+   if(item.sentAt&&!receipt.reenviar&&Date.now()-item.sentAt<LC47_REPOST_MS){item.nextAt=Date.now()+3000;continue;}
+   toSend.push(item);
+  }
+  let active=leadQueue.filter(x=>!toSend.includes(x)&&x.createdBy===actor&&x.sentAt&&['waiting','checking','sending'].includes(x.status)&&Date.now()-x.sentAt<LC47_REPOST_MS).length;
+  for(const item of toSend){
+   if(!queueReady(actor,epoch))return;
+   if(active>=LC47_MAX_INFLIGHT){item.nextAt=Date.now()+3000;continue;}
+   item.status='checking';persistLeadQueue();renderLeadQueue();
    try{
-    // Las cargas interrumpidas se verifican antes de volver a enviarse, con el mismo ID.
-    if(item.sentAt){
-     const receipt=await readLeadReceipt(item);if(!queueReady(actor,epoch))return;
-     if(applyLeadReceipt(item,receipt))continue;
-    }
     if(!item.sentAt&&!item.duplicateChecked){
      const duplicate=await checkDuplicate(item);if(!queueReady(actor,epoch))return;
      if(duplicate){item.status='duplicate';item.duplicate=duplicate;persistLeadQueue();renderLeadQueue();continue;}
      item.duplicateChecked=true;
     }
     if(!queueReady(actor,epoch))return;
-    item.sentAt=Date.now();item.attempts=(item.attempts||0)+1;
-    if(!persistLeadQueue())throw new Error('No se puede conservar esta carga en el dispositivo.');
-    // No esperar la ejecución completa de Apps Script ni el envío del correo.
-    postLead(item).catch(()=>{});
-    for(let i=0;i<5;i++){
-     await wait(i?1300:450);if(!queueReady(actor,epoch))return;
-     const receipt=await readLeadReceipt(item);if(!queueReady(actor,epoch))return;
-     if(applyLeadReceipt(item,receipt))break;
-    }
-    if(item.status!=='saved')throw new Error('Pendiente de confirmación. Se verificará de nuevo automáticamente.');
-   }catch(e){
-    if(!queueReady(actor,epoch))return;
-    item.status=e.definitive||e.code==='AUTH_REQUIRED'?'error':'waiting';
-    item.definitive=!!e.definitive;item.error=String(e.message||e);
-    item.nextAt=Date.now()+Math.min(60000,5000*Math.max(1,item.attempts||1));
-    persistLeadQueue();renderLeadQueue();
-   }
+    // Conservar el identificador y el intento antes de iniciar el POST.
+    item.sentAt=Date.now();item.attempts=(item.attempts||0)+1;item.status='waiting';item.nextAt=Date.now()+2500;
+    if(!persistLeadQueue())throw new Error('No se pudo actualizar el respaldo local. La consulta sigue en Cargas recientes; revisá el almacenamiento antes de cerrar.');
+    postLead(item).catch(()=>{});active++;
+   }catch(e){if(!queueReady(actor,epoch))return;leadQueueError47(item,e);}
+   persistLeadQueue();renderLeadQueue();
   }
- }finally{if(epoch===queueEpoch){queueProcessing=false;scheduleLeadQueue();}}
+ }finally{if(epoch===queueEpoch){queueProcessing=false;persistLeadQueue();renderLeadQueue();scheduleLeadQueue();}}
 }
+
 function enqueueLead(data){
  const actor=currentAdvisor44();
  if(!actor)return setStatus('err','Ingresá con tu PIN antes de cargar una consulta.');
@@ -640,3 +651,4 @@ frame.addEventListener('load',()=>{
 </script>
 </body>
 </html>
+
