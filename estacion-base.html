@@ -322,6 +322,14 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
 @media(prefers-reduced-motion:reduce){.m50-fill{animation:none}}
 
 </style>
+
+<style>
+/* v52: Perfilador dedicado y perfiles compartidos compactos. */
+.pt52-wrap{max-width:900px;margin:0 auto}.pt52-card{margin-top:22px;padding:28px}.pt52-step{display:flex;align-items:center;gap:10px;margin-bottom:18px}.pt52-step>span{display:grid;place-items:center;width:27px;height:27px;background:#e9f2ef;color:var(--green);border-radius:50%;font-size:12px;font-weight:700}.pt52-step h4{margin:0;font-size:17px;color:var(--green)}.pt52-picker{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:16px}.pt52-card label{display:block;font-size:13px;font-weight:600;color:var(--ink)}.pt52-card input,.pt52-card select,.pt52-card textarea{box-sizing:border-box;display:block;width:100%;margin-top:8px;border:1px solid #d5e2dd;border-radius:12px;background:#fbfcfb;color:var(--ink);font:inherit;font-size:16px;font-weight:400;padding:13px 14px;line-height:1.5}.pt52-card textarea{min-height:164px;resize:vertical}.pt52-card :is(input,select,textarea):focus{outline:2px solid #80b5a8;outline-offset:2px;background:#fff}.pt52-card :disabled{opacity:.6;cursor:not-allowed}.pt52-status{font-size:12px;color:var(--muted);min-height:18px;margin:10px 0 0}.pt52-second{margin-top:25px}.pt52-actions{display:flex;align-items:center;gap:18px;margin-top:18px;flex-wrap:wrap}.pt52-actions .btn{font-size:14px;min-height:44px;padding:12px 20px}.pt52-actions p{font-size:12px;color:var(--muted);margin:0;max-width:280px}.pt52-card #pt51-choice:not(:empty){margin-top:14px;color:var(--green);font-size:13px}
+.pc52-count{font-size:12px;color:var(--muted);margin:15px 0}.pc52-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:12px}.pc52-item{border:1px solid var(--line);border-radius:12px;background:#fff;min-width:0;overflow:hidden}.pc52-item>summary{display:block;list-style:none;padding:15px 17px;cursor:pointer}.pc52-item>summary::-webkit-details-marker{display:none}.pc52-item>summary:focus-visible{outline:3px solid #80b5a8;outline-offset:-3px}.pc52-heading{display:flex;justify-content:space-between;align-items:start;gap:10px}.pc52-heading strong{font-size:15px;font-weight:650;overflow-wrap:anywhere;color:var(--green)}.pc52-score{font-size:11px;color:var(--teal);white-space:nowrap}.pc52-owner{display:block;font-size:12px;color:var(--muted);margin:4px 0 9px}.pc52-summary{font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;color:var(--ink)}.pc52-toggle{display:block;font-size:11px;color:var(--teal);margin-top:9px}.pc52-toggle:after{content:' +';font-weight:700}.pc52-item[open] .pc52-toggle{font-size:0}.pc52-item[open] .pc52-toggle:after{content:'Ocultar detalle −';font-size:11px;font-weight:400}.pc52-details{border-top:1px solid var(--line);padding:13px 17px;margin:0;display:grid;gap:11px}.pc52-details>div{display:grid;grid-template-columns:105px minmax(0,1fr);gap:8px}.pc52-details dt{font-size:12px;font-weight:600;color:var(--muted)}.pc52-details dd{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+@media(max-width:760px){.pt52-card{padding:19px}.pt52-picker,.pc52-grid{grid-template-columns:1fr}.pt52-actions{align-items:stretch;gap:10px}.pt52-actions .btn{width:100%}.pt52-actions p{max-width:none}.mobile-bar{padding-left:4px;padding-right:4px;gap:0}.mobile-bar button{min-width:0;padding-left:3px;padding-right:3px;font-size:9px}.mobile-bar button{min-height:44px}.mobile-bar button span:last-child{font-size:clamp(8px,2.3vw,9px)}.pc52-details>div{grid-template-columns:90px minmax(0,1fr)}}
+</style>
+
 </head>
 <body>
 <div class="lockscreen" id="lockscreen">
@@ -412,6 +420,7 @@ body{font-size:14px}.wrap{max-width:none;margin:0;padding:0 0 0 238px}.topbar{he
   <button data-go="v-leads" type="button"><span data-mobile-icon="leads"></span><span>Clientes</span></button>
   <button data-go="v-agenda" type="button"><span data-mobile-icon="visits"></span><span>Agenda</span></button>
   <button data-go="p-stock" type="button"><span data-mobile-icon="stock"></span><span>Propiedades</span></button>
+  <button data-go="v-perfilador" type="button"><span data-mobile-icon="profile"></span><span>Perfilador</span></button>
   <button id="mobile-more" type="button" aria-controls="nav" aria-expanded="false"><span data-mobile-icon="menu"></span><span>Más</span></button>
 </div>
 <div class="wrap">
@@ -1057,6 +1066,7 @@ function renderPanel(){
   else if(id==="v-inicio"){h=homePanel();}
   else if(id==="v-mensajes"){h=messagesPanel();}
   else if(id==='v-compartidos'){h=pc51Panel();}
+  else if(id==='v-perfilador'){h=pt51Panel();}
   else if(id==="v-actividad"){h=activityPanel();}
   else if(id==="v-leads"){h=leadsPanel();}
   else if(id==="v-sugerencias"){h=sugerenciasPanel();}
@@ -1098,7 +1108,7 @@ function renderPanel(){
   if(id==="v-reactivar"&&current==="Stefano")rxLoadAdmin();
   if(id==="v-recuperar")rxLoadAsignadas();
   refreshLists();
-  rpRender();if(id==='v-perfil')td49Load(false);if(id==='v-compartidos')pc51Load();
+  rpRender();if(id==='v-perfil')td49Load(false);if(id==='v-compartidos')pc51Load();if(id==='v-perfilador')pt52Load();
 }
 
 
@@ -1781,7 +1791,7 @@ function needName(){if(!current){alert('Primero seleccioná tu nombre arriba, en
 let leadEpoch=0, leadRequest=null, leadError='', leadLoadedAt=0, pendingProfileId='';
 const ICON_PATHS={home:'M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z',leads:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',tasks:'M9 5h12 M9 12h12 M9 19h12 M3 5l1 1 2-2 M3 12l1 1 2-2 M3 19l1 1 2-2',visits:'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2 M8 14h3 M8 18h6',profile:'M20 21v-2a7 7 0 0 0-14 0v2 M13 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',stock:'M3 21h18 M5 21V7l7-4 7 4v14 M9 21v-6h6v6 M9 8h1 M14 8h1 M9 11h1 M14 11h1',suggest:'m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z',messages:'M21 11a8 8 0 0 1-8 8H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z M7 8h10 M7 12h7',capture:'M12 3v18 M3 12h18 M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10',activity:'M4 20h16 M7 16v-5 M12 16V4 M17 16V8',control:'m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z M9 12l2 2 4-4',arrow:'M5 12h14 M14 7l5 5-5 5',clock:'M12 8v4l3 2 M22 12a10 10 0 1 0-20 0 10 10 0 0 0 20 0',menu:'M4 6h16 M4 12h16 M4 18h16'};
 function icon(name){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(ICON_PATHS[name]||ICON_PATHS.arrow)+'"/></svg>';}
-const COMMERCIAL_NAV=[['v-inicio','Hoy','home'],['v-leads','Clientes','leads'],['v-agenda','Agenda','visits'],['p-stock','Propiedades','stock']];
+const COMMERCIAL_NAV=[['v-inicio','Hoy','home'],['v-leads','Clientes','leads'],['v-agenda','Agenda','visits'],['p-stock','Propiedades','stock'],['v-perfilador','Perfilador','profile']];
 function clGrupoNav(id){
   if(id==='v-cliente'||id==='v-perfil'||id==='v-recuperar'||id==='v-editar')return 'v-leads';
   if(id==='v-visitas')return 'v-agenda';
@@ -2043,7 +2053,7 @@ function h50Appointments(rows,emptyText){return rows.length?rows.map(a=>'<articl
 function h50Render(){
  const el=$('#home-content');if(!el)return;
  const d=H50.owner===current?H50.data:null,loading=H50.loading;
- el.innerHTML=pt51Panel()+'<div class="home-heading"><div><div class="work-date">'+esc(todayLabel())+'</div><h1>Tu jornada, '+esc(current||'asesor')+'.</h1><p>Lo nuevo primero. El resto de tu cartera sigue en Clientes y en el tablero.</p></div><button type="button" class="btn ghost" id="home-refresh" '+(loading?'disabled':'')+'>'+(loading?'Actualizando…':'Actualizar')+'</button></div>'+
+ el.innerHTML='<div class="home-heading"><div><div class="work-date">'+esc(todayLabel())+'</div><h1>Tu jornada, '+esc(current||'asesor')+'.</h1><p>Lo nuevo primero. El resto de tu cartera sigue en Clientes y en el tablero.</p></div><button type="button" class="btn ghost" id="home-refresh" '+(loading?'disabled':'')+'>'+(loading?'Actualizando…':'Actualizar')+'</button></div>'+
   (H50.error?'<div class="home-error" role="status">'+esc(H50.error)+(d?' Se conserva la última lectura.':'')+' <button class="text-link" id="home-retry">Reintentar</button></div>':'')+
   (d?m50HTML(d.metricas):'<div class="card h50-loading" role="status">Preparando tu jornada…</div>')+
   '<div class="h50-columns"><section class="card h50-new"><div class="card-heading"><div><h2>Consultas nuevas</h2><p>Últimos 30 días · hasta 3 consultas</p></div><button class="text-link" data-go="v-leads">Ver clientes →</button></div>'+
@@ -3254,16 +3264,41 @@ function pt51Parse(text){
 }
 let PT51_DRAFTS={};
 function pt51Draft(){try{return localStorage.getItem('lurati_perfil_texto51_'+current)||PT51_DRAFTS[current]||'';}catch(_){return PT51_DRAFTS[current]||'';}}
-function pt51Panel(){return '<section class="card"><h2>Contame qué busca tu cliente</h2><p>Ejemplo: Daniel busca un departamento de 2 dormitorios, hasta USD 50 mil, en Centro, piso alto y orientación este.</p><textarea id="pt51-text" rows="3" maxlength="2500" style="width:100%;font:inherit" placeholder="Escribí el perfil con tus palabras">'+esc(pt51Draft())+'</textarea><button class="btn" id="pt51-choose">Elegir cliente y revisar</button><div id="pt51-choice" role="status"></div><p class="local-note">El texto se interpreta en este dispositivo. Revisás los cambios y confirmás el guardado. Los detalles libres se conservan en observaciones.</p></section>';}
+
+let PT52={owner:'',selected:'',epoch:0};
+function pt52Key(id){return 'lurati_perfilador52_'+current+'_'+id;}
+function pt52Read(id){if(!id)return '';try{return localStorage.getItem(pt52Key(id))||PT51_DRAFTS[pt52Key(id)]||'';}catch(_){return PT51_DRAFTS[pt52Key(id)]||'';}}
+function pt52Store(){if(PT52.owner!==current||!PT52.selected)return;const value=$('#pt51-text')?.value||'';PT51_DRAFTS[pt52Key(PT52.selected)]=value;try{localStorage.setItem(pt52Key(PT52.selected),value);}catch(_){}}
+function pt51Panel(){return '<div class="pt52-wrap"><div class="eyebrow">Tu jornada</div><h3>Perfilador</h3><p class="sub">Elegí el cliente y contanos qué está buscando.</p><section class="card pt52-card"><div class="pt52-step"><span>1</span><h4>¿A quién vamos a perfilar?</h4></div><div class="pt52-picker"><label for="pt52-search">Buscar cliente<input id="pt52-search" type="search" autocomplete="off" placeholder="Código o nombre, por ejemplo C-116 o Pepito"></label><label for="pt51-client">Cliente<select id="pt51-client" disabled><option value="">Cargando tus clientes…</option></select></label></div><div id="pt52-status" class="pt52-status" role="status"></div><div class="pt52-step pt52-second"><span>2</span><h4>¿Qué está buscando?</h4></div><label class="pt52-text-label" for="pt51-text">Describí la búsqueda<textarea id="pt51-text" rows="5" maxlength="2500" disabled placeholder="Busca un departamento de 2 dormitorios, hasta USD 50 mil, en Centro. Prefiere piso alto, frente y orientación este."></textarea></label><div class="pt52-actions"><button class="btn" id="pt51-choose" disabled>Revisar actualización</button><p>Vas a poder revisar los cambios antes de guardarlos.</p></div><div id="pt51-choice" role="status"></div></section></div>';}
 let PT51={owner:'',text:'',leads:[]};
-async function pt51Choose(){const text=$('#pt51-text')?.value.trim(),who=current,out=$('#pt51-choice');if(!text)return out.textContent='Escribí qué busca el cliente.';out.textContent='Buscando tus consultas…';try{const d=await crmGet('leads',{vendedor:who});if(current!==who||!out.isConnected)return;PT51={owner:who,text,leads:ds46Visibles(d.leads||[])};const head=text.match(/^\s*([\p{L} ]{2,60}?)\s+(?:busca|quiere|necesita)\b/iu),n=head?pt51Norm(head[1]):'';const hits=PT51.leads.filter(l=>n&&pt51Norm(l.nombre).includes(n));const ordered=[...hits,...PT51.leads.filter(l=>!hits.includes(l))];out.innerHTML='<label>Confirmá a qué consulta corresponde<select id="pt51-client"><option value="">Elegí el cliente y la consulta</option>'+ordered.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.nombre)+' · '+esc(l.id)+' · '+esc(l.propiedad||'Sin inmueble')+'</option>').join('')+'</select></label><button class="btn" id="pt51-review">Revisar actualización del perfil</button>';if(hits.length===1)$('#pt51-client').value=hits[0].id;}catch(e){if(current===who&&out.isConnected)out.textContent=e.message;}}
+async function pt52Load(){
+ const who=current,epoch=++PT52.epoch,el=$('#pt51-client');PT52.owner=who;PT52.selected='';PT51={owner:who,text:'',leads:[]};
+ try{const d=await crmGet('leads',{vendedor:who});if(current!==who||epoch!==PT52.epoch||!el?.isConnected)return;if(!Array.isArray(d.leads))throw Error('No se pudo leer la lista de clientes.');PT51.leads=ds46Visibles(d.leads).slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),'es'));pt52Options();}
+ catch(e){if(current===who&&epoch===PT52.epoch&&el?.isConnected){$('#pt52-status').innerHTML=esc(e.message)+' <button class="text-link" id="pt52-retry">Reintentar</button>';el.innerHTML='<option value="">Lista no disponible</option>';}}
+}
+function pt52Options(){
+ const select=$('#pt51-client');if(!select||PT51.owner!==current)return;
+ const raw=pt51Norm($('#pt52-search')?.value).trim(),q=raw.replace(/[\s-]/g,''),matches=PT51.leads.filter(l=>pt51Norm(l.id+' '+l.nombre).replace(/[\s-]/g,'').includes(q));
+ const selected=PT51.leads.find(l=>l.id===PT52.selected);const rows=selected&&!matches.includes(selected)?[selected,...matches]:matches;
+ select.innerHTML='<option value="">Seleccioná un cliente</option>'+rows.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.id)+' · '+esc(l.nombre)+' — '+esc(l.propiedad||'Sin inmueble')+'</option>').join('');select.disabled=!rows.length;select.value=PT52.selected;
+ $('#pt52-status').textContent=PT51.leads.length?matches.length+' clientes disponibles'+(raw?' con esta búsqueda':''):'Todavía no tenés consultas asignadas.';
+}
+function pt52Select(){pt52Store();const id=$('#pt51-client')?.value||'';PT52.selected=id;const el=$('#pt51-text');el.value=pt52Read(id);el.disabled=!id;$('#pt51-choose').disabled=!id;$('#pt51-choice').textContent='';}
+async function pt51Choose(){const out=$('#pt51-choice'),id=$('#pt51-client')?.value,text=$('#pt51-text')?.value.trim();if(!id||PT51.owner!==current)return out.textContent='Elegí uno de tus clientes.';if(!text)return out.textContent='Contanos qué busca este cliente.';pt52Store();PT51.text=text;const who=current,button=$('#pt51-choose');button.disabled=true;try{await pt51Review();}finally{if(current===who&&button.isConnected)button.disabled=false;}}
 async function pt51Review(){const id=$('#pt51-client')?.value,who=current;if(!id||PT51.owner!==who)return gcToast('Seleccioná una consulta propia.');try{const d=await crmGet('clienteComercial',{id,asesor:who});if(current!==who)return;const original={...d.calificacion},patch=pt51Parse(PT51.text);patch.detalle=[original.detalle,'Perfil comentado: '+PT51.text].filter(Boolean).join('\n');if(patch.detalle.length>4000)throw new Error('Las observaciones superan el espacio disponible. Acortá el texto nuevo; el perfil anterior se conserva.');gcDialog('<div class="gc-title"><h3>Revisar perfil · '+esc(d.cliente.nombre)+'</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p>Se actualizan los campos reconocidos. Piso, orientación, vista y otros detalles quedan en observaciones. Revisá el próximo paso antes de guardar.</p>'+rxForm(d.cliente,d,'texto51'));const prefix=rxPrefix(id,'texto51');patch.detalle=[original.detalle, 'Perfil comentado: '+PT51.text].filter(Boolean).join('\n');for(const [k,v]of Object.entries(patch)){const el=document.getElementById(prefix+'-'+k);if(el){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}}const form=$('#gc-dialog .rx-quick-form');form.dataset.clBase=JSON.stringify(original);form.querySelector('details').open=true;}catch(e){if(current===who)gcToast(e.message);}}
 function pc51Panel(){return '<h3>Perfiles cargados</h3><p class="sub">Búsquedas del equipo con carga mínima del 50%. Para sugerir una propiedad, coordiná con el vendedor a cargo.</p><input id="pc51-search" type="search" placeholder="Buscar por nombre, zona, características o vendedor" style="width:100%;padding:12px;font:inherit"><button class="btn ghost" id="pc51-refresh">Actualizar perfiles</button><div id="pc51-list" role="status"></div>';}
 let PC51={owner:'',rows:[]};
 async function pc51Load(){const who=current,el=$('#pc51-list');if(!el)return;PC51={owner:who,rows:[]};el.textContent='Cargando perfiles del equipo…';try{const d=await crmGet('perfilesCompartidos',{});if(current!==who||!el.isConnected)return;PC51.rows=d.perfiles||[];pc51Render();}catch(e){if(current===who&&el.isConnected)el.textContent=e.message;}}
-function pc51Render(){const el=$('#pc51-list');if(!el||PC51.owner!==current)return;const q=pt51Norm($('#pc51-search')?.value),labels={objetivo:'Busca para',zona:'Zona',tipo:'Tipo',dorms:'Dormitorios',presup:'Presupuesto USD',pago:'Pago',plazo:'Plazo',banos:'Baños',m2:'Superficie m²',estado:'Estado',antig:'Antigüedad',detalle:'Detalles',motivo:'Motivo no avance'};const rows=PC51.rows.filter(r=>pt51Norm(JSON.stringify(r)).includes(q));el.innerHTML='<p>'+rows.length+' perfiles</p>'+rows.map(r=>'<article class="card"><h4>'+esc(r.nombre)+'</h4><p><b>Vendedor a cargo: '+esc(r.vendedor)+'</b> · '+esc(r.carga)+'% cargado</p><dl>'+Object.entries(r.perfil).filter(([k])=>labels[k]).map(([k,v])=>'<dt><b>'+labels[k]+'</b></dt><dd style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(v)+'</dd>').join('')+'</dl></article>').join('');}
-document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='pt51-choose')pt51Choose();if(b.id==='pt51-review')pt51Review();if(b.id==='pc51-refresh')pc51Load();});
-document.addEventListener('input',e=>{if(e.target.id==='pt51-text'){PT51_DRAFTS[current]=e.target.value;try{localStorage.setItem('lurati_perfil_texto51_'+current,e.target.value);}catch(_){}}if(e.target.id==='pc51-search')pc51Render();});
+
+function pc51Render(){
+ const el=$('#pc51-list');if(!el||PC51.owner!==current)return;
+ const q=pt51Norm($('#pc51-search')?.value),labels={objetivo:'Busca para',zona:'Zona',tipo:'Tipo',dorms:'Dormitorios',presup:'Presupuesto USD',pago:'Pago',plazo:'Plazo',banos:'Baños',m2:'Superficie m²',estado:'Estado',antig:'Antigüedad',detalle:'Detalles',motivo:'Motivo no avance'};
+ const rows=PC51.rows.filter(r=>pt51Norm(JSON.stringify(r)).includes(q));
+ el.innerHTML='<p class="pc52-count">'+rows.length+' perfiles</p><div class="pc52-grid">'+rows.map(r=>{const p=r.perfil||{},d=p.dorms==='0'||p.dorms==='Mono'?'Monoambiente':p.dorms?p.dorms+' dorm.':'';const summary=[p.tipo,d,p.zona,p.presup?'USD '+p.presup.replace(/^USD\s*/i,''):''].filter(Boolean).join(' · ');return '<details class="pc52-item"><summary><span class="pc52-heading"><strong>'+esc(r.nombre)+'</strong><span class="pc52-score">'+esc(r.carga)+'%</span></span><span class="pc52-owner">A cargo de '+esc(r.vendedor)+'</span><span class="pc52-summary">'+esc(summary||'Ver búsqueda registrada')+'</span><span class="pc52-toggle">Ver perfil completo</span></summary><dl class="pc52-details">'+Object.entries(p).filter(([k])=>labels[k]).map(([k,v])=>'<div><dt>'+labels[k]+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl></details>';}).join('')+'</div>'+(rows.length?'':'<div class="empty">No hay perfiles para esta búsqueda.</div>');
+}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='pt51-choose')pt51Choose();if(b.id==='pt51-review')pt51Review();if(b.id==='pc51-refresh')pc51Load();if(b.id==='pt52-retry')pt52Load();});
+document.addEventListener('input',e=>{if(e.target.id==='pt51-text')pt52Store();if(e.target.id==='pt52-search')pt52Options();if(e.target.id==='pc51-search')pc51Render();});
+document.addEventListener('change',e=>{if(e.target.id==='pt51-client')pt52Select();});
 
 
 /* ============ INIT ============ */
