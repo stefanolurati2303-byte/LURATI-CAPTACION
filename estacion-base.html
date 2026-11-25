@@ -1056,6 +1056,7 @@ function renderPanel(){
   else if(id==="v-plan"){h=plan("El recorrido","Plan de venta","Respuesta rápida, perfilado, alternativas, visitas y reunión con Julio. Consulta no cargada = consulta perdida.",PHASES_V,"El primer asesor que responde con criterio se queda con el cliente.");}
   else if(id==="v-inicio"){h=homePanel();}
   else if(id==="v-mensajes"){h=messagesPanel();}
+  else if(id==='v-compartidos'){h=pc51Panel();}
   else if(id==="v-actividad"){h=activityPanel();}
   else if(id==="v-leads"){h=leadsPanel();}
   else if(id==="v-sugerencias"){h=sugerenciasPanel();}
@@ -1097,7 +1098,7 @@ function renderPanel(){
   if(id==="v-reactivar"&&current==="Stefano")rxLoadAdmin();
   if(id==="v-recuperar")rxLoadAsignadas();
   refreshLists();
-  rpRender();if(id==='v-perfil')td49Load(false);
+  rpRender();if(id==='v-perfil')td49Load(false);if(id==='v-compartidos')pc51Load();
 }
 
 
@@ -1789,7 +1790,7 @@ function clGrupoNav(id){
 }
 function renderNav(){
   const primary=[...COMMERCIAL_NAV];if(dv45Can())primary.push(['c-duenos','Dueños vende','capture']);
-  const extras=[['v-tareas','Pendientes de clientes','tasks'],['v-perfil','Tablero comercial','activity'],['v-recuperar','Mis reactivaciones','leads'],['v-sugerencias','Buscar alternativas','suggest'],['v-mensajes','Modelos de mensajes','messages'],['p-estados','Estado de propiedades','control'],['c-trabajo','Captación','capture'],['v-actividad','Mi actividad','activity']];
+  const extras=[['v-compartidos','Perfiles cargados','profile'],['v-tareas','Pendientes de clientes','tasks'],['v-perfil','Tablero comercial','activity'],['v-recuperar','Mis reactivaciones','leads'],['v-sugerencias','Buscar alternativas','suggest'],['v-mensajes','Modelos de mensajes','messages'],['p-estados','Estado de propiedades','control'],['c-trabajo','Captación','capture'],['v-actividad','Mi actividad','activity']];
   if(['Stefano','Flavia'].includes(current))extras.push(['v-editar','Corregir consultas','leads']);
   if(bcSoloStefano())extras.push(['v-busquedas','Búsquedas de clientes','leads']);
   const equipo=[];if(current==='Stefano')equipo.push(['v-direccion','Dirección comercial','activity'],['v-reactivar','Reactivación y equipo','suggest']);if(esSupervisor())equipo.push(['v-control','Supervisión','control']);
@@ -2042,7 +2043,7 @@ function h50Appointments(rows,emptyText){return rows.length?rows.map(a=>'<articl
 function h50Render(){
  const el=$('#home-content');if(!el)return;
  const d=H50.owner===current?H50.data:null,loading=H50.loading;
- el.innerHTML='<div class="home-heading"><div><div class="work-date">'+esc(todayLabel())+'</div><h1>Tu jornada, '+esc(current||'asesor')+'.</h1><p>Lo nuevo primero. El resto de tu cartera sigue en Clientes y en el tablero.</p></div><button type="button" class="btn ghost" id="home-refresh" '+(loading?'disabled':'')+'>'+(loading?'Actualizando…':'Actualizar')+'</button></div>'+
+ el.innerHTML=pt51Panel()+'<div class="home-heading"><div><div class="work-date">'+esc(todayLabel())+'</div><h1>Tu jornada, '+esc(current||'asesor')+'.</h1><p>Lo nuevo primero. El resto de tu cartera sigue en Clientes y en el tablero.</p></div><button type="button" class="btn ghost" id="home-refresh" '+(loading?'disabled':'')+'>'+(loading?'Actualizando…':'Actualizar')+'</button></div>'+
   (H50.error?'<div class="home-error" role="status">'+esc(H50.error)+(d?' Se conserva la última lectura.':'')+' <button class="text-link" id="home-retry">Reintentar</button></div>':'')+
   (d?m50HTML(d.metricas):'<div class="card h50-loading" role="status">Preparando tu jornada…</div>')+
   '<div class="h50-columns"><section class="card h50-new"><div class="card-heading"><div><h2>Consultas nuevas</h2><p>Últimos 30 días · hasta 3 consultas</p></div><button class="text-link" data-go="v-leads">Ver clientes →</button></div>'+
@@ -3235,6 +3236,34 @@ function clProtectedEdit(){
 document.addEventListener('input',e=>{const f=e.target.closest?.('.cl-profile-form');if(!f)return;f.dataset.clDirty='1';const n=f.querySelector('.cl-draft-label');if(n)n.hidden=false;});
 document.addEventListener('change',e=>{const f=e.target.closest?.('.cl-profile-form');if(f){f.dataset.clDirty='1';const n=f.querySelector('.cl-draft-label');if(n)n.hidden=false;}});
 window.addEventListener('beforeunload',e=>{if(clDirtyForm()){e.preventDefault();e.returnValue='';}});
+
+
+
+
+/* v51: interpretación local, revisión y guardado por el circuito existente. */
+function pt51Norm(t){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function pt51Parse(text){
+ const t=pt51Norm(text),p={};if(/\b(no|sin|excepto|descarta)\b/.test(t))return p;
+ let m=t.match(/\b(monoambiente|mono ambiente)\b/);if(m)p.dorms='Mono';
+ m=t.match(/\b([1-4])\s*(dormitorios?|dorms?\.?|habitaciones?)\b/);if(m)p.dorms=m[1];
+ m=t.match(/\b(hasta|maximo|presupuesto(?: de)?)\s*(?:u\$s|usd|us\$|\$)?\s*(\d[\d.,]*)\s*(mil|k)?\b/);if(m){let n=Number(m[2].replace(/\.(?=\d{3}(?:\D|$))/g,'').replace(',','.'));if(m[3])n*=1000;if(Number.isFinite(n)&&n>0)p.presup='Hasta '+n;}
+ const zones=['Centro','Pichincha','Echesortu','Abasto','Fisherton','Martin','Lourdes','Arroyito','Alberdi','Puerto Norte','Refineria','Republica de la Sexta','Funes','Roldan'];const z=zones.filter(z=>new RegExp('\\b'+pt51Norm(z)+'\\b').test(t));if(z.length)p.zona=z.join(', ');
+ if(/\b(depto|departamento)\b/.test(t))p.tipo='Depto';else if(/\bcasa\b/.test(t))p.tipo='Casa';else if(/\b(lote|terreno)\b/.test(t))p.tipo='Lote';
+ if(/\bcontado\b/.test(t))p.pago='Contado';else if(/\bcredito\b/.test(t))p.pago='Crédito';else if(/\bpermuta\b/.test(t))p.pago='Permuta';
+ if(/\binversion\b/.test(t))p.objetivo='Inversión';else if(/\b(vivienda|para vivir)\b/.test(t))p.objetivo='Vivienda';return p;
+}
+let PT51_DRAFTS={};
+function pt51Draft(){try{return localStorage.getItem('lurati_perfil_texto51_'+current)||PT51_DRAFTS[current]||'';}catch(_){return PT51_DRAFTS[current]||'';}}
+function pt51Panel(){return '<section class="card"><h2>Contame qué busca tu cliente</h2><p>Ejemplo: Daniel busca un departamento de 2 dormitorios, hasta USD 50 mil, en Centro, piso alto y orientación este.</p><textarea id="pt51-text" rows="3" maxlength="2500" style="width:100%;font:inherit" placeholder="Escribí el perfil con tus palabras">'+esc(pt51Draft())+'</textarea><button class="btn" id="pt51-choose">Elegir cliente y revisar</button><div id="pt51-choice" role="status"></div><p class="local-note">El texto se interpreta en este dispositivo. Revisás los cambios y confirmás el guardado. Los detalles libres se conservan en observaciones.</p></section>';}
+let PT51={owner:'',text:'',leads:[]};
+async function pt51Choose(){const text=$('#pt51-text')?.value.trim(),who=current,out=$('#pt51-choice');if(!text)return out.textContent='Escribí qué busca el cliente.';out.textContent='Buscando tus consultas…';try{const d=await crmGet('leads',{vendedor:who});if(current!==who||!out.isConnected)return;PT51={owner:who,text,leads:ds46Visibles(d.leads||[])};const head=text.match(/^\s*([\p{L} ]{2,60}?)\s+(?:busca|quiere|necesita)\b/iu),n=head?pt51Norm(head[1]):'';const hits=PT51.leads.filter(l=>n&&pt51Norm(l.nombre).includes(n));const ordered=[...hits,...PT51.leads.filter(l=>!hits.includes(l))];out.innerHTML='<label>Confirmá a qué consulta corresponde<select id="pt51-client"><option value="">Elegí el cliente y la consulta</option>'+ordered.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.nombre)+' · '+esc(l.id)+' · '+esc(l.propiedad||'Sin inmueble')+'</option>').join('')+'</select></label><button class="btn" id="pt51-review">Revisar actualización del perfil</button>';if(hits.length===1)$('#pt51-client').value=hits[0].id;}catch(e){if(current===who&&out.isConnected)out.textContent=e.message;}}
+async function pt51Review(){const id=$('#pt51-client')?.value,who=current;if(!id||PT51.owner!==who)return gcToast('Seleccioná una consulta propia.');try{const d=await crmGet('clienteComercial',{id,asesor:who});if(current!==who)return;const original={...d.calificacion},patch=pt51Parse(PT51.text);patch.detalle=[original.detalle,'Perfil comentado: '+PT51.text].filter(Boolean).join('\n');if(patch.detalle.length>4000)throw new Error('Las observaciones superan el espacio disponible. Acortá el texto nuevo; el perfil anterior se conserva.');gcDialog('<div class="gc-title"><h3>Revisar perfil · '+esc(d.cliente.nombre)+'</h3><button class="btn ghost" data-gc-close>Cerrar</button></div><p>Se actualizan los campos reconocidos. Piso, orientación, vista y otros detalles quedan en observaciones. Revisá el próximo paso antes de guardar.</p>'+rxForm(d.cliente,d,'texto51'));const prefix=rxPrefix(id,'texto51');patch.detalle=[original.detalle, 'Perfil comentado: '+PT51.text].filter(Boolean).join('\n');for(const [k,v]of Object.entries(patch)){const el=document.getElementById(prefix+'-'+k);if(el){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}}const form=$('#gc-dialog .rx-quick-form');form.dataset.clBase=JSON.stringify(original);form.querySelector('details').open=true;}catch(e){if(current===who)gcToast(e.message);}}
+function pc51Panel(){return '<h3>Perfiles cargados</h3><p class="sub">Búsquedas del equipo con carga mínima del 50%. Para sugerir una propiedad, coordiná con el vendedor a cargo.</p><input id="pc51-search" type="search" placeholder="Buscar por nombre, zona, características o vendedor" style="width:100%;padding:12px;font:inherit"><button class="btn ghost" id="pc51-refresh">Actualizar perfiles</button><div id="pc51-list" role="status"></div>';}
+let PC51={owner:'',rows:[]};
+async function pc51Load(){const who=current,el=$('#pc51-list');if(!el)return;PC51={owner:who,rows:[]};el.textContent='Cargando perfiles del equipo…';try{const d=await crmGet('perfilesCompartidos',{});if(current!==who||!el.isConnected)return;PC51.rows=d.perfiles||[];pc51Render();}catch(e){if(current===who&&el.isConnected)el.textContent=e.message;}}
+function pc51Render(){const el=$('#pc51-list');if(!el||PC51.owner!==current)return;const q=pt51Norm($('#pc51-search')?.value),labels={objetivo:'Busca para',zona:'Zona',tipo:'Tipo',dorms:'Dormitorios',presup:'Presupuesto USD',pago:'Pago',plazo:'Plazo',banos:'Baños',m2:'Superficie m²',estado:'Estado',antig:'Antigüedad',detalle:'Detalles',motivo:'Motivo no avance'};const rows=PC51.rows.filter(r=>pt51Norm(JSON.stringify(r)).includes(q));el.innerHTML='<p>'+rows.length+' perfiles</p>'+rows.map(r=>'<article class="card"><h4>'+esc(r.nombre)+'</h4><p><b>Vendedor a cargo: '+esc(r.vendedor)+'</b> · '+esc(r.carga)+'% cargado</p><dl>'+Object.entries(r.perfil).filter(([k])=>labels[k]).map(([k,v])=>'<dt><b>'+labels[k]+'</b></dt><dd style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(v)+'</dd>').join('')+'</dl></article>').join('');}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='pt51-choose')pt51Choose();if(b.id==='pt51-review')pt51Review();if(b.id==='pc51-refresh')pc51Load();});
+document.addEventListener('input',e=>{if(e.target.id==='pt51-text'){PT51_DRAFTS[current]=e.target.value;try{localStorage.setItem('lurati_perfil_texto51_'+current,e.target.value);}catch(_){}}if(e.target.id==='pc51-search')pc51Render();});
 
 
 /* ============ INIT ============ */
